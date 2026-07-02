@@ -21,3 +21,7 @@ Progress Log
 - Updated `README.md` with a data/results availability section using a Google Drive placeholder link. A real shared folder URL still needs to be added after upload.
 - Initialized local git repository and renamed the initial branch to `main`.
 - `git add -n .` showed only code, notebook, README, PROGRESS, `.gitignore`, and `.vscode/settings.json`; `data/`, `results/`, and cache directories were not included.
+- Initial commit created: `1bd7741 Initial SpaceRec slim package`.
+- Attempt to create `OliverWang0908/SpaceRec` failed because the repository already existed.
+- Existing GitHub repository checked: `OliverWang0908/SpaceRec` is private, non-empty, and current user has ADMIN permission.
+- User instructed to delete the existing `OliverWang0908/SpaceRec` repository and recreate it from the current local package.
