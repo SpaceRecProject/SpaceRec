@@ -3,9 +3,10 @@ TODO
 - [x] Confirm repository is not already initialized as git.
 - [x] Add git ignore rules for local data, results, caches, and large archives.
 - [x] Update README with GitHub data availability notes for Google Drive.
-- [ ] Initialize local git repository and commit code-only package.
-- [ ] Create private GitHub repository `SpaceRec` and push.
-- [ ] Verify GitHub remote and that `data/` and `results/` are not tracked.
+- [x] Initialize local git repository and commit code-only package.
+- [x] Create private GitHub repository `SpaceRec` and push.
+- [x] Verify GitHub remote and that `data/` and `results/` are not tracked.
+- [ ] Replace the Google Drive placeholder in `README.md` after the shared folder link is available.
 
 Progress Log
 
@@ -29,3 +30,8 @@ Progress Log
 - Attempted `gh repo delete OliverWang0908/SpaceRec --confirm`; deletion failed because the current token lacks `delete_repo` scope.
 - User manually deleted `OliverWang0908/SpaceRec` on GitHub.
 - Confirmed `gh repo view OliverWang0908/SpaceRec` no longer resolves. Cleaned up the interrupted `gh auth refresh` process.
+- Recreated private repository: `https://github.com/OliverWang0908/SpaceRec`.
+- Pushed local `main` to `origin/main`.
+- Verified GitHub reports `isPrivate=true`, default branch `main`, and repository is non-empty.
+- Verified `origin` fetch/push URL is `https://github.com/OliverWang0908/SpaceRec.git`.
+- Verified no tracked files under `data/` or `results/` using `git ls-files | rg '^(data|results)/'` returning no matches.
