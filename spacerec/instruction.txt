@@ -1,0 +1,308 @@
+SpaceRec Slim Package Instructions
+
+Purpose
+This directory contains the slim, standalone SpaceRec package prepared from the existing project code. It is not a rewrite from scratch. The package keeps the dense18 Virchow2 image-feature path, the no-set-transformer training path, polygon aggregation, and the notebook API workflow.
+
+Current Package Root
+The standalone package root is:
+
+  /net/dali/home/chikina/shared_data/SpaceRec
+
+It contains:
+
+  spacerec/
+    __init__.py
+    api.py
+    deconv/
+    gridembedding/
+    model/
+    evaluation/
+    preprocessing/
+    notebooks/run_spacerec.ipynb
+    instruction.txt
+
+  data/
+    Pipeline input files and small prepared outputs used by the notebook.
+
+The package is intended to be usable from this root. The notebook discovers the root by walking upward until it finds `spacerec/api.py`.
+
+Standalone Data Rule
+The `data/` directory must not contain symlinks. This package is meant to be self-contained. Every file under `data/` should be a real file or real directory copy.
+
+Current validation:
+
+  find /net/dali/home/chikina/shared_data/SpaceRec -type l | wc -l
+
+must return:
+
+  0
+
+Core Principles
+1. Reuse the existing implementation logic whenever possible.
+2. Keep only the dense18 Virchow2 + projection-heads + no-set-transformer path.
+3. Do not reintroduce dense16, ResNet, set-transformer, attention extraction, or unrelated experiment paths.
+4. Do not hard-code user home paths inside the API.
+5. The notebook may use paths relative to `SPACEREC_ROOT / "data"` for the packaged example inputs.
+6. API default outputs are based on the caller's current working directory:
+
+     results/<dataset>/<step>/
+
+7. CUDA, grid embedding, and training should be run on a compute node or inside the active Slurm allocation, not on a login node.
+
+Public API
+Import the API as:
+
+  import spacerec.api as spacerec
+
+The main API functions are:
+
+  spacerec.deconv(...)
+  spacerec.ge(...)
+  spacerec.train(...)
+  spacerec.agg(...)
+  spacerec.plottype(...)
+  spacerec.plotexpr(...)
+
+Notebook
+The main notebook is:
+
+  spacerec/notebooks/run_spacerec.ipynb
+
+The notebook is organized as explicit step input cells followed by step execution cells:
+
+1. Step 1: Deconvolution
+2. Step 2: Grid Embedding
+3. Step 3: Train
+4. Step 4: Aggregate
+5. Step 5: Evaluation
+
+Step 5 uses separate cells for type plotting and expression plotting.
+
+Step 1: Deconvolution
+API:
+
+  spacerec.deconv(...)
+
+Inputs:
+1. `dataset`
+2. `visium_dir`
+3. `sc_ref_h5ad`
+4. `sample_id`
+5. `annotation_column`
+6. `type_merge_json`
+7. `output_dir`
+8. `max_cores`
+9. `force`
+
+The packaged BRCA merge JSON is:
+
+  data/brca_type_merge_17to11.json
+
+Outputs:
+1. `deconv.csv`
+2. `deconv_summary.json`
+3. `deconv_merged.csv` when `type_merge_json` is provided
+4. `deconv_merge_summary.json` when `type_merge_json` is provided
+
+Step 2: Grid Embedding
+API:
+
+  spacerec.ge(...)
+
+Only the dense18 Virchow2 path is retained.
+
+Feature configuration:
+1. Feature key: `virchow2_token_tile_neighbor_concat6400`
+2. Token dimension: 1280
+3. Tile feature dimension: 2560
+4. Neighbor tile feature dimension: 2560
+5. Final feature dimension: 6400
+6. Default patch size: 288
+7. Default stride: 72
+8. Grid size: 18
+9. Virchow2 model input size: 224
+
+Mask and filtering behavior:
+1. Read Visium `in_tissue == 1` positions.
+2. Build a full-resolution Visium tissue bounding box.
+3. Estimate the tissue boundary from the thumbnail image.
+4. Generate sliding-window patches.
+5. Retain patches whose centers are inside both the Visium bounding box and the tissue boundary.
+6. Split each retained patch into dense18 grids.
+7. Filter grid centers by tissue boundary.
+8. Deduplicate overlapping grid bboxes.
+9. Average duplicate grid features with Hann-like patch weights.
+10. Keep supervised-grid metadata based on nearest Visium spot mapping.
+
+Important options:
+1. `auto_select_gpu=True` selects an available CUDA GPU when `device=None`.
+2. `enable_progress_bar=True` shows tqdm progress bars.
+3. `stage_log_stdout=False` keeps JSON progress logs out of notebook stdout.
+4. `max_patches` is for debugging. Use `max_patches=None` for a full run.
+
+Outputs:
+1. `grid_embedding.h5`
+2. `grid_embedding_summary.json`
+3. `grid_embedding_mask_preview.png`
+4. `patch_metadata_h5`
+
+Step 3: Train
+API:
+
+  spacerec.train(...)
+
+Only the no-set-transformer projection-heads model is retained.
+
+Fixed model path:
+1. `architecture="projection_heads"`
+2. `use_set_transformer=False`
+3. `use_gene_head=True`
+4. `use_type_head=True`
+5. Dense feature input dimension: 6400
+
+Expression target:
+The current training path uses raw spot counts from `st_h5ad`. The model sums grid-level predictions at the spot level and applies `log1p` only inside the Huber loss:
+
+  Huber(log1p(sum_grid_pred), log1p(raw_spot_counts))
+
+Important options:
+1. `limit_spots` is only for smoke tests. Use `limit_spots=None` for a full run.
+2. `patience` controls early stopping.
+3. `auto_select_gpu=True` selects an available CUDA GPU when possible.
+4. `enable_progress_bar=True` enables Lightning progress bars.
+
+Outputs:
+1. `grid_predictions.h5`
+2. model checkpoints and metadata
+3. `slim_train_summary.json`
+4. `grid_type.csv`
+5. `grid_expr.h5ad`
+
+`grid_type.csv` contains:
+1. `grid_id`
+2. `center_x`
+3. `center_y`
+4. `bbox_x0`
+5. `bbox_y0`
+6. `bbox_x1`
+7. `bbox_y1`
+8. `predicted_type`
+9. one probability column per cell type
+
+`grid_expr.h5ad` contains:
+1. `X`: grid-by-gene predicted expression matrix
+2. grid metadata in `.obs`
+3. gene names in `.var_names`
+
+Step 4: Aggregate
+API:
+
+  spacerec.agg(...)
+
+Purpose:
+Aggregate grid-level expression and type predictions to cell/polygon level with area-weighted polygon-over-grid overlap.
+
+Inputs:
+1. `grid_expr_h5ad`
+2. `grid_type_csv`
+3. `grid_predictions_h5`
+4. `polygon_csv`
+5. `cell_metadata_csv`
+6. `output_dir`
+7. `valid_only`
+8. `target_name`
+
+Supported target names:
+1. `xen`
+2. `cellvit`
+3. other names may be used as provenance labels when the polygon schema is compatible
+
+Outputs:
+1. `spacerec_ct.csv`
+2. `spacerec_polygon.csv`
+3. `spacerec_expr.h5ad`
+4. `aggregate_summary.json`
+
+Step 5: Evaluation
+APIs:
+
+  spacerec.plottype(...)
+  spacerec.plotexpr(...)
+
+Purpose:
+Generate visual comparisons for selected full-resolution windows.
+
+Type plotting:
+1. Left panel: true Xenium polygon type image.
+2. Right panel: SpaceRec grid type image.
+3. The notebook displays the pair side by side.
+4. Saved outputs:
+
+     results/<dataset>/Evaluation/xen_type.png
+     results/<dataset>/Evaluation/grid_type.png
+
+Expression plotting:
+1. Left panel: true Xenium polygon expression image.
+2. Right panel: SpaceRec grid expression image.
+3. The notebook displays the pair side by side.
+4. Saved outputs:
+
+     results/<dataset>/Evaluation/xen_expr.png
+     results/<dataset>/Evaluation/grid_expr.png
+
+Evaluation summary files are intentionally not written. The evaluation plotting API returns only output PNG paths and basic path metadata.
+
+Packaged evaluation inputs:
+1. `data/true_xen_type.csv`
+2. `data/true_xen_type_merge.json`
+3. `data/true_xen_expr.h5`
+4. `data/grid_type.csv`
+5. `data/grid_expr.h5ad`
+
+`data/true_xen_type.csv` uses the schema:
+
+  window_label,id,vertice_x,vertice_y,celltype
+
+The `celltype` values are raw annotation labels. `data/true_xen_type_merge.json` is passed explicitly to `spacerec.plottype()` to merge raw labels into the display categories.
+
+Default Notebook Debug Settings
+The notebook currently uses bounded debug settings in the expensive steps:
+
+1. Step 2 uses `max_patches=32`.
+2. Step 3 uses `limit_spots=8`, `max_epochs=1`, and `patience=1`.
+
+For a full run:
+
+1. Set Step 2 `max_patches=None`.
+2. Set Step 3 `limit_spots=None`.
+3. Increase `max_epochs` and `patience`.
+
+Because the default packaged grid outputs come from a bounded debug run, evaluation windows outside the embedded patch region may show empty SpaceRec grid panels until Step 2 and Step 3 are rerun full-scale.
+
+Validation Checklist
+Before handing off the package:
+
+1. Confirm no symlinks:
+
+     find /net/dali/home/chikina/shared_data/SpaceRec -type l | wc -l
+
+   Expected value: `0`
+
+2. Confirm import from the standalone root:
+
+     cd /net/dali/home/chikina/shared_data/SpaceRec
+     python -c "import sys; sys.path.insert(0, '.'); import spacerec.api as spacerec; print(spacerec.__file__)"
+
+3. Confirm notebook kernel metadata uses the `spacerec` kernel.
+4. Confirm the notebook setup cell resolves `SPACEREC_ROOT` to:
+
+     /net/dali/home/chikina/shared_data/SpaceRec
+
+5. Confirm Step 5 does not write evaluation summary JSON files.
+
+Do Not Reintroduce
+1. Symlinks inside the standalone package.
+2. Set-transformer code paths.
+3. Dense16 or ResNet embedding paths.
+4. Absolute user-home paths in API defaults.
+5. Evaluation summary JSON outputs.

@@ -1,0 +1,34 @@
+# Local data and generated artifacts
+data/
+results/
+
+# Large archives prepared for external storage
+SpaceRec_data*.tar.gz
+SpaceRec_results*.tar.gz
+*.tar
+*.tar.gz
+*.tgz
+*.zip
+
+# Python caches and local runtime files
+__pycache__/
+*.py[cod]
+*$py.class
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+
+# Jupyter local state
+.ipynb_checkpoints/
+
+# OS and editor files
+.DS_Store
+Thumbs.db
+*.swp
+*.swo
+
+# Environment files
+.env
+.venv/
+venv/
+

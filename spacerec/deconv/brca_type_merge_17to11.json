@@ -1,0 +1,15 @@
+{
+  "merge": {
+    "B Cells": ["B Cells"],
+    "T Cells": ["CD4+ T Cells", "CD8+ T Cells"],
+    "DCIS": ["DCIS 1", "DCIS 2"],
+    "Endothelial": ["Endothelial"],
+    "Invasive Tumor": ["Invasive Tumor", "Prolif Invasive Tumor"],
+    "DCs": ["IRF7+ DCs", "LAMP3+ DCs"],
+    "Macrophages": ["Macrophages 1", "Macrophages 2"],
+    "Mast Cells": ["Mast Cells"],
+    "Myoepi": ["Myoepi ACTA2+", "Myoepi KRT15+"],
+    "Perivascular-Like": ["Perivascular-Like"],
+    "Stromal": ["Stromal"]
+  }
+}
