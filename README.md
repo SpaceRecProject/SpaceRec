@@ -6,7 +6,7 @@ current slim workflow:
 
 1. RCTD deconvolution for spot-level cell-type proportions.
 2. Dense18 Virchow2 grid embeddings.
-3. Projection-heads training without Set Transformer.
+3. Projection-heads training.
 4. Area-weighted aggregation from grids to polygons/cells.
 5. Window-based type and expression visualization.
 
@@ -171,7 +171,7 @@ results/brca/grid_embedding/grid_embedding.h5
 spacerec.train(...)
 ```
 
-Trains the no-Set-Transformer projection-heads model:
+Trains the projection-heads model:
 
 ```text
 grid feature h_g
@@ -280,8 +280,6 @@ These are run artifacts, not fixed expected values.
 
 - `data/`, `results/`, caches, local progress logs, and editor settings are
   ignored by git.
-- The slim package intentionally does not include Set Transformer, dense16,
-  ResNet embedding, or attention-extraction experiment paths.
+- The slim package intentionally keeps only the workflow described above.
 - If plots are blank, first check that the full-resolution window overlaps the
   available grid outputs and polygon reference data.
-
