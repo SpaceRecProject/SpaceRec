@@ -6,6 +6,7 @@ TODO
 - [x] Initialize local git repository and commit code-only package.
 - [x] Create private GitHub repository `SpaceRec` and push.
 - [x] Verify GitHub remote and that `data/` and `results/` are not tracked.
+- [ ] Upload `data/` and `results/` to Google Drive or receive the shared folder link.
 - [ ] Replace the Google Drive placeholder in `README.md` after the shared folder link is available.
 
 Progress Log
@@ -35,3 +36,7 @@ Progress Log
 - Verified GitHub reports `isPrivate=true`, default branch `main`, and repository is non-empty.
 - Verified `origin` fetch/push URL is `https://github.com/OliverWang0908/SpaceRec.git`.
 - Verified no tracked files under `data/` or `results/` using `git ls-files | rg '^(data|results)/'` returning no matches.
+- User asked to directly finish the Google Drive step.
+- Checked current workspace for local Google Drive/rclone/upload helpers with `find . -maxdepth 2`; none were present.
+- Size check remains: `data/` is 2.2G and `results/` is 24G. Filesystem has enough nominal free space, but Google Drive upload requires an authenticated Google Drive tool or OAuth credentials that are not available in the current workspace.
+- Current blocker: cannot create/upload to a Google Drive folder without user-provided Google Drive authentication or a pre-created shared folder/link.
