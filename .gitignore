@@ -1,6 +1,7 @@
 # Local data and generated artifacts
 data/
 results/
+PROGRESS.md
 
 # Large archives prepared for external storage
 SpaceRec_data*.tar.gz
