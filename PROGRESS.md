@@ -40,3 +40,5 @@ Progress Log
 - Checked current workspace for local Google Drive/rclone/upload helpers with `find . -maxdepth 2`; none were present.
 - Size check remains: `data/` is 2.2G and `results/` is 24G. Filesystem has enough nominal free space, but Google Drive upload requires an authenticated Google Drive tool or OAuth credentials that are not available in the current workspace.
 - Current blocker: cannot create/upload to a Google Drive folder without user-provided Google Drive authentication or a pre-created shared folder/link.
+- User asked why `.vscode/` was uploaded. It was included because the requested upload scope was the current directory except `data/` and `results/`; the file only contained harmless notebook search/display settings. Decided to remove editor-local config from git for cleaner sharing.
+- Added `.vscode/` to `.gitignore` and removed `.vscode/settings.json` from the git index while keeping the local file.

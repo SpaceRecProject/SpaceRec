@@ -1,8 +1,0 @@
-{
-  "files.exclude": {
-    "**/*.ipynb": false
-  },
-  "search.exclude": {
-    "**/*.ipynb": false
-  }
-}

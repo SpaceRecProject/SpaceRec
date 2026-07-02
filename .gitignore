@@ -26,9 +26,9 @@ __pycache__/
 Thumbs.db
 *.swp
 *.swo
+.vscode/
 
 # Environment files
 .env
 .venv/
 venv/
-
