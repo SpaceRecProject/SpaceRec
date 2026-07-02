@@ -36,7 +36,7 @@ SpaceRec/
 Download link:
 
 ```text
-Google Drive: TODO - add shared folder link here
+Google Drive: https://drive.google.com/open?id=1Fxyag8rx4A-DDvfdCk6xUd_SKmtTz5vw
 ```
 
 `data/` contains the packaged BRCA example inputs. `results/` contains generated
