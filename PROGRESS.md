@@ -25,3 +25,7 @@ Progress Log
 - Attempt to create `OliverWang0908/SpaceRec` failed because the repository already existed.
 - Existing GitHub repository checked: `OliverWang0908/SpaceRec` is private, non-empty, and current user has ADMIN permission.
 - User instructed to delete the existing `OliverWang0908/SpaceRec` repository and recreate it from the current local package.
+- Attempted `gh repo delete OliverWang0908/SpaceRec --yes`; this `gh` version uses `--confirm` instead.
+- Attempted `gh repo delete OliverWang0908/SpaceRec --confirm`; deletion failed because the current token lacks `delete_repo` scope.
+- User manually deleted `OliverWang0908/SpaceRec` on GitHub.
+- Confirmed `gh repo view OliverWang0908/SpaceRec` no longer resolves. Cleaned up the interrupted `gh auth refresh` process.
