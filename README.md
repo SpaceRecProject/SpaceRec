@@ -1,22 +1,31 @@
+<div align="center">
+
 # SpaceRec
 
-SpaceRec predicts dense grid-level gene expression and cell-type probabilities
-from H&E histology using Visium supervision. This repository contains the
-current slim workflow:
+**Dense grid-level gene expression and cell-type prediction from H&E histology using Visium supervision.**
 
-1. RCTD deconvolution for spot-level cell-type proportions.
-2. Dense18 Virchow2 grid embeddings.
-3. Projection-heads training.
-4. Area-weighted aggregation from grids to polygons/cells.
-5. Window-based type and expression visualization.
+[Tutorial](docs/tutorials/) · [Notebook](spacerec/notebooks/run_spacerec.ipynb) · [API Overview](#api-overview) · [Workflow](#workflow)
+
+</div>
+
+---
+
+SpaceRec packages a slim BRCA workflow for predicting dense grid-level
+expression and cell-type probabilities from histology. The retained path uses
+RCTD deconvolution, dense18 Virchow2 grid embeddings, projection-head training,
+area-weighted polygon aggregation, and window-based visual evaluation.
 
 Main notebook: [tutorial](docs/tutorials/)
 
-Main API:
+## At A Glance
 
-```python
-import spacerec.api as spacerec
-```
+| Stage | Purpose | Main output |
+| --- | --- | --- |
+| 1. Deconvolution | Estimate spot-level cell-type proportions with RCTD. | `results/brca/deconv/deconv.csv` |
+| 2. Grid Embedding | Extract dense18 Virchow2 H&E grid features. | `results/brca/grid_embedding/grid_embedding.h5` |
+| 3. Train | Train expression and type projection heads. | `results/brca/train/grid_predictions.h5` |
+| 4. Aggregate | Transfer grid predictions to polygons/cells by overlap area. | `results/brca/aggregate/spacerec_ct.csv` |
+| 5. Evaluation | Render side-by-side type and expression checks. | `results/brca/Evaluation/` |
 
 ## Data
 
@@ -40,9 +49,13 @@ deconvolution, grid embedding, training, aggregation, and evaluation outputs.
 
 ## Quick Start
 
-Open and run the [tutorial](docs/tutorials/).
+Open the [tutorial](docs/tutorials/) or run the notebook directly:
 
-The notebook is organized into five steps:
+```text
+spacerec/notebooks/run_spacerec.ipynb
+```
+
+The notebook is organized into five explicit execution stages:
 
 ```text
 Step 1: Deconvolution
@@ -54,13 +67,13 @@ Step 5: Evaluation
 
 Current BRCA notebook settings:
 
-```text
-Step 2: max_patches = None
-Step 3: projection_dim = 512
-Step 3: max_epochs = 60
-Step 3: batch_size = 4
-Step 3: limit_spots = None
-```
+| Step | Setting | Value |
+| --- | --- | --- |
+| Step 2 | `max_patches` | `None` |
+| Step 3 | `projection_dim` | `512` |
+| Step 3 | `max_epochs` | `60` |
+| Step 3 | `batch_size` | `4` |
+| Step 3 | `limit_spots` | `None` |
 
 For smoke tests, use a small `max_patches`, a small `limit_spots`, and fewer
 epochs.
@@ -68,6 +81,8 @@ epochs.
 ## API Overview
 
 ```python
+import spacerec.api as spacerec
+
 spacerec.deconv(...)    # spot-level cell-type proportions
 spacerec.ge(...)        # dense18 Virchow2 grid embeddings
 spacerec.train(...)     # projection-heads model training
@@ -86,7 +101,8 @@ Supported API dataset names are `brca` and `crc`; this packaged example is BRCA.
 
 ## Workflow
 
-### Step 1: Deconvolution
+<details open>
+<summary><strong>Step 1: Deconvolution</strong></summary>
 
 ```python
 spacerec.deconv(...)
@@ -110,7 +126,10 @@ Main output:
 results/brca/deconv/deconv.csv
 ```
 
-### Step 2: Grid Embedding
+</details>
+
+<details>
+<summary><strong>Step 2: Grid Embedding</strong></summary>
 
 ```python
 spacerec.ge(...)
@@ -145,7 +164,10 @@ Main output:
 results/brca/grid_embedding/grid_embedding.h5
 ```
 
-### Step 3: Train
+</details>
+
+<details>
+<summary><strong>Step 3: Train</strong></summary>
 
 ```python
 spacerec.train(...)
@@ -192,7 +214,10 @@ results/brca/train/grid_expr.h5ad
 results/brca/train/model/best_train_model.ckpt
 ```
 
-### Step 4: Aggregate
+</details>
+
+<details>
+<summary><strong>Step 4: Aggregate</strong></summary>
 
 ```python
 spacerec.agg(...)
@@ -214,7 +239,10 @@ results/brca/aggregate/spacerec_polygon.csv
 results/brca/aggregate/spacerec_expr.h5ad
 ```
 
-### Step 5: Evaluation
+</details>
+
+<details>
+<summary><strong>Step 5: Evaluation</strong></summary>
 
 ```python
 spacerec.plottype(...)
@@ -231,27 +259,24 @@ xen_expr.png   vs grid_expr.png
 `window_label` and `polygon_window_label` are display labels only. True Xenium
 polygons are selected by full-resolution `window` coordinates.
 
+</details>
+
 ## Current BRCA Run
 
 The current full BRCA run reports:
 
-```text
-grid embedding:
-  n_export_patches = 24423
-  n_grids = 391344
-  n_supervised_grids = 172966
-  feature_dim = 6400
-
-training:
-  n_supervised_spots = 4740
-  n_genes = 4000
-  n_cell_types = 11
-  mean_gene_PCC ~= 0.7751
-  mean_spot_gene_PCC ~= 0.8607
-
-aggregation:
-  n_input_polygons = 139208
-  n_output_cells = 134364
-```
+| Step | Metric | Value |
+| --- | --- | --- |
+| Grid embedding | `n_export_patches` | `24423` |
+| Grid embedding | `n_grids` | `391344` |
+| Grid embedding | `n_supervised_grids` | `172966` |
+| Grid embedding | `feature_dim` | `6400` |
+| Training | `n_supervised_spots` | `4740` |
+| Training | `n_genes` | `4000` |
+| Training | `n_cell_types` | `11` |
+| Training | `mean_gene_PCC` | `~0.7751` |
+| Training | `mean_spot_gene_PCC` | `~0.8607` |
+| Aggregation | `n_input_polygons` | `139208` |
+| Aggregation | `n_output_cells` | `134364` |
 
 These are run artifacts, not fixed expected values.
