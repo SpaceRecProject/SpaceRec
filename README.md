@@ -10,7 +10,7 @@ current slim workflow:
 4. Area-weighted aggregation from grids to polygons/cells.
 5. Window-based type and expression visualization.
 
-Main notebook: [tutorial](https://oliverwang0908.github.io/SpaceRec/tutorials/)
+Main notebook: [tutorial](docs/tutorials/)
 
 Main API:
 
@@ -40,7 +40,7 @@ deconvolution, grid embedding, training, aggregation, and evaluation outputs.
 
 ## Quick Start
 
-Open and run the [tutorial](https://oliverwang0908.github.io/SpaceRec/tutorials/).
+Open and run the [tutorial](docs/tutorials/).
 
 The notebook is organized into five steps:
 
