@@ -46,6 +46,47 @@ Google Drive: https://drive.google.com/open?id=1Fxyag8rx4A-DDvfdCk6xUd_SKmtTz5vw
 `data/` contains the packaged BRCA example inputs. `results/` contains generated
 deconvolution, grid embedding, training, aggregation, and evaluation outputs.
 
+## Environment Setup
+
+Use an environment that can run both Python model code and the R-based RCTD
+step. Start from an existing conda environment when available:
+
+```bash
+conda activate base
+```
+
+Core Python packages used by the workflow:
+
+```text
+torch
+lightning or pytorch-lightning
+numpy
+pandas
+scipy
+h5py
+anndata
+Pillow
+matplotlib
+shapely
+timm
+```
+
+RCTD requires R packages:
+
+```text
+Matrix
+Seurat
+spacexr
+```
+
+Quick environment checks:
+
+```bash
+python -c "import spacerec.api as spacerec; print(spacerec.__file__)"
+python -c "import torch; print(torch.cuda.is_available())"
+Rscript -e "library(Matrix); library(Seurat); library(spacexr)"
+```
+
 ## Quick Start
 
 Open the [tutorial](docs/tutorials/) or run the notebook directly:
