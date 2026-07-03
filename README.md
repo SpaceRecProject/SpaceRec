@@ -275,7 +275,6 @@ The current full BRCA run reports:
 | Training | `n_cell_types` | `11` |
 | Training | `mean_gene_PCC` | `~0.7751` |
 | Training | `mean_spot_gene_PCC` | `~0.8607` |
-| Aggregation | `n_input_polygons` | `139208` |
 | Aggregation | `n_output_cells` | `134364` |
 
 These are run artifacts, not fixed expected values.
