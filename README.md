@@ -48,38 +48,16 @@ deconvolution, grid embedding, training, aggregation, and evaluation outputs.
 
 ## Environment Setup
 
-Use an environment that can run both Python model code and the R-based RCTD
-step. Start from an existing conda environment when available:
+Create a dedicated conda environment:
 
 ```bash
-conda activate base
+conda create -n spacerec python=3.10 -y
+conda activate spacerec
+pip install torch lightning numpy pandas scipy h5py anndata pillow matplotlib shapely timm
 ```
 
-Core Python packages used by the workflow:
-
-```text
-torch
-lightning or pytorch-lightning
-numpy
-pandas
-scipy
-h5py
-anndata
-Pillow
-matplotlib
-shapely
-timm
-```
-
-RCTD requires R packages:
-
-```text
-Matrix
-Seurat
-spacexr
-```
-
-Quick environment checks:
+RCTD also needs the R packages `Matrix`, `Seurat`, and `spacexr`. Check the
+setup before running the notebook:
 
 ```bash
 python -c "import spacerec.api as spacerec; print(spacerec.__file__)"
