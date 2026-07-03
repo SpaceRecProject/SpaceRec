@@ -255,11 +255,3 @@ aggregation:
 ```
 
 These are run artifacts, not fixed expected values.
-
-## Notes
-
-- `data/`, `results/`, caches, local progress logs, and editor settings are
-  ignored by git.
-- The slim package intentionally keeps only the workflow described above.
-- If plots are blank, first check that the full-resolution window overlaps the
-  available grid outputs and polygon reference data.
