@@ -10,11 +10,7 @@ current slim workflow:
 4. Area-weighted aggregation from grids to polygons/cells.
 5. Window-based type and expression visualization.
 
-Main notebook:
-
-```text
-spacerec/notebooks/run_spacerec.ipynb
-```
+Main notebook: [tutorial](spacerec/notebooks/run_spacerec.ipynb)
 
 Main API:
 
@@ -56,11 +52,7 @@ cd /net/dali/home/chikina/shared_data/SpaceRec
 
 ## Quick Start
 
-Open and run:
-
-```text
-spacerec/notebooks/run_spacerec.ipynb
-```
+Open and run the [tutorial](spacerec/notebooks/run_spacerec.ipynb).
 
 The notebook is organized into five steps:
 
