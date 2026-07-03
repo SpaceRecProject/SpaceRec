@@ -99,7 +99,7 @@ training.
 For spot `s`:
 
 ```text
-x_s ~= sum_k p_{s,k} r_k
+x_s ~= l_s sum_k p_{s,k} r_k
 p_{s,k} >= 0
 sum_k p_{s,k} = 1
 ```
