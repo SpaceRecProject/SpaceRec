@@ -6,7 +6,7 @@ This directory contains the slim, standalone SpaceRec package prepared from the 
 Current Package Root
 The standalone package root is:
 
-  /net/dali/home/chikina/shared_data/SpaceRec
+  <SpaceRec repository root>
 
 It contains:
 
@@ -31,7 +31,7 @@ The `data/` directory must not contain symlinks. This package is meant to be sel
 
 Current validation:
 
-  find /net/dali/home/chikina/shared_data/SpaceRec -type l | wc -l
+  find . -type l | wc -l
 
 must return:
 
@@ -47,7 +47,7 @@ Core Principles
 
      results/<dataset>/<step>/
 
-7. CUDA, grid embedding, and training should be run on a compute node or inside the active Slurm allocation, not on a login node.
+7. CUDA, grid embedding, and training should be run in an allocated GPU environment.
 
 Public API
 Import the API as:
@@ -284,20 +284,17 @@ Before handing off the package:
 
 1. Confirm no symlinks:
 
-     find /net/dali/home/chikina/shared_data/SpaceRec -type l | wc -l
+     find . -type l | wc -l
 
    Expected value: `0`
 
 2. Confirm import from the standalone root:
 
-     cd /net/dali/home/chikina/shared_data/SpaceRec
+     cd <SpaceRec repository root>
      python -c "import sys; sys.path.insert(0, '.'); import spacerec.api as spacerec; print(spacerec.__file__)"
 
 3. Confirm notebook kernel metadata uses the `spacerec` kernel.
-4. Confirm the notebook setup cell resolves `SPACEREC_ROOT` to:
-
-     /net/dali/home/chikina/shared_data/SpaceRec
-
+4. Confirm the notebook setup cell resolves `SPACEREC_ROOT` to the repository root.
 5. Confirm Step 5 does not write evaluation summary JSON files.
 
 Do Not Reintroduce

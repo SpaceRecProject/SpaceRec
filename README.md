@@ -38,18 +38,6 @@ Google Drive: https://drive.google.com/open?id=1Fxyag8rx4A-DDvfdCk6xUd_SKmtTz5vw
 `data/` contains the packaged BRCA example inputs. `results/` contains generated
 deconvolution, grid embedding, training, aggregation, and evaluation outputs.
 
-## Cluster Usage
-
-Do not run CUDA work on a login node. On the Pitt GPU cluster, enter the active
-Slurm job before running grid embedding or training:
-
-```bash
-/opt/slurm/bin/srun --jobid=<JOB_ID> --pty bash
-conda activate base
-# or activate the SpaceRec environment if it is separate
-cd /net/dali/home/chikina/shared_data/SpaceRec
-```
-
 ## Quick Start
 
 Open and run the [tutorial](spacerec/notebooks/run_spacerec.ipynb).
