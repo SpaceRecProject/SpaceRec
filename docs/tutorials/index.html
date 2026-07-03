@@ -1,0 +1,626 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>SpaceRec Tutorial</title>
+    <style>
+      :root {
+        color-scheme: light;
+        --ink: #172026;
+        --muted: #52616b;
+        --line: #d9e1e5;
+        --panel: #ffffff;
+        --page: #f6f8f7;
+        --accent: #1b6f6a;
+        --accent-dark: #12343b;
+        --warm: #9a4d1c;
+        --code: #102027;
+      }
+
+      * {
+        box-sizing: border-box;
+      }
+
+      html {
+        scroll-behavior: smooth;
+      }
+
+      body {
+        margin: 0;
+        font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+        line-height: 1.62;
+        color: var(--ink);
+        background: var(--page);
+      }
+
+      a {
+        color: var(--accent);
+        text-decoration-thickness: 1px;
+        text-underline-offset: 3px;
+      }
+
+      code,
+      pre {
+        font-family: "SFMono-Regular", Consolas, "Liberation Mono", Menlo, monospace;
+      }
+
+      pre {
+        margin: 14px 0 0;
+        padding: 16px;
+        overflow-x: auto;
+        border-radius: 8px;
+        color: #eaf5f4;
+        background: var(--code);
+      }
+
+      code {
+        padding: 2px 5px;
+        border-radius: 5px;
+        color: #12343b;
+        background: #e9f2f0;
+      }
+
+      pre code {
+        padding: 0;
+        color: inherit;
+        background: transparent;
+      }
+
+      .layout {
+        display: grid;
+        grid-template-columns: 260px minmax(0, 1fr);
+        min-height: 100vh;
+      }
+
+      .sidebar {
+        position: sticky;
+        top: 0;
+        height: 100vh;
+        padding: 28px 22px;
+        border-right: 1px solid var(--line);
+        background: #ffffff;
+      }
+
+      .brand {
+        display: block;
+        margin-bottom: 26px;
+        color: var(--ink);
+        font-size: 22px;
+        font-weight: 750;
+        text-decoration: none;
+      }
+
+      .sidebar p {
+        margin: 0 0 18px;
+        color: var(--muted);
+        font-size: 13px;
+      }
+
+      .nav {
+        display: grid;
+        gap: 7px;
+      }
+
+      .nav a {
+        padding: 8px 10px;
+        border-radius: 8px;
+        color: #34444c;
+        font-size: 14px;
+        text-decoration: none;
+      }
+
+      .nav a:hover {
+        background: #eef5f3;
+        color: var(--accent-dark);
+      }
+
+      .content {
+        min-width: 0;
+      }
+
+      .hero {
+        padding: 54px min(7vw, 84px) 34px;
+        border-bottom: 1px solid var(--line);
+        background:
+          linear-gradient(135deg, rgba(255, 255, 255, 0.96), rgba(238, 246, 244, 0.94) 52%, rgba(255, 247, 237, 0.98)),
+          radial-gradient(circle at 84% 20%, rgba(27, 111, 106, 0.16), transparent 34%);
+      }
+
+      .eyebrow {
+        margin: 0 0 10px;
+        color: var(--accent);
+        font-size: 13px;
+        font-weight: 760;
+        letter-spacing: 0.08em;
+        text-transform: uppercase;
+      }
+
+      h1 {
+        margin: 0;
+        max-width: 880px;
+        font-size: clamp(34px, 4vw, 58px);
+        line-height: 1.05;
+        letter-spacing: 0;
+      }
+
+      .hero-copy {
+        max-width: 820px;
+        margin: 18px 0 0;
+        color: #33444c;
+        font-size: 18px;
+      }
+
+      .actions {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 10px;
+        margin-top: 26px;
+      }
+
+      .button {
+        display: inline-flex;
+        align-items: center;
+        min-height: 40px;
+        padding: 9px 14px;
+        border: 1px solid var(--accent-dark);
+        border-radius: 8px;
+        color: #ffffff;
+        background: var(--accent-dark);
+        font-weight: 700;
+        text-decoration: none;
+      }
+
+      .button.secondary {
+        color: var(--accent-dark);
+        background: transparent;
+      }
+
+      .main {
+        width: min(100%, 1080px);
+        padding: 34px min(7vw, 84px) 80px;
+      }
+
+      section {
+        margin-top: 34px;
+      }
+
+      h2 {
+        margin: 0 0 12px;
+        font-size: 28px;
+        line-height: 1.2;
+      }
+
+      h3 {
+        margin: 26px 0 8px;
+        font-size: 20px;
+      }
+
+      p {
+        margin: 10px 0 0;
+      }
+
+      .lead {
+        color: var(--muted);
+      }
+
+      .workflow {
+        display: grid;
+        grid-template-columns: repeat(5, minmax(130px, 1fr));
+        gap: 10px;
+        margin-top: 18px;
+      }
+
+      .step-card,
+      .info-card {
+        border: 1px solid var(--line);
+        border-radius: 8px;
+        background: var(--panel);
+      }
+
+      .step-card {
+        padding: 14px;
+      }
+
+      .step-number {
+        display: inline-flex;
+        width: 26px;
+        height: 26px;
+        align-items: center;
+        justify-content: center;
+        margin-bottom: 10px;
+        border-radius: 50%;
+        color: #ffffff;
+        background: var(--accent);
+        font-size: 13px;
+        font-weight: 760;
+      }
+
+      .step-card strong {
+        display: block;
+        margin-bottom: 4px;
+      }
+
+      .step-card span,
+      .info-card span {
+        color: var(--muted);
+        font-size: 14px;
+      }
+
+      .grid {
+        display: grid;
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        gap: 14px;
+        margin-top: 16px;
+      }
+
+      .info-card {
+        padding: 16px;
+      }
+
+      .table {
+        width: 100%;
+        margin-top: 14px;
+        border-collapse: collapse;
+        overflow: hidden;
+        border: 1px solid var(--line);
+        border-radius: 8px;
+        background: var(--panel);
+      }
+
+      .table th,
+      .table td {
+        padding: 12px 14px;
+        border-bottom: 1px solid var(--line);
+        text-align: left;
+        vertical-align: top;
+      }
+
+      .table th {
+        width: 210px;
+        color: #23333a;
+        background: #edf4f2;
+      }
+
+      .table tr:last-child th,
+      .table tr:last-child td {
+        border-bottom: 0;
+      }
+
+      .callout {
+        margin-top: 16px;
+        padding: 14px 16px;
+        border-left: 4px solid var(--warm);
+        border-radius: 8px;
+        color: #3c3026;
+        background: #fff7ed;
+      }
+
+      .formula {
+        margin-top: 12px;
+        padding: 12px 14px;
+        border: 1px solid #d5e3e0;
+        border-radius: 8px;
+        color: #23333a;
+        background: #f8fbfa;
+        font-family: "SFMono-Regular", Consolas, "Liberation Mono", Menlo, monospace;
+        font-size: 14px;
+        overflow-x: auto;
+      }
+
+      footer {
+        margin-top: 50px;
+        padding-top: 22px;
+        border-top: 1px solid var(--line);
+        color: var(--muted);
+        font-size: 14px;
+      }
+
+      @media (max-width: 920px) {
+        .layout {
+          display: block;
+        }
+
+        .sidebar {
+          position: static;
+          height: auto;
+          padding: 18px;
+          border-right: 0;
+          border-bottom: 1px solid var(--line);
+        }
+
+        .brand {
+          margin-bottom: 8px;
+        }
+
+        .nav {
+          grid-template-columns: repeat(2, minmax(0, 1fr));
+        }
+
+        .workflow,
+        .grid {
+          grid-template-columns: 1fr;
+        }
+      }
+
+      @media (max-width: 560px) {
+        .hero,
+        .main {
+          padding-left: 18px;
+          padding-right: 18px;
+        }
+
+        .nav {
+          grid-template-columns: 1fr;
+        }
+
+        .table th,
+        .table td {
+          display: block;
+          width: 100%;
+        }
+
+        .table td {
+          border-top: 0;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <div class="layout">
+      <aside class="sidebar">
+        <a class="brand" href="../">SpaceRec</a>
+        <p>Reproducible tutorial for the packaged BRCA workflow.</p>
+        <nav class="nav" aria-label="Tutorial sections">
+          <a href="#overview">Overview</a>
+          <a href="#setup">Setup</a>
+          <a href="#deconvolution">Deconvolution</a>
+          <a href="#grid-embedding">Grid Embedding</a>
+          <a href="#train">Train</a>
+          <a href="#aggregate">Aggregate</a>
+          <a href="#evaluation">Evaluation</a>
+          <a href="#outputs">Outputs</a>
+        </nav>
+      </aside>
+
+      <div class="content">
+        <header class="hero">
+          <p class="eyebrow">SpaceRec Tutorial</p>
+          <h1>Run the BRCA workflow from inputs to spatial prediction maps.</h1>
+          <p class="hero-copy">
+            This page walks through the same five stages exposed in the main notebook:
+            deconvolution, Virchow2 grid embedding, projection-head training,
+            polygon aggregation, and visual evaluation.
+          </p>
+          <div class="actions">
+            <a class="button" href="https://github.com/OliverWang0908/SpaceRec/blob/main/spacerec/notebooks/run_spacerec.ipynb">Open notebook</a>
+            <a class="button secondary" href="https://github.com/OliverWang0908/SpaceRec">View repository</a>
+          </div>
+        </header>
+
+        <main class="main">
+          <section id="overview">
+            <h2>Overview</h2>
+            <p class="lead">
+              SpaceRec predicts dense grid-level gene expression and cell-type
+              probabilities from H&amp;E histology using Visium supervision.
+            </p>
+            <div class="workflow" aria-label="SpaceRec workflow">
+              <div class="step-card">
+                <span class="step-number">1</span>
+                <strong>Deconvolution</strong>
+                <span>Estimate spot-level cell-type proportions.</span>
+              </div>
+              <div class="step-card">
+                <span class="step-number">2</span>
+                <strong>Grid Embedding</strong>
+                <span>Extract dense18 Virchow2 H&amp;E features.</span>
+              </div>
+              <div class="step-card">
+                <span class="step-number">3</span>
+                <strong>Train</strong>
+                <span>Fit gene and type projection heads.</span>
+              </div>
+              <div class="step-card">
+                <span class="step-number">4</span>
+                <strong>Aggregate</strong>
+                <span>Map grid predictions to polygons/cells.</span>
+              </div>
+              <div class="step-card">
+                <span class="step-number">5</span>
+                <strong>Evaluation</strong>
+                <span>Render type and expression comparisons.</span>
+              </div>
+            </div>
+          </section>
+
+          <section id="setup">
+            <h2>Setup</h2>
+            <table class="table">
+              <tbody>
+                <tr>
+                  <th>Notebook</th>
+                  <td><code>spacerec/notebooks/run_spacerec.ipynb</code></td>
+                </tr>
+                <tr>
+                  <th>Required artifacts</th>
+                  <td><code>data/</code> and <code>results/</code> at the repository root.</td>
+                </tr>
+                <tr>
+                  <th>Dataset setting</th>
+                  <td><code>dataset = "brca"</code>, <code>sample_id = "BREAST"</code></td>
+                </tr>
+                <tr>
+                  <th>Outputs</th>
+                  <td><code>results/&lt;dataset&gt;/&lt;step&gt;/</code></td>
+                </tr>
+              </tbody>
+            </table>
+            <div class="callout">
+              For smoke tests, set small values for <code>max_patches</code>,
+              <code>limit_spots</code>, and <code>max_epochs</code> before running
+              expensive cells.
+            </div>
+            <pre><code>import spacerec.api as spacerec
+
+dataset = "brca"
+sample_id = "BREAST"</code></pre>
+          </section>
+
+          <section id="deconvolution">
+            <h2>Step 1: Deconvolution</h2>
+            <p>
+              The deconvolution step uses Visium spot counts and an annotated
+              single-cell reference to estimate spot-level cell-type proportions.
+              The resulting <code>deconv.csv</code> supervises the model's type head.
+            </p>
+            <div class="formula">x_s ~= l_s sum_k p_{s,k} r_k, p_{s,k} &gt;= 0, sum_k p_{s,k} = 1</div>
+            <pre><code>spacerec.deconv(
+    dataset=dataset,
+    visium_dir=visium_dir,
+    sc_ref_h5ad=sc_ref_h5ad,
+    output_dir=deconv_dir,
+    output_csv=deconv_csv,
+    sample_id=sample_id,
+    annotation_column="Level1",
+)</code></pre>
+          </section>
+
+          <section id="grid-embedding">
+            <h2>Step 2: Grid Embedding</h2>
+            <p>
+              The grid embedding step crops full-resolution H&amp;E patches, resizes
+              them for Virchow2, maps tokens back to dense18 full-resolution grids,
+              and keeps grids inside the tissue boundary.
+            </p>
+            <div class="grid">
+              <div class="info-card">
+                <strong>Feature layout</strong><br>
+                <span>1280 token + 2560 same-patch tile + 2560 neighbor context = 6400 dimensions.</span>
+              </div>
+              <div class="info-card">
+                <strong>Patch settings</strong><br>
+                <span>Default notebook flow uses 288px patches with stride 72.</span>
+              </div>
+            </div>
+            <div class="formula">h_g = sum_v w_{g,v} h_{g,v} / sum_v w_{g,v}</div>
+            <pre><code>spacerec.ge(
+    dataset=dataset,
+    he_image=he_image,
+    positions_csv=positions_csv,
+    scalefactors_json=scalefactors_json,
+    thumbnail_png=thumbnail_png,
+    output_dir=grid_dir,
+    output_h5=grid_embedding_h5,
+    model="virchow2",
+    auto_select_gpu=True,
+)</code></pre>
+          </section>
+
+          <section id="train">
+            <h2>Step 3: Train</h2>
+            <p>
+              Training fits projection heads over the 6400-dimensional grid
+              embeddings. The gene head predicts grid expression and the type head
+              predicts grid-level cell-type probabilities.
+            </p>
+            <div class="formula">L = Huber(log(1 + xhat_s), log(1 + x_s)) + lambda [alpha L_conf + (1 - alpha) KL(p_s || phat_s)]</div>
+            <pre><code>spacerec.train(
+    dataset=dataset,
+    st_h5ad=st_h5ad,
+    deconv_csv=deconv_csv,
+    grid_embedding_h5=grid_embedding_h5,
+    gene_list=gene_list,
+    run_dir=train_dir,
+    projection_dim=512,
+    max_epochs=60,
+    batch_size=4,
+    auto_select_gpu=True,
+)</code></pre>
+          </section>
+
+          <section id="aggregate">
+            <h2>Step 4: Aggregate</h2>
+            <p>
+              Grid-level predictions are transferred to polygon or cell regions by
+              area overlap. Cell-level expression and type probabilities are
+              area-weighted averages over covered grids.
+            </p>
+            <div class="formula">xhat_c = sum_g a_{c,g} xhat_g / sum_g a_{c,g}</div>
+            <pre><code>spacerec.agg(
+    dataset=dataset,
+    grid_expr_h5ad=grid_expr_h5ad,
+    grid_type_csv=grid_type_csv,
+    grid_predictions_h5=grid_predictions_h5,
+    polygon_csv=polygon_csv,
+    output_dir=aggregate_dir,
+    valid_only=True,
+    target_name="xen",
+)</code></pre>
+          </section>
+
+          <section id="evaluation">
+            <h2>Step 5: Evaluation</h2>
+            <p>
+              Evaluation renders side-by-side type and expression checks for
+              selected windows. The notebook uses separate cells for type plotting
+              and expression plotting.
+            </p>
+            <pre><code>type_plot = spacerec.plottype(
+    dataset=dataset,
+    grid_type_csv=grid_type_csv,
+    true_xen_type_csv=true_xen_type_csv,
+    type_merge_json=type_merge_json,
+    window=type_evaluation_window,
+    window_label=type_window_label,
+    output_dir=evaluation_dir,
+)
+
+expr_plot = spacerec.plotexpr(
+    dataset=dataset,
+    grid_expr_h5ad=grid_expr_h5ad,
+    true_xen_expr_h5=true_xen_expr_h5,
+    true_xen_type_csv=true_xen_type_csv,
+    window=expr_evaluation_window,
+    output_dir=evaluation_dir,
+    gene="EPCAM",
+)</code></pre>
+          </section>
+
+          <section id="outputs">
+            <h2>Main Outputs</h2>
+            <table class="table">
+              <tbody>
+                <tr>
+                  <th>Deconvolution</th>
+                  <td><code>results/brca/deconv/deconv.csv</code></td>
+                </tr>
+                <tr>
+                  <th>Grid embedding</th>
+                  <td><code>results/brca/grid_embedding/grid_embedding.h5</code></td>
+                </tr>
+                <tr>
+                  <th>Training</th>
+                  <td><code>grid_predictions.h5</code>, <code>grid_type.csv</code>, <code>grid_expr.h5ad</code>, <code>best_train_model.ckpt</code></td>
+                </tr>
+                <tr>
+                  <th>Aggregation</th>
+                  <td><code>spacerec_ct.csv</code>, <code>spacerec_polygon.csv</code>, <code>spacerec_expr.h5ad</code></td>
+                </tr>
+                <tr>
+                  <th>Evaluation</th>
+                  <td><code>xen_type.png</code>, <code>grid_type.png</code>, <code>xen_expr.png</code>, <code>grid_expr.png</code></td>
+                </tr>
+              </tbody>
+            </table>
+          </section>
+
+          <footer>
+            This static tutorial mirrors the main notebook and is intended as the
+            first entry point from the README.
+          </footer>
+        </main>
+      </div>
+    </div>
+  </body>
+</html>
