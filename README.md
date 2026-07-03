@@ -10,12 +10,11 @@
 
 ---
 
-SpaceRec packages a slim BRCA workflow for predicting dense grid-level
+SpaceRec packages a workflow for predicting dense grid-level
 expression and cell-type probabilities from histology. The retained path uses
 RCTD deconvolution, dense18 Virchow2 grid embeddings, projection-head training,
 area-weighted polygon aggregation, and window-based visual evaluation.
 
-Main notebook: [tutorial](docs/tutorials/)
 
 ## At A Glance
 
