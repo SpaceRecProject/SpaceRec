@@ -2,7 +2,7 @@
 
 # SpaceRec
 
-**Dense grid-level gene expression and cell-type prediction from H&E histology using Visium supervision.**
+**predicting high resolution gene expression and cell type composition in spatial transcriptomics.**
 
 [Tutorial](docs/tutorials/) · [Notebook](spacerec/notebooks/run_spacerec.ipynb) · [API Overview](#api-overview) · [Workflow](#workflow)
 
