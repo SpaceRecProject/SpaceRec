@@ -308,6 +308,7 @@
 
         <p class="nav-title">On this page</p>
         <nav class="nav" aria-label="Page navigation">
+          <a href="#setup">Setup</a>
           <a href="#overview">Overview</a>
           <a href="#system">Tested system</a>
           <a href="#quick-start">Quick start</a>
@@ -340,6 +341,25 @@
             predictions.
           </p>
 
+          <section id="setup">
+            <h2>Setup</h2>
+            <p>
+              Clone the repository, create the conda environment, install the
+              Python dependencies, and verify the Python, CUDA, and R setup from
+              the repository root.
+            </p>
+
+            <pre><code>git clone https://github.com/SpaceRecProject/SpaceRec.git
+cd SpaceRec
+conda create -n spacerec python=3.10 -y
+conda activate spacerec
+pip install torch lightning numpy pandas scipy h5py anndata pillow matplotlib shapely timm
+
+python -c "import spacerec.api as spacerec; print(spacerec.__file__)"
+python -c "import torch; print(torch.cuda.is_available())"
+Rscript -e "library(Matrix); library(Seurat); library(spacexr)"</code></pre>
+          </section>
+
           <section id="overview">
             <h2>Overview</h2>
             <p>
@@ -350,6 +370,7 @@
             </p>
 
             <ol class="tutorial-list">
+              <li><a href="#setup">Setup commands</a></li>
               <li><a href="#quick-start">Step-by-step guide for H&amp;E-stained imaging data</a></li>
               <li><a href="#workflow">Workflow overview</a></li>
               <li><a href="#outputs">Output reference</a></li>
@@ -368,17 +389,9 @@
           <section id="quick-start">
             <h2>Quick start</h2>
             <p>
-              Place <code>data/</code> and <code>results/</code> at the repository
-              root, create the conda environment, and open the notebook.
+              After setup, place <code>data/</code> and <code>results/</code> at
+              the repository root and open the notebook.
             </p>
-
-            <pre><code>conda create -n spacerec python=3.10 -y
-conda activate spacerec
-pip install torch lightning numpy pandas scipy h5py anndata pillow matplotlib shapely timm
-
-python -c "import spacerec.api as spacerec; print(spacerec.__file__)"
-python -c "import torch; print(torch.cuda.is_available())"
-Rscript -e "library(Matrix); library(Seurat); library(spacexr)"</code></pre>
 
             <table>
               <tbody>
