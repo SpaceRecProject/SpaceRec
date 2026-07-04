@@ -14,8 +14,8 @@ SpaceRec builds a histology-guided model for high-resolution spatial
 reconstruction, learning to predict dense grid-level gene expression and
 cell-type probabilities from H&E image features under Visium supervision. The
 modeling pipeline integrates RCTD-based cell-type supervision, dense18 Virchow2
-feature extraction, projection-head training, area-weighted polygon/cell
-aggregation, and window-level visual evaluation.
+feature extraction, projection-head training, polygon/cell aggregation, and
+window-level visual evaluation.
 
 
 ## At A Glance
