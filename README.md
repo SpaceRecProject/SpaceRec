@@ -4,7 +4,7 @@
 
 **predicting high resolution gene expression and cell type composition in spatial transcriptomics.**
 
-[Tutorial](https://spacerecproject.github.io/SpaceRec/tutorials/) · [Notebook](spacerec/notebooks/run_spacerec.ipynb) · [API Overview](#api-overview) · [Workflow](#workflow)
+[Tutorial](docs/tutorials/index.html) · [Notebook](spacerec/notebooks/run_spacerec.ipynb) · [API Overview](#api-overview) · [Workflow](#workflow)
 
 </div>
 
@@ -68,7 +68,7 @@ Rscript -e "library(Matrix); library(Seurat); library(spacexr)"
 
 ## Quick Start
 
-Open the [tutorial](https://spacerecproject.github.io/SpaceRec/tutorials/) or run the notebook directly:
+Open the [tutorial](docs/tutorials/index.html) or run the notebook directly:
 
 ```text
 spacerec/notebooks/run_spacerec.ipynb
