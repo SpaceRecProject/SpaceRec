@@ -10,10 +10,12 @@
 
 ---
 
-SpaceRec packages a workflow for predicting dense grid-level
-expression and cell-type probabilities from histology. The retained path uses
-RCTD deconvolution, dense18 Virchow2 grid embeddings, projection-head training,
-area-weighted polygon aggregation, and window-based visual evaluation.
+SpaceRec is an end-to-end computational workflow for high-resolution spatial
+reconstruction from histology, estimating dense grid-level gene expression and
+cell-type probabilities under Visium supervision. The pipeline integrates
+RCTD-based deconvolution, dense18 Virchow2 feature extraction, projection-head
+model training, area-weighted polygon/cell aggregation, and window-level visual
+evaluation.
 
 
 ## At A Glance
