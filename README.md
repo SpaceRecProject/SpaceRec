@@ -118,7 +118,7 @@ Supported API dataset names are `brca` and `crc`; this packaged example is BRCA.
 
 ## Workflow
 
-<details open>
+<details>
 <summary><strong>Step 1: Deconvolution</strong></summary>
 
 ```python
