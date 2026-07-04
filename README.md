@@ -20,7 +20,7 @@ area-weighted polygon aggregation, and window-based visual evaluation.
 
 | Stage | Purpose | Main output |
 | --- | --- | --- |
-| 1. Deconvolution  | Estimate spot-level cell-type proportions with RCTD. | `results/brca/deconv/deconv.csv` |
+| 1. Deconvolution    | Estimate spot-level cell-type proportions with RCTD. | `results/brca/deconv/deconv.csv` |
 | 2. Grid Embedding | Extract dense18 Virchow2 H&E grid features. | `results/brca/grid_embedding/grid_embedding.h5` |
 | 3. Train | Train expression and type projection heads. | `results/brca/train/grid_predictions.h5` |
 | 4. Aggregate | Transfer grid predictions to polygons/cells by overlap area. | `results/brca/aggregate/spacerec_ct.csv` |
