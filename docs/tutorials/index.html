@@ -5,6 +5,15 @@
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <title>Tutorials - SpaceRec</title>
     <meta name="description" content="SpaceRec tutorials for dense spatial reconstruction from H&amp;E histology.">
+    <script>
+      window.MathJax = {
+        tex: {
+          inlineMath: [["\\(", "\\)"]],
+          displayMath: [["\\[", "\\]"]]
+        }
+      };
+    </script>
+    <script defer src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-chtml.js"></script>
     <style>
       :root {
         color-scheme: light;
@@ -214,8 +223,7 @@
         border: 1px solid var(--line);
         border-radius: 6px;
         background: var(--surface);
-        font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", monospace;
-        font-size: 14px;
+        font-size: 16px;
       }
 
       table {
@@ -413,45 +421,161 @@ Rscript -e "library(Matrix); library(Seurat); library(spacexr)"</code></pre>
           <section id="deconvolution">
             <h2>Step 1: Deconvolution</h2>
             <p>
-              RCTD estimates spot-level cell-type proportions from Visium counts
-              and an annotated single-cell reference. These proportions supervise
-              the model's type head during training.
+              Use the Visium spot count matrix and the annotated scRNA reference
+              to estimate spot-level cell-type proportions. The output
+              <code>deconv.csv</code> is the weak supervision target for the
+              model's cell-type head.
             </p>
-            <div class="formula">x_s ~= l_s sum_k p_{s,k} r_k, p_{s,k} &gt;= 0, sum_k p_{s,k} = 1</div>
-            <pre><code>spacerec.deconv(...)</code></pre>
+            <p>
+              For each spot \(s\), RCTD approximates its expression profile as
+              a mixture of reference type profiles:
+            </p>
+            <div class="formula">\[x_s \approx l_s\sum_k p_{s,k} r_k, \quad p_{s,k} \ge 0, \quad \sum_k p_{s,k}=1\]</div>
+            <p>
+              If <code>type_merge_json</code> is provided, source cell-type
+              columns are summed into the target ontology and row-normalized
+              again.
+            </p>
+            <pre><code>pprint(spacerec.deconv(
+    dataset=dataset,
+    visium_dir=visium_dir,
+    sc_ref_h5ad=sc_ref_h5ad,
+    output_dir=deconv_dir,
+    output_csv=deconv_csv,
+    sample_id=sample_id,
+    annotation_column=annotation_column,
+    max_cores=8,
+    type_merge_json=type_merge_json,
+    force=False,
+    run_rctd=True,
+))</code></pre>
           </section>
 
           <section id="grid-embedding">
             <h2>Step 2: Grid embedding</h2>
             <p>
-              SpaceRec crops full-resolution H&amp;E patches, extracts Virchow2
-              token features, maps tokens back to dense18 grids, and combines
-              overlapping views with smooth spatial weights.
+              Generate dense grid-level histology embeddings from the H&amp;E
+              image. The fixed BRCA flow crops 288px full-resolution patches,
+              resizes each patch to 224px for Virchow2, maps 16x16 tokens back
+              to dense18 full-resolution grids, and keeps grids inside the tissue
+              boundary.
             </p>
-            <div class="formula">h_g = sum_v w_{g,v} h_{g,v} / sum_v w_{g,v}</div>
-            <pre><code>spacerec.ge(...)</code></pre>
+            <p>
+              Each grid view concatenates token, same-patch tile, and
+              neighbor-tile context:
+            </p>
+            <div class="formula">\[h_{g,v} = [t_{g,v}; u_v; n_v] \in \mathbb{R}^{6400}\]</div>
+            <p>
+              Overlapping patch views of the same final grid are combined with
+              raised-cosine / Hann-like weights after concatenation:
+            </p>
+            <div class="formula">\[h_g = \frac{\sum_v w_{g,v} h_{g,v}}{\sum_v w_{g,v}}\]</div>
+            <pre><code>ge_summary = spacerec.ge(
+    dataset=dataset,
+    he_image=he_image,
+    positions_csv=positions_csv,
+    scalefactors_json=scalefactors_json,
+    thumbnail_png=thumbnail_png,
+    output_dir=grid_dir,
+    output_h5=grid_embedding_h5,
+    patch_size=288,
+    stride=72,
+    concat_local=True,
+    concat_nbr=True,
+    model="virchow2",
+    batch_size=4,
+    num_workers=4,
+    device=None,
+    max_patches = None, # max_patches= 32 for smoke test
+    metadata_only=False,
+    force=True,
+    auto_select_gpu=True,
+    enable_progress_bar=True,
+    progress_refresh_rate=1,
+    stage_log_stdout=False,
+)
+display_ge_summary(ge_summary)</code></pre>
           </section>
 
           <section id="training">
             <h2>Step 3: Training</h2>
             <p>
-              Training fits projection heads over the 6400-dimensional grid
-              embeddings. One head predicts gene expression and the other
-              predicts cell-type probabilities.
+              Train the no-Set-Transformer projection-heads model on dense grid
+              embeddings. In this notebook <code>projection_dim=512</code>, so
+              each 6400-dimensional grid vector is first projected as:
             </p>
-            <div class="formula">L = L_expr + lambda_type * [alpha L_conf + (1 - alpha) L_deconv]</div>
-            <pre><code>spacerec.train(...)</code></pre>
+            <div class="formula">\[z_g = \mathrm{LayerNorm}(\mathrm{GELU}(W h_g + b))\]</div>
+            <p>
+              The gene head predicts nonnegative grid expression \(\hat{x}_g\),
+              and the type head predicts grid probabilities \(\hat{q}_g\):
+            </p>
+            <div class="formula">\[\hat{x}_g = \mathrm{Softplus}(f_{gene}(z_g)), \quad \hat{q}_g = \mathrm{Softmax}(f_{type}(z_g)/T)\]</div>
+            <p>
+              Training supervision is spot-level. For the grids \(G_s\) assigned
+              to spot \(s\):
+            </p>
+            <div class="formula">\[\hat{x}_s = \sum_{g \in G_s} \hat{x}_g, \quad \hat{p}_s = \frac{1}{|G_s|}\sum_{g \in G_s} \hat{q}_g\]</div>
+            <p>
+              The loss combines log-count expression regression and
+              deconvolution-proportion matching:
+            </p>
+            <div class="formula">\[L = \mathrm{Huber}(\log(1+\hat{x}_s), \log(1+x_s)) + \lambda [\alpha L_{conf} + (1-\alpha)\mathrm{KL}(p_s \Vert \hat{p}_s)]\]</div>
+            <p>
+              where \(L_{conf}=-\mathbb{E}_g\log \max_k \hat{q}_{g,k}\)
+              encourages confident grid-level type assignments.
+            </p>
+            <pre><code>train_summary = spacerec.train(
+    dataset=dataset,
+    st_h5ad=st_h5ad,
+    deconv_csv=deconv_csv,
+    grid_embedding_h5=grid_embedding_h5,
+    gene_list=gene_list,
+    run_dir=train_dir,
+    projection_dim=512,
+    lambda_type=1.0,
+    alpha=0.05,
+    max_epochs=60,
+    batch_size=4,
+    lr=5e-5,
+    limit_spots=None, # this para is for smoke test, you can set it to be 8 or 10
+    patience=20,
+    auto_select_gpu=True,
+    enable_progress_bar=True,
+    progress_refresh_rate=1,
+    stage_log_stdout=False,
+)
+display_train_summary(train_summary)</code></pre>
           </section>
 
           <section id="aggregation">
             <h2>Step 4: Aggregation</h2>
             <p>
-              Grid-level predictions are transferred to polygon or cell regions
-              by overlap area. This creates cell-level expression and cell-type
-              probability tables.
+              Aggregate grid-level SpaceRec predictions to Xenium-like
+              polygon/cell regions. For a target polygon \(c\), overlapping
+              grids are weighted by overlap area:
             </p>
-            <div class="formula">xhat_c = sum_g a_{c,g} xhat_g / sum_g a_{c,g}</div>
-            <pre><code>spacerec.agg(...)</code></pre>
+            <div class="formula">\[a_{c,g} = \mathrm{area}(\mathrm{polygon}_c \cap \mathrm{grid}_g)\]</div>
+            <p>
+              Cell-level expression and type probabilities are area-weighted
+              averages of covered grids:
+            </p>
+            <div class="formula">\[\hat{x}_c = \frac{\sum_g a_{c,g}\hat{x}_g}{\sum_g a_{c,g}}, \quad \hat{p}_c = \frac{\sum_g a_{c,g}\hat{q}_g}{\sum_g a_{c,g}}\]</div>
+            <p>
+              The exported cell type is the maximum-probability class, and
+              invalid or uncovered polygons can be dropped with
+              <code>valid_only=True</code>.
+            </p>
+            <pre><code>spacerec.agg(
+    dataset=dataset,
+    grid_expr_h5ad=grid_expr_h5ad,
+    grid_type_csv=grid_type_csv,
+    grid_predictions_h5=grid_predictions_h5,
+    polygon_csv=polygon_csv,
+    cell_metadata_csv=cell_metadata_csv,
+    output_dir=aggregate_dir,
+    valid_only=True,
+    target_name="xen",
+)</code></pre>
           </section>
 
           <section id="evaluation">
@@ -460,8 +584,28 @@ Rscript -e "library(Matrix); library(Seurat); library(spacexr)"</code></pre>
               The final cells render side-by-side checks for predicted and
               measured cell types and expression in selected spatial windows.
             </p>
-            <pre><code>spacerec.plottype(...)
-spacerec.plotexpr(...)</code></pre>
+            <pre><code>type_plot = spacerec.plottype(
+    dataset=dataset,
+    grid_type_csv=grid_type_csv,
+    true_xen_type_csv=true_xen_type_csv,
+    type_merge_json=type_merge_json,
+    window=type_evaluation_window,
+    window_label=type_window_label,
+    output_dir=evaluation_dir,
+)
+display_image_pair(type_plot["true_type_png"], type_plot["grid_type_png"])
+
+expr_plot = spacerec.plotexpr(
+    dataset=dataset,
+    grid_expr_h5ad=grid_expr_h5ad,
+    true_xen_expr_h5=true_xen_expr_h5,
+    true_xen_type_csv=true_xen_type_csv,
+    polygon_window_label=expr_polygon_window_label,
+    window=expr_evaluation_window,
+    output_dir=evaluation_dir,
+    gene=evaluation_gene,
+)
+display_image_pair(expr_plot["xen_expr_png"], expr_plot["grid_expr_png"])</code></pre>
           </section>
 
           <section id="outputs">
