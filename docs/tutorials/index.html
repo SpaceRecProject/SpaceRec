@@ -8,21 +8,13 @@
     <style>
       :root {
         color-scheme: light;
-        --page: #f7f8fa;
+        --page: #f8f9fb;
         --surface: #ffffff;
-        --surface-soft: #f1f5f7;
-        --ink: #1f2933;
-        --muted: #5f6f7a;
-        --line: #d9e2e8;
-        --link: #2563eb;
-        --link-dark: #1d4ed8;
-        --accent: #0f766e;
-        --accent-soft: #e6f4f1;
-        --warn-soft: #fff7ed;
-        --warn-line: #fed7aa;
-        --code-bg: #111827;
-        --code-fg: #f8fafc;
-        --shadow: 0 14px 32px rgba(31, 41, 51, 0.08);
+        --ink: #20242a;
+        --muted: #5f6b76;
+        --line: #d8dee4;
+        --link: #0969da;
+        --code-bg: #f6f8fa;
       }
 
       * {
@@ -37,18 +29,15 @@
         margin: 0;
         color: var(--ink);
         background: var(--page);
-        font-family: ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+        font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Helvetica, Arial, sans-serif;
+        font-size: 16px;
         line-height: 1.65;
       }
 
       a {
         color: var(--link);
         text-decoration-thickness: 1px;
-        text-underline-offset: 3px;
-      }
-
-      a:hover {
-        color: var(--link-dark);
+        text-underline-offset: 2px;
       }
 
       code,
@@ -58,31 +47,29 @@
 
       code {
         padding: 2px 5px;
-        border-radius: 5px;
-        color: #17415f;
-        background: #eaf1f5;
-        font-size: 0.94em;
+        border-radius: 4px;
+        background: var(--code-bg);
+        font-size: 0.93em;
       }
 
       pre {
-        margin: 16px 0 0;
-        padding: 16px;
+        margin: 14px 0 0;
+        padding: 14px 16px;
         overflow-x: auto;
-        border-radius: 8px;
-        color: var(--code-fg);
+        border: 1px solid var(--line);
+        border-radius: 6px;
         background: var(--code-bg);
         font-size: 14px;
       }
 
       pre code {
         padding: 0;
-        color: inherit;
         background: transparent;
       }
 
-      .shell {
+      .layout {
         display: grid;
-        grid-template-columns: 286px minmax(0, 1fr);
+        grid-template-columns: 260px minmax(0, 1fr);
         min-height: 100vh;
       }
 
@@ -97,92 +84,60 @@
       }
 
       .brand {
-        display: flex;
-        align-items: center;
-        gap: 10px;
-        margin-bottom: 22px;
+        display: block;
+        margin-bottom: 26px;
         color: var(--ink);
-        font-size: 20px;
-        font-weight: 750;
+        font-size: 22px;
+        font-weight: 700;
         text-decoration: none;
       }
 
-      .brand-mark {
-        display: inline-grid;
-        width: 32px;
-        height: 32px;
-        place-items: center;
-        border-radius: 8px;
-        color: #ffffff;
-        background: var(--accent);
-        font-size: 15px;
-        font-weight: 800;
-      }
-
-      .sidebar-section {
-        margin-top: 22px;
-      }
-
-      .sidebar-title {
-        margin: 0 0 8px;
-        color: #6b7780;
+      .nav-title {
+        margin: 22px 0 8px;
+        color: var(--muted);
         font-size: 12px;
-        font-weight: 800;
-        letter-spacing: 0.08em;
+        font-weight: 700;
+        letter-spacing: 0.06em;
         text-transform: uppercase;
       }
 
       .nav {
         display: grid;
-        gap: 3px;
+        gap: 2px;
       }
 
       .nav a {
-        display: block;
-        padding: 7px 9px;
-        border-radius: 7px;
-        color: #384853;
+        padding: 5px 0;
+        color: #39424e;
         font-size: 14px;
         text-decoration: none;
       }
 
-      .nav a:hover,
-      .nav a.active {
-        color: #0f3f5f;
-        background: #edf4f7;
+      .nav a:hover {
+        color: var(--link);
       }
 
-      .side-note {
-        margin: 8px 0 0;
-        color: var(--muted);
-        font-size: 13px;
-      }
-
-      .page {
+      .content {
         min-width: 0;
       }
 
       .topbar {
         display: flex;
-        align-items: center;
-        justify-content: space-between;
-        gap: 16px;
-        min-height: 54px;
-        padding: 0 min(6vw, 72px);
+        justify-content: flex-end;
+        gap: 18px;
+        padding: 14px min(7vw, 74px);
         border-bottom: 1px solid var(--line);
-        background: rgba(255, 255, 255, 0.92);
+        background: var(--surface);
       }
 
       .topbar a {
         font-size: 14px;
-        font-weight: 650;
         text-decoration: none;
       }
 
-      .hero {
-        padding: 46px min(6vw, 72px) 34px;
-        border-bottom: 1px solid var(--line);
-        background: linear-gradient(180deg, #ffffff 0%, #f4f7f8 100%);
+      main {
+        max-width: 920px;
+        padding: 40px min(7vw, 74px) 72px;
       }
 
       .breadcrumb {
@@ -191,295 +146,139 @@
         font-size: 14px;
       }
 
-      .breadcrumb a {
-        color: var(--muted);
-      }
-
       h1,
       h2,
       h3 {
-        line-height: 1.22;
+        line-height: 1.25;
       }
 
       h1 {
-        max-width: 900px;
-        margin: 0;
-        font-size: 42px;
-        font-weight: 780;
+        margin: 0 0 16px;
+        font-size: 38px;
+        font-weight: 650;
       }
 
       h2 {
-        margin: 0 0 12px;
-        font-size: 28px;
+        margin: 38px 0 12px;
+        padding-bottom: 6px;
+        border-bottom: 1px solid var(--line);
+        font-size: 26px;
+        font-weight: 650;
       }
 
       h3 {
-        margin: 24px 0 8px;
+        margin: 26px 0 8px;
         font-size: 20px;
+        font-weight: 650;
       }
 
       p {
         margin: 10px 0 0;
       }
 
-      .subtitle {
-        max-width: 860px;
-        margin-top: 16px;
-        color: #465761;
-        font-size: 18px;
+      ul,
+      ol {
+        margin: 10px 0 0;
+        padding-left: 24px;
       }
 
-      .actions {
-        display: flex;
-        flex-wrap: wrap;
-        gap: 10px;
-        margin-top: 24px;
-      }
-
-      .button {
-        display: inline-flex;
-        align-items: center;
-        min-height: 40px;
-        padding: 9px 14px;
-        border: 1px solid var(--link);
-        border-radius: 8px;
-        color: #ffffff;
-        background: var(--link);
-        font-weight: 750;
-        text-decoration: none;
-      }
-
-      .button.secondary {
-        color: var(--link);
-        background: #ffffff;
-      }
-
-      .content {
-        width: min(100%, 1040px);
-        padding: 34px min(6vw, 72px) 72px;
-      }
-
-      section {
-        margin-top: 36px;
-      }
-
-      section:first-child {
-        margin-top: 0;
+      li + li {
+        margin-top: 4px;
       }
 
       .lead {
         color: var(--muted);
-      }
-
-      .card-grid {
-        display: grid;
-        grid-template-columns: repeat(2, minmax(0, 1fr));
-        gap: 14px;
-        margin-top: 18px;
-      }
-
-      .tutorial-card,
-      .info-card,
-      .step-card {
-        border: 1px solid var(--line);
-        border-radius: 8px;
-        background: var(--surface);
-        box-shadow: var(--shadow);
-      }
-
-      .tutorial-card {
-        display: block;
-        padding: 18px;
-        color: var(--ink);
-        text-decoration: none;
-      }
-
-      .tutorial-card:hover {
-        border-color: #b8c7d1;
-      }
-
-      .tutorial-card strong {
-        display: block;
-        margin-bottom: 6px;
         font-size: 17px;
       }
 
-      .tutorial-card span,
-      .info-card span,
-      .step-card span {
-        color: var(--muted);
-        font-size: 14px;
-      }
-
-      .meta-grid,
-      .workflow {
-        display: grid;
-        grid-template-columns: repeat(3, minmax(0, 1fr));
-        gap: 12px;
-        margin-top: 18px;
-      }
-
-      .info-card,
-      .step-card {
-        padding: 16px;
-      }
-
-      .info-card strong,
-      .step-card strong {
-        display: block;
-        margin-bottom: 4px;
-      }
-
-      .workflow {
-        grid-template-columns: repeat(5, minmax(118px, 1fr));
-      }
-
-      .step-number {
-        display: inline-grid;
-        width: 28px;
-        height: 28px;
-        place-items: center;
-        margin-bottom: 11px;
-        border-radius: 50%;
-        color: #ffffff;
-        background: var(--accent);
-        font-size: 13px;
-        font-weight: 800;
-      }
-
-      .callout {
+      .tutorial-list {
         margin-top: 16px;
-        padding: 14px 16px;
-        border: 1px solid var(--warn-line);
-        border-left: 4px solid #f59e0b;
-        border-radius: 8px;
-        color: #3f3528;
-        background: var(--warn-soft);
+        padding-left: 22px;
+      }
+
+      .tutorial-list li {
+        margin-top: 10px;
+      }
+
+      .note {
+        margin-top: 16px;
+        padding: 12px 14px;
+        border-left: 4px solid var(--line);
+        background: var(--surface);
       }
 
       .formula {
-        margin-top: 14px;
-        padding: 13px 15px;
+        margin-top: 12px;
+        padding: 10px 12px;
         overflow-x: auto;
-        border: 1px solid #cfe2dc;
-        border-radius: 8px;
-        color: #20343e;
-        background: var(--accent-soft);
+        border: 1px solid var(--line);
+        border-radius: 6px;
+        background: var(--surface);
         font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", monospace;
         font-size: 14px;
       }
 
-      .table {
+      table {
         width: 100%;
-        margin-top: 16px;
-        overflow: hidden;
+        margin-top: 14px;
         border: 1px solid var(--line);
-        border-collapse: separate;
-        border-spacing: 0;
-        border-radius: 8px;
+        border-collapse: collapse;
         background: var(--surface);
       }
 
-      .table th,
-      .table td {
-        padding: 12px 14px;
-        border-bottom: 1px solid var(--line);
+      th,
+      td {
+        padding: 10px 12px;
+        border: 1px solid var(--line);
         text-align: left;
         vertical-align: top;
       }
 
-      .table th {
-        width: 210px;
-        color: #2c3c45;
-        background: var(--surface-soft);
-      }
-
-      .table tr:last-child th,
-      .table tr:last-child td {
-        border-bottom: 0;
-      }
-
-      .pager {
-        display: grid;
-        grid-template-columns: 1fr 1fr;
-        gap: 14px;
-        margin-top: 48px;
-      }
-
-      .pager a {
-        padding: 16px;
-        border: 1px solid var(--line);
-        border-radius: 8px;
-        background: var(--surface);
-        text-decoration: none;
-      }
-
-      .pager span {
-        display: block;
-        color: var(--muted);
-        font-size: 13px;
+      th {
+        width: 190px;
+        background: var(--code-bg);
+        font-weight: 650;
       }
 
       footer {
-        margin-top: 42px;
-        padding-top: 20px;
+        margin-top: 46px;
+        padding-top: 18px;
         border-top: 1px solid var(--line);
         color: var(--muted);
         font-size: 14px;
       }
 
-      @media (max-width: 980px) {
-        .shell {
+      @media (max-width: 900px) {
+        .layout {
           display: block;
         }
 
         .sidebar {
           position: static;
           height: auto;
-          padding: 18px min(6vw, 42px);
           border-right: 0;
           border-bottom: 1px solid var(--line);
         }
 
-        .nav {
-          grid-template-columns: repeat(2, minmax(0, 1fr));
-        }
-
         .topbar {
-          display: none;
-        }
-
-        .workflow,
-        .meta-grid {
-          grid-template-columns: repeat(2, minmax(0, 1fr));
+          justify-content: flex-start;
         }
       }
 
-      @media (max-width: 680px) {
-        .hero,
-        .content,
+      @media (max-width: 560px) {
+        main,
+        .topbar,
         .sidebar {
           padding-left: 18px;
           padding-right: 18px;
         }
 
         h1 {
-          font-size: 34px;
+          font-size: 32px;
         }
 
-        .card-grid,
-        .workflow,
-        .meta-grid,
-        .pager {
-          grid-template-columns: 1fr;
-        }
-
-        .nav {
-          grid-template-columns: 1fr;
-        }
-
-        .table th,
-        .table td {
+        th,
+        td {
           display: block;
           width: 100%;
         }
@@ -487,127 +286,84 @@
     </style>
   </head>
   <body>
-    <div class="shell">
+    <div class="layout">
       <aside class="sidebar">
-        <a class="brand" href="../">
-          <span class="brand-mark">SR</span>
-          <span>SpaceRec</span>
-        </a>
+        <a class="brand" href="../">SpaceRec</a>
 
-        <div class="sidebar-section">
-          <p class="sidebar-title">General</p>
-          <nav class="nav" aria-label="General navigation">
-            <a href="../">Documentation home</a>
-            <a class="active" href="./">Tutorials</a>
-            <a href="https://github.com/SpaceRecProject/SpaceRec">GitHub</a>
-            <a href="https://github.com/SpaceRecProject/SpaceRec/blob/main/spacerec/notebooks/run_spacerec.ipynb">Notebook</a>
-          </nav>
-        </div>
+        <p class="nav-title">General</p>
+        <nav class="nav" aria-label="General navigation">
+          <a href="../">Documentation home</a>
+          <a href="./">Tutorials</a>
+          <a href="https://github.com/SpaceRecProject/SpaceRec">GitHub</a>
+          <a href="https://github.com/SpaceRecProject/SpaceRec/blob/main/spacerec/notebooks/run_spacerec.ipynb">Notebook</a>
+        </nav>
 
-        <div class="sidebar-section">
-          <p class="sidebar-title">Tutorials</p>
-          <nav class="nav" aria-label="Tutorial sections">
-            <a href="#overview">Overview</a>
-            <a href="#system">Tested system</a>
-            <a href="#quick-start">Quick start</a>
-            <a href="#workflow">Workflow</a>
-            <a href="#outputs">Outputs</a>
-          </nav>
-        </div>
+        <p class="nav-title">On this page</p>
+        <nav class="nav" aria-label="Page navigation">
+          <a href="#overview">Overview</a>
+          <a href="#system">Tested system</a>
+          <a href="#quick-start">Quick start</a>
+          <a href="#workflow">Workflow</a>
+          <a href="#outputs">Outputs</a>
+        </nav>
 
-        <div class="sidebar-section">
-          <p class="sidebar-title">Workflow steps</p>
-          <nav class="nav" aria-label="Workflow steps">
-            <a href="#deconvolution">Deconvolution</a>
-            <a href="#grid-embedding">Grid embedding</a>
-            <a href="#training">Training</a>
-            <a href="#aggregation">Aggregation</a>
-            <a href="#evaluation">Evaluation</a>
-          </nav>
-        </div>
-
-        <p class="side-note">Static tutorial page served from the repository <code>docs/</code> folder.</p>
+        <p class="nav-title">Workflow steps</p>
+        <nav class="nav" aria-label="Workflow steps">
+          <a href="#deconvolution">Deconvolution</a>
+          <a href="#grid-embedding">Grid embedding</a>
+          <a href="#training">Training</a>
+          <a href="#aggregation">Aggregation</a>
+          <a href="#evaluation">Evaluation</a>
+        </nav>
       </aside>
 
-      <div class="page">
+      <div class="content">
         <div class="topbar">
-          <a href="../">SpaceRec documentation</a>
-          <a href="https://github.com/SpaceRecProject/SpaceRec">View repository</a>
+          <a href="https://github.com/SpaceRecProject/SpaceRec">Repository</a>
+          <a href="https://github.com/SpaceRecProject/SpaceRec/blob/main/spacerec/notebooks/run_spacerec.ipynb">Notebook</a>
         </div>
 
-        <header class="hero">
+        <main>
           <p class="breadcrumb"><a href="../">SpaceRec</a> / Tutorials</p>
           <h1>Tutorials</h1>
-          <p class="subtitle">
-            Step-by-step guides for running SpaceRec on the packaged BRCA workflow,
+          <p class="lead">
+            Step-by-step notes for running SpaceRec on the packaged BRCA workflow,
             from H&amp;E and Visium inputs to dense expression maps and cell-type
             predictions.
           </p>
-          <div class="actions">
-            <a class="button" href="https://github.com/SpaceRecProject/SpaceRec/blob/main/spacerec/notebooks/run_spacerec.ipynb">Open notebook</a>
-            <a class="button secondary" href="https://github.com/SpaceRecProject/SpaceRec">View source</a>
-          </div>
-        </header>
 
-        <main class="content">
           <section id="overview">
-            <h2>Welcome to the SpaceRec tutorials</h2>
-            <p class="lead">
-              These tutorials explain how to use SpaceRec for dense spatial
-              reconstruction from H&amp;E histology. The current release focuses on
-              a reproducible BRCA example with explicit execution stages and
-              saved intermediate outputs.
+            <h2>Overview</h2>
+            <p>
+              SpaceRec predicts dense grid-level gene expression and cell-type
+              probabilities from histology using Visium supervision. The current
+              tutorial follows the main notebook and keeps the workflow in five
+              explicit stages.
             </p>
 
-            <div class="card-grid" aria-label="Tutorial index">
-              <a class="tutorial-card" href="#quick-start">
-                <strong>Step-by-step guide for H&amp;E-stained imaging data</strong>
-                <span>Run deconvolution, dense grid embedding, projection-head training, aggregation, and evaluation.</span>
-              </a>
-              <a class="tutorial-card" href="#outputs">
-                <strong>Output reference</strong>
-                <span>Locate the generated CSV, H5, H5AD, checkpoint, and visualization files for each workflow stage.</span>
-              </a>
-              <a class="tutorial-card" href="#system">
-                <strong>Environment notes</strong>
-                <span>Prepare the Python and R dependencies required by the notebook and RCTD deconvolution step.</span>
-              </a>
-              <a class="tutorial-card" href="#workflow">
-                <strong>Model workflow overview</strong>
-                <span>Review how spot-level supervision is transferred to dense grid and polygon-level predictions.</span>
-              </a>
-            </div>
+            <ol class="tutorial-list">
+              <li><a href="#quick-start">Step-by-step guide for H&amp;E-stained imaging data</a></li>
+              <li><a href="#workflow">Workflow overview</a></li>
+              <li><a href="#outputs">Output reference</a></li>
+            </ol>
           </section>
 
           <section id="system">
             <h2>Tested system</h2>
-            <p class="lead">
-              The full tutorial is GPU-oriented because the grid embedding and
-              training stages use deep image features and projection-head fitting.
-            </p>
-            <div class="meta-grid">
-              <div class="info-card">
-                <strong>Python</strong>
-                <span>Python 3.10 with PyTorch, Lightning, NumPy, pandas, h5py, AnnData, Pillow, Matplotlib, Shapely, and timm.</span>
-              </div>
-              <div class="info-card">
-                <strong>R</strong>
-                <span>RCTD requires Matrix, Seurat, and spacexr for spot-level cell-type deconvolution.</span>
-              </div>
-              <div class="info-card">
-                <strong>GPU</strong>
-                <span>CUDA is recommended for Virchow2 grid embeddings and model training.</span>
-              </div>
-            </div>
+            <ul>
+              <li>Python 3.10 with PyTorch, Lightning, NumPy, pandas, h5py, AnnData, Pillow, Matplotlib, Shapely, and timm.</li>
+              <li>R packages: Matrix, Seurat, and spacexr for RCTD deconvolution.</li>
+              <li>CUDA is recommended for grid embedding and model training.</li>
+            </ul>
           </section>
 
           <section id="quick-start">
             <h2>Quick start</h2>
             <p>
-              Download the packaged artifacts, place <code>data/</code> and
-              <code>results/</code> at the repository root, create the environment,
-              and open the notebook.
+              Place <code>data/</code> and <code>results/</code> at the repository
+              root, create the conda environment, and open the notebook.
             </p>
+
             <pre><code>conda create -n spacerec python=3.10 -y
 conda activate spacerec
 pip install torch lightning numpy pandas scipy h5py anndata pillow matplotlib shapely timm
@@ -616,7 +372,7 @@ python -c "import spacerec.api as spacerec; print(spacerec.__file__)"
 python -c "import torch; print(torch.cuda.is_available())"
 Rscript -e "library(Matrix); library(Seurat); library(spacexr)"</code></pre>
 
-            <table class="table">
+            <table>
               <tbody>
                 <tr>
                   <th>Main notebook</th>
@@ -637,45 +393,21 @@ Rscript -e "library(Matrix); library(Seurat); library(spacexr)"</code></pre>
               </tbody>
             </table>
 
-            <div class="callout">
+            <div class="note">
               For smoke tests, lower <code>max_patches</code>, <code>limit_spots</code>,
-              and <code>max_epochs</code> before running the expensive cells.
+              and <code>max_epochs</code> before running expensive cells.
             </div>
           </section>
 
           <section id="workflow">
             <h2>Workflow</h2>
-            <p class="lead">
-              The notebook is organized into five explicit execution stages.
-              Each stage writes reusable files under <code>results/brca/</code>.
-            </p>
-            <div class="workflow" aria-label="SpaceRec workflow">
-              <div class="step-card">
-                <span class="step-number">1</span>
-                <strong>Deconvolution</strong>
-                <span>Estimate spot-level cell-type proportions.</span>
-              </div>
-              <div class="step-card">
-                <span class="step-number">2</span>
-                <strong>Grid embedding</strong>
-                <span>Extract dense18 Virchow2 H&amp;E features.</span>
-              </div>
-              <div class="step-card">
-                <span class="step-number">3</span>
-                <strong>Training</strong>
-                <span>Fit expression and type projection heads.</span>
-              </div>
-              <div class="step-card">
-                <span class="step-number">4</span>
-                <strong>Aggregation</strong>
-                <span>Map grids to polygon and cell predictions.</span>
-              </div>
-              <div class="step-card">
-                <span class="step-number">5</span>
-                <strong>Evaluation</strong>
-                <span>Render type and expression checks.</span>
-              </div>
-            </div>
+            <ol>
+              <li>Deconvolution: estimate spot-level cell-type proportions.</li>
+              <li>Grid embedding: extract dense18 Virchow2 H&amp;E features.</li>
+              <li>Training: fit expression and type projection heads.</li>
+              <li>Aggregation: map grid predictions to polygons and cells.</li>
+              <li>Evaluation: render type and expression checks.</li>
+            </ol>
           </section>
 
           <section id="deconvolution">
@@ -686,15 +418,7 @@ Rscript -e "library(Matrix); library(Seurat); library(spacexr)"</code></pre>
               the model's type head during training.
             </p>
             <div class="formula">x_s ~= l_s sum_k p_{s,k} r_k, p_{s,k} &gt;= 0, sum_k p_{s,k} = 1</div>
-            <pre><code>spacerec.deconv(
-    dataset=dataset,
-    visium_dir=visium_dir,
-    sc_ref_h5ad=sc_ref_h5ad,
-    output_dir=deconv_dir,
-    output_csv=deconv_csv,
-    sample_id=sample_id,
-    annotation_column="Level1",
-)</code></pre>
+            <pre><code>spacerec.deconv(...)</code></pre>
           </section>
 
           <section id="grid-embedding">
@@ -705,39 +429,18 @@ Rscript -e "library(Matrix); library(Seurat); library(spacexr)"</code></pre>
               overlapping views with smooth spatial weights.
             </p>
             <div class="formula">h_g = sum_v w_{g,v} h_{g,v} / sum_v w_{g,v}</div>
-            <pre><code>spacerec.ge(
-    dataset=dataset,
-    he_image=he_image,
-    positions_csv=positions_csv,
-    scalefactors_json=scalefactors_json,
-    thumbnail_png=thumbnail_png,
-    output_dir=grid_dir,
-    output_h5=grid_embedding_h5,
-    model="virchow2",
-    auto_select_gpu=True,
-)</code></pre>
+            <pre><code>spacerec.ge(...)</code></pre>
           </section>
 
           <section id="training">
             <h2>Step 3: Training</h2>
             <p>
-              The training stage fits projection heads over the 6400-dimensional
-              grid embeddings. One head predicts gene expression and the other
+              Training fits projection heads over the 6400-dimensional grid
+              embeddings. One head predicts gene expression and the other
               predicts cell-type probabilities.
             </p>
             <div class="formula">L = L_expr + lambda_type * [alpha L_conf + (1 - alpha) L_deconv]</div>
-            <pre><code>spacerec.train(
-    dataset=dataset,
-    st_h5ad=st_h5ad,
-    deconv_csv=deconv_csv,
-    grid_embedding_h5=grid_embedding_h5,
-    gene_list=gene_list,
-    run_dir=train_dir,
-    projection_dim=512,
-    max_epochs=60,
-    batch_size=4,
-    auto_select_gpu=True,
-)</code></pre>
+            <pre><code>spacerec.train(...)</code></pre>
           </section>
 
           <section id="aggregation">
@@ -748,16 +451,7 @@ Rscript -e "library(Matrix); library(Seurat); library(spacexr)"</code></pre>
               probability tables.
             </p>
             <div class="formula">xhat_c = sum_g a_{c,g} xhat_g / sum_g a_{c,g}</div>
-            <pre><code>spacerec.agg(
-    dataset=dataset,
-    grid_expr_h5ad=grid_expr_h5ad,
-    grid_type_csv=grid_type_csv,
-    grid_predictions_h5=grid_predictions_h5,
-    polygon_csv=polygon_csv,
-    output_dir=aggregate_dir,
-    valid_only=True,
-    target_name="xen",
-)</code></pre>
+            <pre><code>spacerec.agg(...)</code></pre>
           </section>
 
           <section id="evaluation">
@@ -766,25 +460,13 @@ Rscript -e "library(Matrix); library(Seurat); library(spacexr)"</code></pre>
               The final cells render side-by-side checks for predicted and
               measured cell types and expression in selected spatial windows.
             </p>
-            <pre><code>spacerec.plottype(
-    dataset=dataset,
-    grid_type_csv=grid_type_csv,
-    true_xen_type_csv=true_xen_type_csv,
-    output_dir=evaluation_dir,
-)
-
-spacerec.plotexpr(
-    dataset=dataset,
-    grid_expr_h5ad=grid_expr_h5ad,
-    true_xen_expr_h5=true_xen_expr_h5,
-    output_dir=evaluation_dir,
-    gene="EPCAM",
-)</code></pre>
+            <pre><code>spacerec.plottype(...)
+spacerec.plotexpr(...)</code></pre>
           </section>
 
           <section id="outputs">
             <h2>Main outputs</h2>
-            <table class="table">
+            <table>
               <tbody>
                 <tr>
                   <th>Deconvolution</th>
@@ -810,20 +492,9 @@ spacerec.plotexpr(
             </table>
           </section>
 
-          <nav class="pager" aria-label="Page navigation">
-            <a href="../">
-              <span>Previous</span>
-              Documentation home
-            </a>
-            <a href="https://github.com/SpaceRecProject/SpaceRec/blob/main/spacerec/notebooks/run_spacerec.ipynb">
-              <span>Next</span>
-              Run the tutorial notebook
-            </a>
-          </nav>
-
           <footer>
-            Copyright SpaceRecProject. Built as a static GitHub Pages tutorial
-            from the repository documentation folder.
+            This page mirrors the main SpaceRec notebook and is served from
+            <code>docs/tutorials/</code>.
           </footer>
         </main>
       </div>
