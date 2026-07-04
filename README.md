@@ -47,16 +47,18 @@ deconvolution, grid embedding, training, aggregation, and evaluation outputs.
 
 ## Environment Setup
 
-Create a dedicated conda environment:
+Clone the repository, enter it, and create a dedicated conda environment:
 
 ```bash
+git clone https://github.com/SpaceRecProject/SpaceRec.git
+cd SpaceRec
 conda create -n spacerec python=3.10 -y
 conda activate spacerec
 pip install torch lightning numpy pandas scipy h5py anndata pillow matplotlib shapely timm
 ```
 
 RCTD also needs the R packages `Matrix`, `Seurat`, and `spacexr`. Check the
-setup before running the notebook:
+setup from the repository root before running the notebook:
 
 ```bash
 python -c "import spacerec.api as spacerec; print(spacerec.__file__)"
