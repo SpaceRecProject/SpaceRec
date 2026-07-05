@@ -178,11 +178,6 @@ spacerec.agg(...)
 ```
 
 $$
-\{\hat{e}_g,\hat{p}_g\}_{g=1}^{G},\quad
-\rho_{a,g}=\frac{A_{a,g}}{A_g}.
-$$
-
-$$
 \tilde{e}_a=\sum_{g\in\mathcal{G}(a)}\rho_{a,g}\hat{e}_g,\quad
 \hat{e}_a=\log\left(1+\max(\tilde{e}_a,0)\right).
 $$
