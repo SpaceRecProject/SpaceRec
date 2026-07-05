@@ -22,7 +22,7 @@ cell-type probabilities from H&E image features under Visium supervision.
 | 1. Deconvolution    | Estimate spot-level cell-type proportions with RCTD. | `results/brca/deconv/deconv.csv` |
 | 2. Grid Embedding | Extract dense18 Virchow2 H&E grid features. | `results/brca/grid_embedding/grid_embedding.h5` |
 | 3. Train | Train expression and type projection heads. | `results/brca/train/grid_predictions.h5` |
-| 4. Aggregate | Transfer grid predictions to polygons/cells by overlap area. | `results/brca/aggregate/spacerec_ct.csv` |
+| 4. Aggregate | Aggregate grid predictions to polygon-level expression and type assignments. | `results/brca/aggregate/spacerec_ct.csv` |
 | 5. Evaluation | Render side-by-side type and expression checks. | `results/brca/Evaluation/` |
 
 ## Data
@@ -133,11 +133,11 @@ training.
 
 For spot `s`:
 
-```text
-x_s ~= l_s sum_k p_{s,k} r_k
-p_{s,k} >= 0
-sum_k p_{s,k} = 1
-```
+$$
+x_s \approx l_s \sum_k p_{s,k} r_k,\quad
+p_{s,k} \ge 0,\quad
+\sum_k p_{s,k}=1.
+$$
 
 Main output:
 
@@ -166,16 +166,16 @@ final feature:          6400
 
 Each grid view is:
 
-```text
-h_{g,v} = [t_{g,v}; u_v; n_v]
-```
+$$
+h_{g,v} = [t_{g,v}; u_v; n_v] \in \mathbb{R}^{6400}.
+$$
 
 Overlapping patch views are combined after concatenation with raised-cosine /
 Hann-like weights:
 
-```text
-h_g = sum_v w_{g,v} h_{g,v} / sum_v w_{g,v}
-```
+$$
+h_g = \frac{\sum_v w_{g,v} h_{g,v}}{\sum_v w_{g,v}}.
+$$
 
 Main output:
 
@@ -203,26 +203,44 @@ grid feature h_g
 
 With the notebook setting, the first projection is:
 
-```text
-6400 -> 512
-```
+$$
+6400 \rightarrow 512.
+$$
 
 The model predicts grid-level expression and type probabilities, then aggregates
 them to Visium spots for supervision:
 
-```text
-xhat_s = sum_{g in G_s} xhat_g
-phat_s = (1 / |G_s|) sum_{g in G_s} qhat_g
-```
+$$
+\hat{x}_s = \sum_{g \in G_s} \hat{x}_g,\quad
+\hat{p}_s = \frac{1}{|G_s|}\sum_{g \in G_s}\hat{q}_g.
+$$
 
 Loss:
 
-```text
-L_expr = Huber(log(1 + xhat_s), log(1 + x_s))
-L_deconv = KL(p_s || phat_s)
-L_conf = - mean_g log max_k qhat_{g,k}
-L = L_expr + lambda_type * [alpha L_conf + (1 - alpha) L_deconv]
-```
+$$
+\mathcal{L}_{expr}
+= \mathrm{Huber}\left(\log(1+\hat{x}_s), \log(1+x_s)\right)
+$$
+
+$$
+\mathcal{L}_{deconv}
+= \mathrm{KL}\left(p_s \Vert \hat{p}_s\right)
+$$
+
+$$
+\mathcal{L}_{conf}
+= -\mathbb{E}_g \log \max_k \hat{q}_{g,k}
+$$
+
+$$
+\mathcal{L}
+= \mathcal{L}_{expr}
++ \lambda_{type}
+\left[
+\alpha \mathcal{L}_{conf}
++ (1-\alpha)\mathcal{L}_{deconv}
+\right].
+$$
 
 Main outputs:
 
@@ -242,13 +260,60 @@ results/brca/train/model/best_train_model.ckpt
 spacerec.agg(...)
 ```
 
-Aggregates grid predictions to polygon/cell level by area overlap:
+After training, the model generated predictions for all retained dense grids:
 
-```text
-a_{c,g} = area(polygon_c intersect grid_g)
-xhat_c = sum_g a_{c,g} xhat_g / sum_g a_{c,g}
-phat_c = sum_g a_{c,g} qhat_g / sum_g a_{c,g}
-```
+$$
+\{\hat{e}_g,\hat{p}_g\}_{g=1}^{G}.
+$$
+
+For a target polygon \(a\), let \(\mathcal{G}(a)\) denote the set of overlapping
+dense grids. Let \(A_g\) be the area of one dense grid and \(A_{a,g}\) be the
+intersection area between polygon \(a\) and grid \(g\). The fractional overlap
+weight was defined as:
+
+$$
+\rho_{a,g} = \frac{A_{a,g}}{A_g}.
+$$
+
+Because grid-level expression predictions represent additive expression
+contributions, polygon-level expression was computed by area-fraction weighted
+summation:
+
+$$
+\tilde{e}_a
+= \sum_{g\in\mathcal{G}(a)}
+\rho_{a,g}\hat{e}_g.
+$$
+
+The exported polygon-level expression was then log-transformed:
+
+$$
+\hat{e}_a
+= \log\left(1+\max(\tilde{e}_a,0)\right).
+$$
+
+Polygon-level cell-type probabilities were computed from the area-weighted sum
+of grid-level probabilities:
+
+$$
+\tilde{p}_a
+= \sum_{g\in\mathcal{G}(a)}
+\rho_{a,g}\hat{p}_g.
+$$
+
+The result was normalized across cell types:
+
+$$
+\hat{p}_{a,c}
+= \frac{\tilde{p}_{a,c}}{\sum_{c'=1}^{C}\tilde{p}_{a,c'}}.
+$$
+
+The final cell-type assignment was:
+
+$$
+\hat{c}_a
+= \arg\max_c \hat{p}_{a,c}.
+$$
 
 Main outputs:
 
