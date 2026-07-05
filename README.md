@@ -126,23 +126,12 @@ Supported API dataset names are `brca` and `crc`; this packaged example is BRCA.
 spacerec.deconv(...)
 ```
 
-Estimates spot-level cell-type proportions from Visium counts and an annotated
-single-cell reference. These proportions supervise the type head during
-training.
-
-For spot `s`:
-
 $$
 x_s \approx l_s \sum_k p_{s,k} r_k,\quad
-p_{s,k} \ge 0,\quad
-\sum_k p_{s,k}=1.
+p_{s,k} \ge 0,\quad \sum_k p_{s,k}=1.
 $$
 
-Main output:
-
-```text
-results/brca/deconv/deconv.csv
-```
+Output: `results/brca/deconv/deconv.csv`
 
 ### Step 2: Grid Embedding
 
@@ -150,34 +139,12 @@ results/brca/deconv/deconv.csv
 spacerec.ge(...)
 ```
 
-Generates dense grid features from H&E using Virchow2. The retained path is
-`dense18_virchow2` with final 6400-dimensional grid embeddings:
-
-```text
-token feature:          1280
-same-patch tile:        2560
-neighbor tile context:  2560
-final feature:          6400
-```
-
-Each grid view is:
-
 $$
-h_{g,v} = [t_{g,v}; u_v; n_v] \in \mathbb{R}^{6400}.
+h_{g,v} = [t_{g,v}; u_v; n_v] \in \mathbb{R}^{6400},\quad
+h_g = \frac{\sum_v w_{g,v}h_{g,v}}{\sum_v w_{g,v}}.
 $$
 
-Overlapping patch views are combined after concatenation with raised-cosine /
-Hann-like weights:
-
-$$
-h_g = \frac{\sum_v w_{g,v} h_{g,v}}{\sum_v w_{g,v}}.
-$$
-
-Main output:
-
-```text
-results/brca/grid_embedding/grid_embedding.h5
-```
+Output: `results/brca/grid_embedding/grid_embedding.h5`
 
 ### Step 3: Train
 
@@ -185,64 +152,18 @@ results/brca/grid_embedding/grid_embedding.h5
 spacerec.train(...)
 ```
 
-Trains the projection-heads model:
-
-```text
-grid feature h_g
-  -> Linear + GELU + LayerNorm
-  -> GeneHead
-  -> TypeHead
-```
-
-With the notebook setting, the first projection is:
-
 $$
-6400 \rightarrow 512.
-$$
-
-The model predicts grid-level expression and type probabilities, then aggregates
-them to Visium spots for supervision:
-
-$$
-\hat{x}_s = \sum_{g \in G_s} \hat{x}_g,\quad
+\hat{x}_s = \sum_{g \in G_s}\hat{x}_g,\quad
 \hat{p}_s = \frac{1}{|G_s|}\sum_{g \in G_s}\hat{q}_g.
-$$
-
-Loss:
-
-$$
-\mathcal{L}_{expr}
-= \mathrm{Huber}\left(\log(1+\hat{x}_s), \log(1+x_s)\right)
-$$
-
-$$
-\mathcal{L}_{deconv}
-= \mathrm{KL}\left(p_s \Vert \hat{p}_s\right)
-$$
-
-$$
-\mathcal{L}_{conf}
-= -\mathbb{E}_g \log \max_k \hat{q}_{g,k}
 $$
 
 $$
 \mathcal{L}
-= \mathcal{L}_{expr}
-+ \lambda_{type}
-\left[
-\alpha \mathcal{L}_{conf}
-+ (1-\alpha)\mathcal{L}_{deconv}
-\right].
+= \mathrm{Huber}\left(\log(1+\hat{x}_s),\log(1+x_s)\right)
++ \lambda_{type}\left[\alpha\mathcal{L}_{conf}+(1-\alpha)\mathrm{KL}(p_s\Vert\hat{p}_s)\right].
 $$
 
-Main outputs:
-
-```text
-results/brca/train/grid_predictions.h5
-results/brca/train/grid_type.csv
-results/brca/train/grid_expr.h5ad
-results/brca/train/model/best_train_model.ckpt
-```
+Outputs: `results/brca/train/grid_predictions.h5`, `grid_type.csv`, `grid_expr.h5ad`, `model/best_train_model.ckpt`
 
 ### Step 4: Aggregate
 
@@ -250,68 +171,23 @@ results/brca/train/model/best_train_model.ckpt
 spacerec.agg(...)
 ```
 
-After training, the model generated predictions for all retained dense grids:
-
 $$
-\{\hat{e}_g,\hat{p}_g\}_{g=1}^{G}.
-$$
-
-For a target polygon $a$, let $\mathcal{G}(a)$ denote the set of overlapping
-dense grids. Let $A_g$ be the area of one dense grid and $A_{a,g}$ be the
-intersection area between polygon $a$ and grid $g$. The fractional overlap
-weight was defined as:
-
-$$
-\rho_{a,g} = \frac{A_{a,g}}{A_g}.
+\{\hat{e}_g,\hat{p}_g\}_{g=1}^{G},\quad
+\rho_{a,g}=\frac{A_{a,g}}{A_g}.
 $$
 
-Because grid-level expression predictions represent additive expression
-contributions, polygon-level expression was computed by area-fraction weighted
-summation:
-
 $$
-\tilde{e}_a
-= \sum_{g\in\mathcal{G}(a)}
-\rho_{a,g}\hat{e}_g.
+\tilde{e}_a=\sum_{g\in\mathcal{G}(a)}\rho_{a,g}\hat{e}_g,\quad
+\hat{e}_a=\log\left(1+\max(\tilde{e}_a,0)\right).
 $$
 
-The exported polygon-level expression was then log-transformed:
-
 $$
-\hat{e}_a
-= \log\left(1+\max(\tilde{e}_a,0)\right).
-$$
-
-Polygon-level cell-type probabilities were computed from the area-weighted sum
-of grid-level probabilities:
-
-$$
-\tilde{p}_a
-= \sum_{g\in\mathcal{G}(a)}
-\rho_{a,g}\hat{p}_g.
+\tilde{p}_a=\sum_{g\in\mathcal{G}(a)}\rho_{a,g}\hat{p}_g,\quad
+\hat{p}_{a,c}=\frac{\tilde{p}_{a,c}}{\sum_{c'=1}^{C}\tilde{p}_{a,c'}},\quad
+\hat{c}_a=\arg\max_c \hat{p}_{a,c}.
 $$
 
-The result was normalized across cell types:
-
-$$
-\hat{p}_{a,c}
-= \frac{\tilde{p}_{a,c}}{\sum_{c'=1}^{C}\tilde{p}_{a,c'}}.
-$$
-
-The final cell-type assignment was:
-
-$$
-\hat{c}_a
-= \arg\max_c \hat{p}_{a,c}.
-$$
-
-Main outputs:
-
-```text
-results/brca/aggregate/spacerec_ct.csv
-results/brca/aggregate/spacerec_polygon.csv
-results/brca/aggregate/spacerec_expr.h5ad
-```
+Outputs: `results/brca/aggregate/spacerec_ct.csv`, `spacerec_polygon.csv`, `spacerec_expr.h5ad`
 
 ### Step 5: Evaluation
 
@@ -320,15 +196,7 @@ spacerec.plottype(...)
 spacerec.plotexpr(...)
 ```
 
-Generates side-by-side visual checks:
-
-```text
-xen_type.png   vs grid_type.png
-xen_expr.png   vs grid_expr.png
-```
-
-`window_label` and `polygon_window_label` are display labels only. True Xenium
-polygons are selected by full-resolution `window` coordinates.
+Outputs: `results/brca/Evaluation/xen_type.png`, `grid_type.png`, `xen_expr.png`, `grid_expr.png`
 
 ## Current BRCA Run
 
