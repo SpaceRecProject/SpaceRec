@@ -158,9 +158,15 @@ $$
 $$
 
 $$
-\mathcal{L}
-= \mathrm{Huber}\left(\log(1+\hat{x}_s),\log(1+x_s)\right)
-+ \lambda_{type}\left[\alpha\mathcal{L}_{conf}+(1-\alpha)\mathrm{KL}(p_s\Vert\hat{p}_s)\right].
+\mathcal{L}_{expr} = \mathrm{Huber}(\log(1+\hat{x}_s),\log(1+x_s)).
+$$
+
+$$
+\mathcal{L}_{type} = \alpha\mathcal{L}_{conf} + (1-\alpha)\mathrm{KL}(p_s\parallel\hat{p}_s).
+$$
+
+$$
+\mathcal{L} = \mathcal{L}_{expr} + \lambda_{type}\mathcal{L}_{type}.
 $$
 
 Outputs: `results/brca/train/grid_predictions.h5`, `grid_type.csv`, `grid_expr.h5ad`, `model/best_train_model.ckpt`
