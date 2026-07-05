@@ -120,8 +120,7 @@ Supported API dataset names are `brca` and `crc`; this packaged example is BRCA.
 
 ## Workflow
 
-<details>
-<summary><strong>Step 1: Deconvolution</strong></summary>
+### Step 1: Deconvolution
 
 ```python
 spacerec.deconv(...)
@@ -134,10 +133,7 @@ $$
 
 Output: `results/brca/deconv/deconv.csv`
 
-</details>
-
-<details>
-<summary><strong>Step 2: Grid Embedding</strong></summary>
+### Step 2: Grid Embedding
 
 ```python
 spacerec.ge(...)
@@ -150,10 +146,7 @@ $$
 
 Output: `results/brca/grid_embedding/grid_embedding.h5`
 
-</details>
-
-<details>
-<summary><strong>Step 3: Train</strong></summary>
+### Step 3: Train
 
 ```python
 spacerec.train(...)
@@ -178,10 +171,7 @@ $$
 
 Outputs: `results/brca/train/grid_predictions.h5`, `grid_type.csv`, `grid_expr.h5ad`, `model/best_train_model.ckpt`
 
-</details>
-
-<details>
-<summary><strong>Step 4: Aggregate</strong></summary>
+### Step 4: Aggregate
 
 ```python
 spacerec.agg(...)
@@ -205,10 +195,7 @@ $$
 
 Outputs: `results/brca/aggregate/spacerec_ct.csv`, `spacerec_polygon.csv`, `spacerec_expr.h5ad`
 
-</details>
-
-<details>
-<summary><strong>Step 5: Evaluation</strong></summary>
+### Step 5: Evaluation
 
 ```python
 spacerec.plottype(...)
@@ -216,8 +203,6 @@ spacerec.plotexpr(...)
 ```
 
 Outputs: `results/brca/Evaluation/xen_type.png`, `grid_type.png`, `xen_expr.png`, `grid_expr.png`
-
-</details>
 
 ## Current BRCA Run
 
