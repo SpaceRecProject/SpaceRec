@@ -120,8 +120,7 @@ Supported API dataset names are `brca` and `crc`; this packaged example is BRCA.
 
 ## Workflow
 
-<details>
-<summary><strong>Step 1: Deconvolution</strong></summary>
+### Step 1: Deconvolution
 
 ```python
 spacerec.deconv(...)
@@ -145,10 +144,7 @@ Main output:
 results/brca/deconv/deconv.csv
 ```
 
-</details>
-
-<details>
-<summary><strong>Step 2: Grid Embedding</strong></summary>
+### Step 2: Grid Embedding
 
 ```python
 spacerec.ge(...)
@@ -183,10 +179,7 @@ Main output:
 results/brca/grid_embedding/grid_embedding.h5
 ```
 
-</details>
-
-<details>
-<summary><strong>Step 3: Train</strong></summary>
+### Step 3: Train
 
 ```python
 spacerec.train(...)
@@ -251,10 +244,7 @@ results/brca/train/grid_expr.h5ad
 results/brca/train/model/best_train_model.ckpt
 ```
 
-</details>
-
-<details>
-<summary><strong>Step 4: Aggregate</strong></summary>
+### Step 4: Aggregate
 
 ```python
 spacerec.agg(...)
@@ -266,9 +256,9 @@ $$
 \{\hat{e}_g,\hat{p}_g\}_{g=1}^{G}.
 $$
 
-For a target polygon \(a\), let \(\mathcal{G}(a)\) denote the set of overlapping
-dense grids. Let \(A_g\) be the area of one dense grid and \(A_{a,g}\) be the
-intersection area between polygon \(a\) and grid \(g\). The fractional overlap
+For a target polygon $a$, let $\mathcal{G}(a)$ denote the set of overlapping
+dense grids. Let $A_g$ be the area of one dense grid and $A_{a,g}$ be the
+intersection area between polygon $a$ and grid $g$. The fractional overlap
 weight was defined as:
 
 $$
@@ -323,10 +313,7 @@ results/brca/aggregate/spacerec_polygon.csv
 results/brca/aggregate/spacerec_expr.h5ad
 ```
 
-</details>
-
-<details>
-<summary><strong>Step 5: Evaluation</strong></summary>
+### Step 5: Evaluation
 
 ```python
 spacerec.plottype(...)
@@ -342,8 +329,6 @@ xen_expr.png   vs grid_expr.png
 
 `window_label` and `polygon_window_label` are display labels only. True Xenium
 polygons are selected by full-resolution `window` coordinates.
-
-</details>
 
 ## Current BRCA Run
 
