@@ -14,7 +14,7 @@
       ],
     },
     clusters: {
-      src: "assets/clusters.png", label: "Clusters 0–4",
+      src: "assets/clusters.png?v=20260917-0241c15", label: "Clusters 0–4",
       legend: [
         ["Cluster 0", "#4682B4"], ["Cluster 1", "#FA8072"],
         ["Cluster 2", "#E41A1C"], ["Cluster 3", "#B452CD"],
