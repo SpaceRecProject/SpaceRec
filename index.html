@@ -3,20 +3,29 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>H&amp;E / SpaceRec Comparison</title>
+  <title>DBiTplus Image Comparison</title>
   <link rel="stylesheet" href="styles.css">
 </head>
 <body>
   <header class="app-header">
     <div>
       <p class="eyebrow">DBiTplus · GSM9239732</p>
-      <h1>H&amp;E / SpaceRec comparison</h1>
+      <h1>DBiTplus image comparison</h1>
     </div>
     <button class="button primary" id="exportButton" type="button">Export PNG</button>
   </header>
 
   <main>
     <section class="toolbar" aria-label="Comparison controls">
+      <div class="control-group pair-group">
+        <span class="control-label">Compare</span>
+        <div class="segmented pair-segmented" role="group" aria-label="Image pair">
+          <button class="segment active" type="button" data-pair="he-spacerec" aria-pressed="true">H&amp;E / SpaceRec</button>
+          <button class="segment" type="button" data-pair="he-clusters" aria-pressed="false">H&amp;E / Clusters</button>
+          <button class="segment" type="button" data-pair="spacerec-clusters" aria-pressed="false">SpaceRec / Clusters</button>
+        </div>
+      </div>
+
       <div class="control-group mode-group">
         <span class="control-label">View</span>
         <div class="segmented" role="group" aria-label="Comparison mode">
@@ -51,12 +60,12 @@
     <section class="viewer-wrap" aria-label="Image comparison">
       <div class="comparison-stage mode-swipe" id="comparisonStage">
         <div class="single-view" id="singleView">
-          <img class="image-layer base-layer" id="spaceRecImage" src="assets/spacerec.png" alt="SpaceRec grid-level prediction" draggable="false">
+          <img class="image-layer base-layer" id="rightImage" src="assets/spacerec.png" alt="SpaceRec grid-level prediction" draggable="false">
           <div class="image-layer clipped-layer" id="heClip">
-            <img id="heImage" src="assets/he.png" alt="H&amp;E histology" draggable="false">
+            <img id="leftImage" src="assets/he.png" alt="H&amp;E histology" draggable="false">
           </div>
-          <span class="image-label label-left">H&amp;E</span>
-          <span class="image-label label-right">SpaceRec</span>
+          <span class="image-label label-left" id="leftLabel">H&amp;E</span>
+          <span class="image-label label-right" id="rightLabel">SpaceRec</span>
           <div class="divider" id="divider" role="slider" tabindex="0" aria-label="H&E reveal position" aria-valuemin="0" aria-valuemax="100" aria-valuenow="50">
             <span class="divider-line"></span>
             <span class="divider-handle" aria-hidden="true"><span>‹</span><span>›</span></span>
@@ -65,16 +74,18 @@
 
         <div class="side-view" id="sideView" hidden>
           <figure>
-            <div class="side-image"><img id="sideHeImage" src="assets/he.png" alt="H&E histology" draggable="false"></div>
-            <figcaption>H&amp;E</figcaption>
+            <div class="side-image"><img id="sideLeftImage" src="assets/he.png" alt="H&E histology" draggable="false"></div>
+            <figcaption id="sideLeftCaption">H&amp;E</figcaption>
           </figure>
           <figure>
-            <div class="side-image"><img id="sideSpaceRecImage" src="assets/spacerec.png" alt="SpaceRec grid-level prediction" draggable="false"></div>
-            <figcaption>SpaceRec</figcaption>
+            <div class="side-image"><img id="sideRightImage" src="assets/spacerec.png" alt="SpaceRec grid-level prediction" draggable="false"></div>
+            <figcaption id="sideRightCaption">SpaceRec</figcaption>
           </figure>
         </div>
       </div>
     </section>
+
+    <section class="legend-band" id="legendBand" aria-label="Color legend"></section>
 
     <section class="caption-band">
       <label for="captionInput">Sample ID or description</label>
@@ -83,7 +94,7 @@
 
     <details class="instructions">
       <summary>Replace the example images</summary>
-      <p>Use “Choose H&amp;E” and “Choose SpaceRec” to load local PNG, JPEG, or WebP files. For precise overlay, both files must describe the same coordinate bounds and have matching dimensions or aspect ratios. Use Reset to restore the registered DBiTplus example.</p>
+      <p>Select one of the registered image pairs above. Use “Choose H&amp;E” and “Choose SpaceRec” to replace those layers with local PNG, JPEG, or WebP files. For precise overlay, both files must describe the same coordinate bounds and have matching dimensions or aspect ratios. Use Reset to restore all registered DBiTplus examples.</p>
     </details>
   </main>
 
