@@ -1,0 +1,92 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>H&amp;E / SpaceRec Comparison</title>
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  <header class="app-header">
+    <div>
+      <p class="eyebrow">DBiTplus · GSM9239732</p>
+      <h1>H&amp;E / SpaceRec comparison</h1>
+    </div>
+    <button class="button primary" id="exportButton" type="button">Export PNG</button>
+  </header>
+
+  <main>
+    <section class="toolbar" aria-label="Comparison controls">
+      <div class="control-group mode-group">
+        <span class="control-label">View</span>
+        <div class="segmented" role="group" aria-label="Comparison mode">
+          <button class="segment active" type="button" data-mode="swipe" aria-pressed="true">Swipe</button>
+          <button class="segment" type="button" data-mode="opacity" aria-pressed="false">Opacity</button>
+          <button class="segment" type="button" data-mode="side" aria-pressed="false">Side by side</button>
+        </div>
+      </div>
+
+      <div class="control-group range-group" id="rangeGroup">
+        <label class="control-label" id="rangeLabel" for="comparisonRange">Position</label>
+        <input id="comparisonRange" type="range" min="0" max="100" value="50" step="1">
+        <output id="rangeOutput" for="comparisonRange">50%</output>
+      </div>
+
+      <div class="control-group file-group">
+        <span class="control-label">Images</span>
+        <label class="button file-button" for="heUpload">Choose H&amp;E</label>
+        <input id="heUpload" type="file" accept="image/*">
+        <label class="button file-button" for="spaceRecUpload">Choose SpaceRec</label>
+        <input id="spaceRecUpload" type="file" accept="image/*">
+      </div>
+
+      <button class="button" id="resetButton" type="button">Reset</button>
+    </section>
+
+    <div class="status-row">
+      <p id="imageStatus" aria-live="polite">Loading registered example images…</p>
+      <p class="warning" id="imageWarning" role="alert" hidden></p>
+    </div>
+
+    <section class="viewer-wrap" aria-label="Image comparison">
+      <div class="comparison-stage mode-swipe" id="comparisonStage">
+        <div class="single-view" id="singleView">
+          <img class="image-layer base-layer" id="spaceRecImage" src="assets/spacerec.png" alt="SpaceRec grid-level prediction" draggable="false">
+          <div class="image-layer clipped-layer" id="heClip">
+            <img id="heImage" src="assets/he.png" alt="H&amp;E histology" draggable="false">
+          </div>
+          <span class="image-label label-left">H&amp;E</span>
+          <span class="image-label label-right">SpaceRec</span>
+          <div class="divider" id="divider" role="slider" tabindex="0" aria-label="H&E reveal position" aria-valuemin="0" aria-valuemax="100" aria-valuenow="50">
+            <span class="divider-line"></span>
+            <span class="divider-handle" aria-hidden="true"><span>‹</span><span>›</span></span>
+          </div>
+        </div>
+
+        <div class="side-view" id="sideView" hidden>
+          <figure>
+            <div class="side-image"><img id="sideHeImage" src="assets/he.png" alt="H&E histology" draggable="false"></div>
+            <figcaption>H&amp;E</figcaption>
+          </figure>
+          <figure>
+            <div class="side-image"><img id="sideSpaceRecImage" src="assets/spacerec.png" alt="SpaceRec grid-level prediction" draggable="false"></div>
+            <figcaption>SpaceRec</figcaption>
+          </figure>
+        </div>
+      </div>
+    </section>
+
+    <section class="caption-band">
+      <label for="captionInput">Sample ID or description</label>
+      <input id="captionInput" type="text" value="GSM9239732 · Human lymph node 2 · 50 µm DBiTplus" maxlength="180">
+    </section>
+
+    <details class="instructions">
+      <summary>Replace the example images</summary>
+      <p>Use “Choose H&amp;E” and “Choose SpaceRec” to load local PNG, JPEG, or WebP files. For precise overlay, both files must describe the same coordinate bounds and have matching dimensions or aspect ratios. Use Reset to restore the registered DBiTplus example.</p>
+    </details>
+  </main>
+
+  <script src="app.js"></script>
+</body>
+</html>
