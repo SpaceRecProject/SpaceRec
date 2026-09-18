@@ -15,10 +15,11 @@
       ],
     },
     clusters: {
-      src: "assets/clusters.png?v=20260917-all2500-1", label: "Clusters 0–4",
+      src: "assets/clusters.png?v=20260918-fig3repro-aligned-1", label: "Clusters 0–4",
+      legendTitle: "Expression clusters · 2,478 spots",
       legend: [
         ["Cluster 0", "#4682B4"], ["Cluster 1", "#FA8072"],
-        ["Cluster 2", "#E41A1C"], ["Cluster 3", "#B452CD"],
+        ["Cluster 2", "#B4CDCD"], ["Cluster 3", "#B452CD"],
         ["Cluster 4", "#F0E68C"],
       ],
     },
