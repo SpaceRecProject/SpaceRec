@@ -72,6 +72,10 @@ main {
 
 .pair-group { width: 100%; }
 .pair-segmented { grid-template-columns: repeat(3, minmax(0, auto)); }
+.expr-cluster-group { width: 100%; }
+.expr-cluster-segmented { grid-template-columns: repeat(4, minmax(0, auto)); }
+.gene-group { width: 100%; }
+.gene-segmented { display: inline-flex; }
 
 .control-label {
   color: var(--muted);
@@ -87,6 +91,9 @@ main {
   border-radius: 4px;
   overflow: hidden;
 }
+
+.segmented.expr-cluster-segmented { grid-template-columns: repeat(4, minmax(0, auto)); }
+.segmented.gene-segmented { display: inline-flex; }
 
 .segment {
   min-height: 36px;
@@ -251,9 +258,11 @@ input[type="file"] {
   main { padding: 12px 10px 24px; }
   .toolbar { align-items: stretch; gap: 10px; }
   .mode-group, .range-group, .file-group { width: 100%; }
-  .pair-group { align-items: stretch; flex-direction: column; }
+  .pair-group, .expr-cluster-group, .gene-group { align-items: stretch; flex-direction: column; }
   .pair-segmented { width: 100%; grid-template-columns: repeat(3, minmax(0, 1fr)); }
-  .pair-segmented .segment { white-space: normal; }
+  .segmented.expr-cluster-segmented { width: 100%; grid-template-columns: repeat(4, minmax(0, 1fr)); }
+  .segmented.gene-segmented { width: 100%; display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .pair-segmented .segment, .expr-cluster-segmented .segment { white-space: normal; }
   .mode-group { align-items: stretch; flex-direction: column; }
   .segmented { width: 100%; grid-template-columns: repeat(3, 1fr); }
   .segment { padding-inline: 6px; }

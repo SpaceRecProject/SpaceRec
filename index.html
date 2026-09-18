@@ -4,7 +4,7 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>DBiTplus Image Comparison</title>
-  <link rel="stylesheet" href="styles.css">
+  <link rel="stylesheet" href="styles.css?v=20260918-expr-cluster-1">
 </head>
 <body>
   <header class="app-header">
@@ -24,6 +24,21 @@
           <button class="segment active" type="button" data-pair="he-clusters" aria-pressed="true">H&amp;E / Clusters</button>
           <button class="segment" type="button" data-pair="spacerec-clusters" aria-pressed="false">SpaceRec / Clusters</button>
         </div>
+      </div>
+
+      <div class="control-group expr-cluster-group">
+        <span class="control-label">SpaceRec_expr / cluster</span>
+        <div class="segmented expr-cluster-segmented" role="group" aria-label="SpaceRec expression and cluster comparison">
+          <button class="segment" type="button" data-expr-cluster="0" aria-pressed="false">Cluster 0</button>
+          <button class="segment" type="button" data-expr-cluster="1" aria-pressed="false">Cluster 1</button>
+          <button class="segment" type="button" data-expr-cluster="3" aria-pressed="false">Cluster 3</button>
+          <button class="segment" type="button" data-expr-cluster="4" aria-pressed="false">Cluster 4</button>
+        </div>
+      </div>
+
+      <div class="control-group gene-group" id="expressionGeneGroup" hidden>
+        <span class="control-label">Gene</span>
+        <div class="segmented gene-segmented" id="expressionGeneButtons" role="group" aria-label="Expression gene"></div>
       </div>
 
       <div class="control-group mode-group">
@@ -98,6 +113,6 @@
     </details>
   </main>
 
-  <script src="app.js?v=20260918-fig3repro-aligned-2"></script>
+  <script src="app.js?v=20260918-expr-cluster-1"></script>
 </body>
 </html>

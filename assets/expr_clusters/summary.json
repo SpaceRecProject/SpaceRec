@@ -1,0 +1,61 @@
+{
+  "task": "BRCA-style SpaceRec expression / cluster web assets",
+  "gene_image_source": "resources/dbitplus/model_pred/grid_expr_genes_60px",
+  "gene_images_copied_without_modification": true,
+  "canvas_size_wh": [
+    1029,
+    1163
+  ],
+  "orientation": "counterclockwise 90 degrees, then top-bottom flip",
+  "cluster_background": "only the selected cluster is colored; all other clusters are black",
+  "clusters": {
+    "0": {
+      "cluster_asset": "Cluster0_only_grid_style.png",
+      "cluster_color": "#4682B4",
+      "genes": [
+        "IL7R",
+        "CXCL9"
+      ],
+      "gene_assets": [
+        "Cluster0_Gene_IL7R_grid_expr_rot90ccw_flipud.png",
+        "Cluster0_Gene_CXCL9_grid_expr_rot90ccw_flipud.png"
+      ],
+      "n_cluster_spots": 867
+    },
+    "1": {
+      "cluster_asset": "Cluster1_only_grid_style.png",
+      "cluster_color": "#FA8072",
+      "genes": [
+        "MS4A1"
+      ],
+      "gene_assets": [
+        "Cluster1_Gene_MS4A1_grid_expr_rot90ccw_flipud.png"
+      ],
+      "n_cluster_spots": 560
+    },
+    "3": {
+      "cluster_asset": "Cluster3_only_grid_style.png",
+      "cluster_color": "#B452CD",
+      "genes": [
+        "MYH11",
+        "MYLK"
+      ],
+      "gene_assets": [
+        "Cluster3_Gene_MYH11_grid_expr_rot90ccw_flipud.png",
+        "Cluster3_Gene_MYLK_grid_expr_rot90ccw_flipud.png"
+      ],
+      "n_cluster_spots": 330
+    },
+    "4": {
+      "cluster_asset": "Cluster4_only_grid_style.png",
+      "cluster_color": "#F0E68C",
+      "genes": [
+        "C1QA"
+      ],
+      "gene_assets": [
+        "Cluster4_Gene_C1QA_grid_expr_rot90ccw_flipud.png"
+      ],
+      "n_cluster_spots": 299
+    }
+  }
+}

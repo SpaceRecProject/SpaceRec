@@ -23,6 +23,52 @@
         ["Cluster 4", "#F0E68C"],
       ],
     },
+    cluster0: {
+      src: "assets/expr_clusters/Cluster0_only_grid_style.png?v=20260918-expr-cluster-1", label: "Cluster 0",
+      legendTitle: "Cluster 0 only", legend: [["Cluster 0", "#4682B4"]],
+    },
+    cluster1: {
+      src: "assets/expr_clusters/Cluster1_only_grid_style.png?v=20260918-expr-cluster-1", label: "Cluster 1",
+      legendTitle: "Cluster 1 only", legend: [["Cluster 1", "#FA8072"]],
+    },
+    cluster3: {
+      src: "assets/expr_clusters/Cluster3_only_grid_style.png?v=20260918-expr-cluster-1", label: "Cluster 3",
+      legendTitle: "Cluster 3 only", legend: [["Cluster 3", "#B452CD"]],
+    },
+    cluster4: {
+      src: "assets/expr_clusters/Cluster4_only_grid_style.png?v=20260918-expr-cluster-1", label: "Cluster 4",
+      legendTitle: "Cluster 4 only", legend: [["Cluster 4", "#F0E68C"]],
+    },
+    expr0IL7R: {
+      src: "assets/expr_clusters/Cluster0_Gene_IL7R_grid_expr_rot90ccw_flipud.png?v=20260918-expr-cluster-1", label: "IL7R expression",
+      legend: [],
+    },
+    expr0CXCL9: {
+      src: "assets/expr_clusters/Cluster0_Gene_CXCL9_grid_expr_rot90ccw_flipud.png?v=20260918-expr-cluster-1", label: "CXCL9 expression",
+      legend: [],
+    },
+    expr1MS4A1: {
+      src: "assets/expr_clusters/Cluster1_Gene_MS4A1_grid_expr_rot90ccw_flipud.png?v=20260918-expr-cluster-1", label: "MS4A1 expression",
+      legend: [],
+    },
+    expr3MYH11: {
+      src: "assets/expr_clusters/Cluster3_Gene_MYH11_grid_expr_rot90ccw_flipud.png?v=20260918-expr-cluster-1", label: "MYH11 expression",
+      legend: [],
+    },
+    expr3MYLK: {
+      src: "assets/expr_clusters/Cluster3_Gene_MYLK_grid_expr_rot90ccw_flipud.png?v=20260918-expr-cluster-1", label: "MYLK expression",
+      legend: [],
+    },
+    expr4C1QA: {
+      src: "assets/expr_clusters/Cluster4_Gene_C1QA_grid_expr_rot90ccw_flipud.png?v=20260918-expr-cluster-1", label: "C1QA expression",
+      legend: [],
+    },
+  };
+  const EXPRESSION_GROUPS = {
+    "0": { clusterKey: "cluster0", genes: [["IL7R", "expr0IL7R"], ["CXCL9", "expr0CXCL9"]] },
+    "1": { clusterKey: "cluster1", genes: [["MS4A1", "expr1MS4A1"]] },
+    "3": { clusterKey: "cluster3", genes: [["MYH11", "expr3MYH11"], ["MYLK", "expr3MYLK"]] },
+    "4": { clusterKey: "cluster4", genes: [["C1QA", "expr4C1QA"]] },
   };
   const PAIRS = {
     "he-spacerec": ["he", "spacerec"],
@@ -32,7 +78,8 @@
   const freshLayer = (key) => ({ ...DEFINITIONS[key], key, url: null, width: 0, height: 0 });
   const state = {
     mode: "swipe", pair: "he-clusters", value: 50, dragging: false,
-    layers: { he: freshLayer("he"), spacerec: freshLayer("spacerec"), clusters: freshLayer("clusters") },
+    expressionGenes: { "0": "expr0IL7R", "1": "expr1MS4A1", "3": "expr3MYH11", "4": "expr4C1QA" },
+    layers: Object.fromEntries(Object.keys(DEFINITIONS).map((key) => [key, freshLayer(key)])),
   };
   const byId = (id) => document.getElementById(id);
   const elements = {
@@ -47,9 +94,15 @@
     legend: byId("legendBand"), heUpload: byId("heUpload"), spaceRecUpload: byId("spaceRecUpload"),
     reset: byId("resetButton"), export: byId("exportButton"),
     modes: [...document.querySelectorAll("[data-mode]")], pairs: [...document.querySelectorAll("[data-pair]")],
+    expressionClusters: [...document.querySelectorAll("[data-expr-cluster]")],
+    expressionGeneGroup: byId("expressionGeneGroup"), expressionGeneButtons: byId("expressionGeneButtons"),
   };
 
-  const activeKeys = () => PAIRS[state.pair];
+  const expressionCluster = () => state.pair.startsWith("expr-cluster-") ? state.pair.split("-").at(-1) : null;
+  const activeKeys = () => {
+    const cluster = expressionCluster();
+    return cluster ? [state.expressionGenes[cluster], EXPRESSION_GROUPS[cluster].clusterKey] : PAIRS[state.pair];
+  };
   const activeLayers = () => activeKeys().map((key) => state.layers[key]);
   const clamp = (value) => Math.min(100, Math.max(0, Number(value)));
 
@@ -110,6 +163,37 @@
     renderLegend();
   }
 
+  function renderExpressionControls() {
+    const cluster = expressionCluster();
+    elements.expressionClusters.forEach((button) => {
+      const active = button.dataset.exprCluster === cluster;
+      button.classList.toggle("active", active);
+      button.setAttribute("aria-pressed", String(active));
+    });
+    elements.expressionGeneButtons.replaceChildren();
+    elements.expressionGeneGroup.hidden = cluster === null;
+    if (cluster === null) return;
+    EXPRESSION_GROUPS[cluster].genes.forEach(([gene, key]) => {
+      const button = document.createElement("button");
+      button.className = `segment${state.expressionGenes[cluster] === key ? " active" : ""}`;
+      button.type = "button";
+      button.textContent = gene;
+      button.dataset.expressionGene = key;
+      button.setAttribute("aria-pressed", String(state.expressionGenes[cluster] === key));
+      button.addEventListener("click", () => setExpressionGene(cluster, key));
+      elements.expressionGeneButtons.append(button);
+    });
+  }
+
+  function setExpressionGene(cluster, key) {
+    if (!EXPRESSION_GROUPS[cluster].genes.some((entry) => entry[1] === key)) return;
+    state.expressionGenes[cluster] = key;
+    renderExpressionControls();
+    applyImages();
+    setMode(state.mode);
+    updateCompatibility();
+  }
+
   function setMode(mode) {
     state.mode = mode;
     elements.modes.forEach((button) => {
@@ -146,6 +230,7 @@
       button.classList.toggle("active", active);
       button.setAttribute("aria-pressed", String(active));
     });
+    renderExpressionControls();
     applyImages();
     setMode(state.mode);
     updateCompatibility();
@@ -212,6 +297,7 @@
     elements.spaceRecUpload.value = "";
     elements.caption.value = DEFAULT_CAPTION;
     state.value = 50;
+    state.expressionGenes = { "0": "expr0IL7R", "1": "expr1MS4A1", "3": "expr3MYH11", "4": "expr4C1QA" };
     setPair("he-clusters");
     setMode("swipe");
     updateValue(50);
@@ -362,6 +448,7 @@
 
   elements.modes.forEach((button) => button.addEventListener("click", () => setMode(button.dataset.mode)));
   elements.pairs.forEach((button) => button.addEventListener("click", () => setPair(button.dataset.pair)));
+  elements.expressionClusters.forEach((button) => button.addEventListener("click", () => setPair(`expr-cluster-${button.dataset.exprCluster}`)));
   elements.range.addEventListener("input", () => updateValue(elements.range.value));
   elements.single.addEventListener("pointerdown", (event) => {
     if (state.mode !== "swipe") return;
@@ -396,5 +483,5 @@
   setMode("swipe");
   updateValue(50);
   Object.keys(state.layers).forEach(loadDimensions);
-  window.comparisonApp = { state, setMode, setPair, updateValue, reset, exportPng };
+  window.comparisonApp = { state, setMode, setPair, setExpressionGene, updateValue, reset, exportPng };
 })();
