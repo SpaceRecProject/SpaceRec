@@ -5,7 +5,7 @@
   const DEFINITIONS = {
     he: { src: "assets/he.png", label: "H&E", legend: [] },
     spacerec: {
-      src: "assets/spacerec.png", label: "SpaceRec",
+      src: "assets/spacerec.png?v=20260917-rctd140-1", label: "SpaceRec",
       legend: [
         ["B cells", "#E41A1C"], ["T cells", "#377EB8"], ["DC", "#984EA3"],
         ["Endo", "#4DAF4A"], ["ILC", "#FF7F00"], ["Macrophages", "#A65628"],
