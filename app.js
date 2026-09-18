@@ -5,9 +5,14 @@
   const DEFINITIONS = {
     he: { src: "assets/he.png", label: "H&E", legend: [] },
     spacerec: {
-      src: "assets/spacerec.png?v=20260917-rctd140-1", label: "SpaceRec",
+      src: "assets/spacerec.png?v=20260918-rctd19-140-1", label: "SpaceRec",
       legend: [
-        ["B cells", "#E41A1C"], ["T cells", "#377EB8"], ["DC", "#984EA3"],
+        ["B_Cycling", "#E41A1C"], ["B_GC", "#FB6A4A"],
+        ["B_activated", "#CB181D"], ["B_mem", "#FC9272"],
+        ["B_naive", "#FCAE91"], ["B_plasma", "#99000D"],
+        ["T_CD4+", "#377EB8"], ["T_CD4+_naive", "#6BAED6"],
+        ["T_CD8+", "#08519C"], ["T_CD8+_naive", "#9ECAE1"],
+        ["T_Treg", "#54278F"], ["DC", "#984EA3"],
         ["Endo", "#4DAF4A"], ["ILC", "#FF7F00"], ["Macrophages", "#A65628"],
         ["Monocytes", "#F781BF"], ["NK", "#00A6D6"], ["NKT", "#FFD92F"],
         ["VSMC", "#666666"],
