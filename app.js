@@ -160,8 +160,11 @@
     const showImageLabels = expressionCluster() === null;
     elements.leftLabel.hidden = !showImageLabels;
     elements.rightLabel.hidden = !showImageLabels;
+    elements.status.hidden = !showImageLabels;
     elements.sideLeftCaption.textContent = left.label;
     elements.sideRightCaption.textContent = right.label;
+    elements.sideLeftCaption.hidden = !showImageLabels;
+    elements.sideRightCaption.hidden = !showImageLabels;
     elements.divider.setAttribute("aria-label", `${left.label} reveal position`);
     renderLegend();
   }
