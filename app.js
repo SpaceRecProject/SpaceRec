@@ -15,7 +15,7 @@
       ],
     },
     clusters: {
-      src: "assets/clusters.png?v=20260918-fig3repro-aligned-1", label: "Clusters 0–4",
+      src: "assets/clusters_fig3_aligned.png?v=20260918-fig3repro-aligned-2", label: "Clusters 0–4",
       legendTitle: "Expression clusters · 2,478 spots",
       legend: [
         ["Cluster 0", "#4682B4"], ["Cluster 1", "#FA8072"],
@@ -31,7 +31,7 @@
   };
   const freshLayer = (key) => ({ ...DEFINITIONS[key], key, url: null, width: 0, height: 0 });
   const state = {
-    mode: "swipe", pair: "he-spacerec", value: 50, dragging: false,
+    mode: "swipe", pair: "he-clusters", value: 50, dragging: false,
     layers: { he: freshLayer("he"), spacerec: freshLayer("spacerec"), clusters: freshLayer("clusters") },
   };
   const byId = (id) => document.getElementById(id);
@@ -212,7 +212,7 @@
     elements.spaceRecUpload.value = "";
     elements.caption.value = DEFAULT_CAPTION;
     state.value = 50;
-    setPair("he-spacerec");
+    setPair("he-clusters");
     setMode("swipe");
     updateValue(50);
     Object.keys(state.layers).forEach(loadDimensions);
