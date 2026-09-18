@@ -1,12 +1,12 @@
 (() => {
   "use strict";
 
-  const DEFAULT_CAPTION = "GSM9239732 · Human lymph node 2 · 50 µm DBiTplus · 19-type RCTD";
+  const DEFAULT_CAPTION = "GSM9239732 · Human lymph node 2 · 50 µm DBiTplus · 19-type RCTD · 60 px grid";
   const DEFINITIONS = {
     he: { src: "assets/he.png", label: "H&E", legend: [] },
     spacerec: {
-      src: "assets/spacerec.png?v=20260918-rctd19-140-2", label: "SpaceRec",
-      legendTitle: "SpaceRec · 19 RCTD types",
+      src: "assets/spacerec.png?v=20260918-rctd19-grid60-1", label: "SpaceRec",
+      legendTitle: "SpaceRec · 19 RCTD types · 60 px grid",
       legend: [
         ["B_Cycling", "#E41A1C"], ["B_GC", "#FB6A4A"],
         ["B_activated", "#CB181D"], ["B_mem", "#FC9272"],
