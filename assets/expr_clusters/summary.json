@@ -1,7 +1,8 @@
 {
   "task": "BRCA-style SpaceRec expression / cluster web assets",
   "gene_image_source": "resources/dbitplus/model_pred/grid_expr_genes_60px",
-  "gene_images_copied_without_modification": true,
+  "gene_image_data_source_unchanged": true,
+  "web_image_processing": "top embedded title area cleared to black for both gene and cluster panels",
   "canvas_size_wh": [
     1029,
     1163

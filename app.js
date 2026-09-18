@@ -24,43 +24,43 @@
       ],
     },
     cluster0: {
-      src: "assets/expr_clusters/Cluster0_only_grid_style.png?v=20260918-expr-cluster-2", label: "Cluster 0",
+      src: "assets/expr_clusters/Cluster0_only_grid_style.png?v=20260918-expr-cluster-3", label: "Cluster 0",
       legendTitle: "Cluster 0 only", legend: [["Cluster 0", "#4682B4"]],
     },
     cluster1: {
-      src: "assets/expr_clusters/Cluster1_only_grid_style.png?v=20260918-expr-cluster-2", label: "Cluster 1",
+      src: "assets/expr_clusters/Cluster1_only_grid_style.png?v=20260918-expr-cluster-3", label: "Cluster 1",
       legendTitle: "Cluster 1 only", legend: [["Cluster 1", "#FA8072"]],
     },
     cluster3: {
-      src: "assets/expr_clusters/Cluster3_only_grid_style.png?v=20260918-expr-cluster-2", label: "Cluster 3",
+      src: "assets/expr_clusters/Cluster3_only_grid_style.png?v=20260918-expr-cluster-3", label: "Cluster 3",
       legendTitle: "Cluster 3 only", legend: [["Cluster 3", "#B452CD"]],
     },
     cluster4: {
-      src: "assets/expr_clusters/Cluster4_only_grid_style.png?v=20260918-expr-cluster-2", label: "Cluster 4",
+      src: "assets/expr_clusters/Cluster4_only_grid_style.png?v=20260918-expr-cluster-3", label: "Cluster 4",
       legendTitle: "Cluster 4 only", legend: [["Cluster 4", "#F0E68C"]],
     },
     expr0IL7R: {
-      src: "assets/expr_clusters/Cluster0_Gene_IL7R_grid_expr_rot90ccw_flipud.png?v=20260918-expr-cluster-1", label: "IL7R expression",
+      src: "assets/expr_clusters/Cluster0_Gene_IL7R_grid_expr_rot90ccw_flipud.png?v=20260918-expr-cluster-3", label: "IL7R expression",
       legend: [],
     },
     expr0CXCL9: {
-      src: "assets/expr_clusters/Cluster0_Gene_CXCL9_grid_expr_rot90ccw_flipud.png?v=20260918-expr-cluster-1", label: "CXCL9 expression",
+      src: "assets/expr_clusters/Cluster0_Gene_CXCL9_grid_expr_rot90ccw_flipud.png?v=20260918-expr-cluster-3", label: "CXCL9 expression",
       legend: [],
     },
     expr1MS4A1: {
-      src: "assets/expr_clusters/Cluster1_Gene_MS4A1_grid_expr_rot90ccw_flipud.png?v=20260918-expr-cluster-1", label: "MS4A1 expression",
+      src: "assets/expr_clusters/Cluster1_Gene_MS4A1_grid_expr_rot90ccw_flipud.png?v=20260918-expr-cluster-3", label: "MS4A1 expression",
       legend: [],
     },
     expr3MYH11: {
-      src: "assets/expr_clusters/Cluster3_Gene_MYH11_grid_expr_rot90ccw_flipud.png?v=20260918-expr-cluster-1", label: "MYH11 expression",
+      src: "assets/expr_clusters/Cluster3_Gene_MYH11_grid_expr_rot90ccw_flipud.png?v=20260918-expr-cluster-3", label: "MYH11 expression",
       legend: [],
     },
     expr3MYLK: {
-      src: "assets/expr_clusters/Cluster3_Gene_MYLK_grid_expr_rot90ccw_flipud.png?v=20260918-expr-cluster-1", label: "MYLK expression",
+      src: "assets/expr_clusters/Cluster3_Gene_MYLK_grid_expr_rot90ccw_flipud.png?v=20260918-expr-cluster-3", label: "MYLK expression",
       legend: [],
     },
     expr4C1QA: {
-      src: "assets/expr_clusters/Cluster4_Gene_C1QA_grid_expr_rot90ccw_flipud.png?v=20260918-expr-cluster-1", label: "C1QA expression",
+      src: "assets/expr_clusters/Cluster4_Gene_C1QA_grid_expr_rot90ccw_flipud.png?v=20260918-expr-cluster-3", label: "C1QA expression",
       legend: [],
     },
   };
@@ -157,6 +157,9 @@
     elements.sideRightImage.src = right.src;
     elements.leftLabel.textContent = left.label;
     elements.rightLabel.textContent = right.label;
+    const showImageLabels = expressionCluster() === null;
+    elements.leftLabel.hidden = !showImageLabels;
+    elements.rightLabel.hidden = !showImageLabels;
     elements.sideLeftCaption.textContent = left.label;
     elements.sideRightCaption.textContent = right.label;
     elements.divider.setAttribute("aria-label", `${left.label} reveal position`);
