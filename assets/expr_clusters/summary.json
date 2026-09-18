@@ -8,6 +8,7 @@
   ],
   "orientation": "counterclockwise 90 degrees, then top-bottom flip",
   "cluster_background": "only the selected cluster is colored; all other clusters are black",
+  "cluster_colorbar": false,
   "clusters": {
     "0": {
       "cluster_asset": "Cluster0_only_grid_style.png",

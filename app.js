@@ -24,19 +24,19 @@
       ],
     },
     cluster0: {
-      src: "assets/expr_clusters/Cluster0_only_grid_style.png?v=20260918-expr-cluster-1", label: "Cluster 0",
+      src: "assets/expr_clusters/Cluster0_only_grid_style.png?v=20260918-expr-cluster-2", label: "Cluster 0",
       legendTitle: "Cluster 0 only", legend: [["Cluster 0", "#4682B4"]],
     },
     cluster1: {
-      src: "assets/expr_clusters/Cluster1_only_grid_style.png?v=20260918-expr-cluster-1", label: "Cluster 1",
+      src: "assets/expr_clusters/Cluster1_only_grid_style.png?v=20260918-expr-cluster-2", label: "Cluster 1",
       legendTitle: "Cluster 1 only", legend: [["Cluster 1", "#FA8072"]],
     },
     cluster3: {
-      src: "assets/expr_clusters/Cluster3_only_grid_style.png?v=20260918-expr-cluster-1", label: "Cluster 3",
+      src: "assets/expr_clusters/Cluster3_only_grid_style.png?v=20260918-expr-cluster-2", label: "Cluster 3",
       legendTitle: "Cluster 3 only", legend: [["Cluster 3", "#B452CD"]],
     },
     cluster4: {
-      src: "assets/expr_clusters/Cluster4_only_grid_style.png?v=20260918-expr-cluster-1", label: "Cluster 4",
+      src: "assets/expr_clusters/Cluster4_only_grid_style.png?v=20260918-expr-cluster-2", label: "Cluster 4",
       legendTitle: "Cluster 4 only", legend: [["Cluster 4", "#F0E68C"]],
     },
     expr0IL7R: {
