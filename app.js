@@ -1,11 +1,12 @@
 (() => {
   "use strict";
 
-  const DEFAULT_CAPTION = "GSM9239732 · Human lymph node 2 · 50 µm DBiTplus";
+  const DEFAULT_CAPTION = "GSM9239732 · Human lymph node 2 · 50 µm DBiTplus · 19-type RCTD";
   const DEFINITIONS = {
     he: { src: "assets/he.png", label: "H&E", legend: [] },
     spacerec: {
-      src: "assets/spacerec.png?v=20260918-rctd19-140-1", label: "SpaceRec",
+      src: "assets/spacerec.png?v=20260918-rctd19-140-2", label: "SpaceRec",
+      legendTitle: "SpaceRec · 19 RCTD types",
       legend: [
         ["B_Cycling", "#E41A1C"], ["B_GC", "#FB6A4A"],
         ["B_activated", "#CB181D"], ["B_mem", "#FC9272"],
@@ -82,7 +83,7 @@
       const group = document.createElement("div");
       group.className = "legend-group";
       const title = document.createElement("h2");
-      title.textContent = layer.label;
+      title.textContent = layer.legendTitle || layer.label;
       const list = document.createElement("div");
       list.className = "legend-list";
       layer.legend.forEach(([label, color]) => {
