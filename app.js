@@ -2,7 +2,7 @@
   "use strict";
 
   const DEFAULT_CAPTION = "GSM9239732 · Human lymph node 2 · 50 µm DBiTplus · 10-type RCTD · 60 px grid";
-  const CODEX_ASSET_VERSION = "20260923-codex-major7-marker-1";
+  const CODEX_ASSET_VERSION = "20260923-codex-major7-marker-2";
   const codexAsset = (name) => window.CODEX_EMBEDDED_ASSETS?.[name]
     || `assets/codex_major7_marker/${name}?v=${CODEX_ASSET_VERSION}`;
   const CODEX_MAJOR_LEGEND = [
@@ -86,9 +86,9 @@
     DEFINITIONS[group.cellKey] = {
       src: codexAsset(`cells_${majorType}.png`),
       label: `${group.label} cells`,
-      legendTitle: `${group.label} selected · other cells dimmed`,
+      legendTitle: `${group.label} selected`,
       legend: CODEX_MAJOR_LEGEND,
-      width: 8058, height: 7932,
+      width: 7932, height: 8058,
     };
     group.genes.forEach((gene) => {
       DEFINITIONS[`codexGene${gene}`] = {
@@ -96,7 +96,7 @@
         label: `${gene} spot expression`,
         legendTitle: `${gene} · raw DBiT spot expression`,
         legend: [["Low", "#000004"], ["High", "#FCFDBF"]],
-        width: 8058, height: 7932,
+        width: 7932, height: 8058,
       };
     });
   });

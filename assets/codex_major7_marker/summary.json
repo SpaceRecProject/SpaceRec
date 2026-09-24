@@ -3,13 +3,13 @@
   "source_dbit_spot_expression": "resources/dbitplus/spatial/GSM9239732_Human_lymph_node_2_50um/GSM9239732_LN50UM_stdata_names.tsv.gz",
   "coordinate_system": "x image = y_tform; y image = x_tform; y increases downward",
   "canvas_size_wh": [
-    8058,
-    7932
+    7932,
+    8058
   ],
   "n_cells": 27510,
   "n_spots_expression": 2500,
   "n_spots_with_codex_cells": 2280,
-  "cell_layer": "selected major type in its palette color; all other cells dark; transparent background",
+  "cell_layer": "selected major type only in its palette color; all other cells transparent",
   "gene_layer": "raw DBiT spot counts; log1p; per-gene positive 99th percentile scaling; magma",
   "major_type_order": [
     "CD4",
@@ -265,16 +265,23 @@
   },
   "spot_grid_fit": {
     "x_intercept_i_j": [
-      -122.24177596288031,
-      -0.00022695765612468222,
-      162.76731664216652
-    ],
-    "y_intercept_i_j": [
       -120.24866519248322,
       160.22311624309316,
       -8.796866117677382e-05
     ],
+    "y_intercept_i_j": [
+      -122.24177596288031,
+      -0.00022695765612468222,
+      162.76731664216652
+    ],
     "observed_spots_use_official_bounds": 2280,
     "missing_spots_use_fitted_regular_grid": 220
+  },
+  "alignment_qc": {
+    "spot_bounds_image_axes": "x=min_col..max_col; y=min_row..max_row",
+    "cell_centers_image_axes": "x=y_tform; y=x_tform",
+    "cell_centers_inside_own_spot": 27157,
+    "cell_centers_total": 27510,
+    "cell_centers_inside_own_spot_fraction": 0.987168302435478
   }
 }
