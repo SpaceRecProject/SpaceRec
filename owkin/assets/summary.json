@@ -16,7 +16,7 @@
   "grid_size_px": [
     3
   ],
-  "overlay_alpha": 0.68,
+  "grid_layer": "pure class RGB inside each prediction bbox; transparent elsewhere",
   "label_order": [
     "Cancer Epithelial",
     "Normal Epithelial",
@@ -53,6 +53,6 @@
   "annotations_embedded_in_images": false,
   "outputs": {
     "he": "he.png",
-    "grid_type_on_he": "grid_type_on_he.png"
+    "grid_type": "grid_type.png"
   }
 }

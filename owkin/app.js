@@ -3,7 +3,7 @@
 
   const DEFAULTS = {
     he: { src: "assets/he.png?v=20260924-owkin-grid-1", label: "H&E", width: 3000, height: 3000, url: null },
-    prediction: { src: "assets/grid_type_on_he.png?v=20260924-owkin-grid-1", label: "Grid type prediction", width: 3000, height: 3000, url: null },
+    prediction: { src: "assets/grid_type.png?v=20260924-owkin-grid-3", label: "Grid type prediction", width: 3000, height: 3000, url: null },
   };
   const DEFAULT_CAPTION = "CAVG10673 · Owkin Visium · SpaceRec Stage 1 · 3 px grid";
   const cloneLayer = (key) => ({ ...DEFAULTS[key] });
