@@ -1,0 +1,102 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Owkin H&amp;E / Grid Type Prediction</title>
+  <link rel="stylesheet" href="styles.css?v=20260924-owkin-grid-1">
+</head>
+<body>
+  <header class="app-header">
+    <div>
+      <p class="eyebrow">OWKIN · CAVG10673</p>
+      <h1>H&amp;E / grid type prediction</h1>
+    </div>
+    <button class="button primary" id="exportButton" type="button">Export PNG</button>
+  </header>
+
+  <main>
+    <section class="toolbar" aria-label="Comparison controls">
+      <div class="control-group mode-group">
+        <span class="control-label">View</span>
+        <div class="segmented" role="group" aria-label="Comparison mode">
+          <button class="segment active" type="button" data-mode="swipe" aria-pressed="true">Swipe</button>
+          <button class="segment" type="button" data-mode="opacity" aria-pressed="false">Opacity</button>
+          <button class="segment" type="button" data-mode="side" aria-pressed="false">Side by side</button>
+        </div>
+      </div>
+
+      <div class="control-group range-group" id="rangeGroup">
+        <label class="control-label" id="rangeLabel" for="comparisonRange">Position</label>
+        <input id="comparisonRange" type="range" min="0" max="100" value="50" step="1">
+        <output id="rangeOutput" for="comparisonRange">50%</output>
+      </div>
+
+      <div class="control-group file-group">
+        <span class="control-label">Images</span>
+        <label class="button file-button" for="heUpload">Choose H&amp;E</label>
+        <input id="heUpload" type="file" accept="image/*">
+        <label class="button file-button" for="predictionUpload">Choose prediction</label>
+        <input id="predictionUpload" type="file" accept="image/*">
+      </div>
+
+      <button class="button" id="resetButton" type="button">Reset</button>
+    </section>
+
+    <div class="status-row">
+      <p id="imageStatus" aria-live="polite">H&amp;E 3000×3000 · Grid type prediction 3000×3000</p>
+      <p class="warning" id="imageWarning" role="alert" hidden></p>
+    </div>
+
+    <section class="viewer-wrap" aria-label="Image comparison">
+      <div class="comparison-stage mode-swipe" id="comparisonStage">
+        <div class="single-view" id="singleView">
+          <img class="image-layer base-layer" id="rightImage" src="assets/grid_type_on_he.png?v=20260924-owkin-grid-1" alt="Grid type prediction on H&amp;E" draggable="false">
+          <div class="image-layer clipped-layer" id="comparisonClip">
+            <img id="leftImage" src="assets/he.png?v=20260924-owkin-grid-1" alt="H&amp;E histology" draggable="false">
+          </div>
+          <div class="divider" id="divider" role="slider" tabindex="0" aria-label="H&amp;E reveal position" aria-valuemin="0" aria-valuemax="100" aria-valuenow="50">
+            <span class="divider-line"></span>
+            <span class="divider-handle" aria-hidden="true"><span>‹</span><span>›</span></span>
+          </div>
+        </div>
+
+        <div class="side-view" id="sideView" hidden>
+          <figure>
+            <div class="side-image"><img id="sideLeftImage" src="assets/he.png?v=20260924-owkin-grid-1" alt="H&amp;E histology" draggable="false"></div>
+            <figcaption>H&amp;E</figcaption>
+          </figure>
+          <figure>
+            <div class="side-image"><img id="sideRightImage" src="assets/grid_type_on_he.png?v=20260924-owkin-grid-1" alt="Grid type prediction on H&amp;E" draggable="false"></div>
+            <figcaption>Grid type prediction</figcaption>
+          </figure>
+        </div>
+      </div>
+    </section>
+
+    <section class="legend-band" aria-label="Grid type color legend">
+      <div class="legend-group">
+        <h2>Grid type</h2>
+        <div class="legend-list">
+          <span class="legend-item"><i style="background:#E41A1C"></i>Cancer Epithelial (126,164)</span>
+          <span class="legend-item"><i style="background:#4DAF4A"></i>Normal Epithelial (4,533)</span>
+          <span class="legend-item"><i style="background:#FF7F00"></i>T cells (721)</span>
+          <span class="legend-item"><i style="background:#377EB8"></i>B / Plasma (269)</span>
+          <span class="legend-item"><i style="background:#984EA3"></i>NK (110)</span>
+          <span class="legend-item"><i style="background:#A65628"></i>Myeloid (20,493)</span>
+          <span class="legend-item"><i style="background:#F781BF"></i>Dendritic (863)</span>
+          <span class="legend-item"><i style="background:#B3A400"></i>Fibroblast / PVL (54,412)</span>
+          <span class="legend-item"><i style="background:#00A9CF"></i>Endothelial (4,162)</span>
+        </div>
+      </div>
+    </section>
+
+    <section class="caption-band">
+      <label for="captionInput">Sample ID or description</label>
+      <input id="captionInput" type="text" value="CAVG10673 · Owkin Visium · SpaceRec Stage 1 · 3 px grid" maxlength="180">
+    </section>
+  </main>
+
+  <script src="app.js?v=20260924-owkin-grid-1"></script>
+</body>
+</html>

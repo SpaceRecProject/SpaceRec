@@ -1,0 +1,58 @@
+{
+  "status": "complete",
+  "source_he": "resources/brent/Owkin/CAVG10673_2025-03-25_09-36-55_2025-03-25_09-34-09_V44L29-386_D1_PI_R_109a_vis.png",
+  "source_prediction": "resources/brent/Owkin/model_pred/stage1_grid_type.csv",
+  "canvas_size_wh": [
+    3000,
+    3000
+  ],
+  "n_grids": 211727,
+  "grid_extent_xyxy": [
+    324,
+    804,
+    1677,
+    2226
+  ],
+  "grid_size_px": [
+    3
+  ],
+  "overlay_alpha": 0.68,
+  "label_order": [
+    "Cancer Epithelial",
+    "Normal Epithelial",
+    "T cells",
+    "B_Plasma",
+    "NK",
+    "Myeloid",
+    "Dendritic",
+    "Fibroblast_PVL",
+    "Endothelial"
+  ],
+  "colors": {
+    "Cancer Epithelial": "#E41A1C",
+    "Normal Epithelial": "#4DAF4A",
+    "T cells": "#FF7F00",
+    "B_Plasma": "#377EB8",
+    "NK": "#984EA3",
+    "Myeloid": "#A65628",
+    "Dendritic": "#F781BF",
+    "Fibroblast_PVL": "#B3A400",
+    "Endothelial": "#00A9CF"
+  },
+  "counts": {
+    "Cancer Epithelial": 126164,
+    "Normal Epithelial": 4533,
+    "T cells": 721,
+    "B_Plasma": 269,
+    "NK": 110,
+    "Myeloid": 20493,
+    "Dendritic": 863,
+    "Fibroblast_PVL": 54412,
+    "Endothelial": 4162
+  },
+  "annotations_embedded_in_images": false,
+  "outputs": {
+    "he": "he.png",
+    "grid_type_on_he": "grid_type_on_he.png"
+  }
+}
