@@ -71,7 +71,10 @@ main {
 }
 
 .pair-group { width: 100%; }
-.pair-segmented { grid-template-columns: repeat(3, minmax(0, auto)); }
+.pair-segmented { grid-template-columns: repeat(2, minmax(0, auto)); }
+.type-group, .marker-group { width: 100%; }
+.type-segmented { grid-template-columns: repeat(9, minmax(0, auto)); }
+.marker-segmented { display: inline-flex; }
 .expr-cluster-group { width: 100%; }
 .expr-cluster-segmented { grid-template-columns: repeat(4, minmax(0, auto)); }
 .gene-group { width: 100%; }
@@ -102,6 +105,8 @@ main {
 .segmented.gene-segmented { display: inline-flex; }
 .segmented.codex-major-segmented { grid-template-columns: repeat(7, minmax(0, auto)); }
 .segmented.codex-gene-segmented { display: inline-flex; }
+.segmented.type-segmented { grid-template-columns: repeat(9, minmax(0, auto)); }
+.segmented.marker-segmented { display: inline-flex; }
 
 .segment {
   min-height: 36px;
@@ -264,12 +269,14 @@ input[type="file"] {
   main { padding: 12px 10px 24px; }
   .toolbar { align-items: stretch; gap: 10px; }
   .mode-group, .range-group, .file-group { width: 100%; }
-  .pair-group, .expr-cluster-group, .gene-group, .codex-major-group, .codex-gene-group { align-items: stretch; flex-direction: column; }
-  .pair-segmented { width: 100%; grid-template-columns: repeat(3, minmax(0, 1fr)); }
+  .pair-group, .expr-cluster-group, .gene-group, .codex-major-group, .codex-gene-group, .type-group, .marker-group { align-items: stretch; flex-direction: column; }
+  .pair-segmented { width: 100%; grid-template-columns: repeat(2, minmax(0, 1fr)); }
   .segmented.expr-cluster-segmented { width: 100%; grid-template-columns: repeat(4, minmax(0, 1fr)); }
   .segmented.gene-segmented { width: 100%; display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); }
   .segmented.codex-major-segmented { width: 100%; grid-template-columns: repeat(4, minmax(0, 1fr)); }
   .segmented.codex-gene-segmented { width: 100%; display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); }
+  .segmented.type-segmented { width: 100%; grid-template-columns: repeat(3, minmax(0, 1fr)); }
+  .segmented.marker-segmented { width: 100%; display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); }
   .pair-segmented .segment, .expr-cluster-segmented .segment, .codex-major-segmented .segment { white-space: normal; }
   .mode-group { align-items: stretch; flex-direction: column; }
   .segmented { width: 100%; grid-template-columns: repeat(3, 1fr); }

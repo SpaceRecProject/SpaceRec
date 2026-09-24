@@ -1,0 +1,287 @@
+{
+  "status": "complete",
+  "canvas_size_wh": [
+    3000,
+    3000
+  ],
+  "background": "black",
+  "n_grids": 211727,
+  "grid_size_px": 3,
+  "grid_extent_xyxy": [
+    324,
+    804,
+    1677,
+    2226
+  ],
+  "type_order": [
+    "Cancer Epithelial",
+    "Normal Epithelial",
+    "T cells",
+    "B_Plasma",
+    "NK",
+    "Myeloid",
+    "Dendritic",
+    "Fibroblast_PVL",
+    "Endothelial"
+  ],
+  "type_colors": {
+    "Cancer Epithelial": "#E41A1C",
+    "Normal Epithelial": "#4DAF4A",
+    "T cells": "#FF7F00",
+    "B_Plasma": "#377EB8",
+    "NK": "#984EA3",
+    "Myeloid": "#A65628",
+    "Dendritic": "#F781BF",
+    "Fibroblast_PVL": "#B3A400",
+    "Endothelial": "#00A9CF"
+  },
+  "type_counts": {
+    "Cancer Epithelial": 126164,
+    "Normal Epithelial": 4533,
+    "T cells": 721,
+    "B_Plasma": 269,
+    "NK": 110,
+    "Myeloid": 20493,
+    "Dendritic": 863,
+    "Fibroblast_PVL": 54412,
+    "Endothelial": 4162
+  },
+  "markers": {
+    "Cancer Epithelial": [
+      "CEACAM6",
+      "KRT19"
+    ],
+    "Normal Epithelial": [
+      "KRT5",
+      "KRT15"
+    ],
+    "T cells": [
+      "CD3D",
+      "TRAC"
+    ],
+    "B_Plasma": [
+      "MS4A1",
+      "JCHAIN"
+    ],
+    "NK": [
+      "NKG7",
+      "GNLY"
+    ],
+    "Myeloid": [
+      "C1QA",
+      "CD163"
+    ],
+    "Dendritic": [
+      "CD1C",
+      "FCER1A"
+    ],
+    "Fibroblast_PVL": [
+      "COL1A1",
+      "RGS5"
+    ],
+    "Endothelial": [
+      "VWF",
+      "CLDN5"
+    ]
+  },
+  "expression_normalization": "per_gene_global_zscore_clipped_to_minus2_plus2",
+  "expression_colormap": "magma",
+  "expression_color_limits": [
+    -2.0,
+    2.0
+  ],
+  "type_assets": {
+    "Cancer Epithelial": "type_Cancer_Epithelial.png",
+    "Normal Epithelial": "type_Normal_Epithelial.png",
+    "T cells": "type_T_cells.png",
+    "B_Plasma": "type_B_Plasma.png",
+    "NK": "type_NK.png",
+    "Myeloid": "type_Myeloid.png",
+    "Dendritic": "type_Dendritic.png",
+    "Fibroblast_PVL": "type_Fibroblast_PVL.png",
+    "Endothelial": "type_Endothelial.png"
+  },
+  "gene_assets": {
+    "CEACAM6": {
+      "group": "Cancer Epithelial",
+      "file": "gene_Cancer_Epithelial_CEACAM6.png",
+      "global_z_mean": 0.14755215863836976,
+      "global_z_std": 0.15131572041096705,
+      "color_limits": [
+        -2.0,
+        2.0
+      ]
+    },
+    "KRT19": {
+      "group": "Cancer Epithelial",
+      "file": "gene_Cancer_Epithelial_KRT19.png",
+      "global_z_mean": 0.5963744522131879,
+      "global_z_std": 0.5535389918264353,
+      "color_limits": [
+        -2.0,
+        2.0
+      ]
+    },
+    "KRT5": {
+      "group": "Normal Epithelial",
+      "file": "gene_Normal_Epithelial_KRT5.png",
+      "global_z_mean": 0.0022974412394160507,
+      "global_z_std": 0.0018102980918289404,
+      "color_limits": [
+        -2.0,
+        2.0
+      ]
+    },
+    "KRT15": {
+      "group": "Normal Epithelial",
+      "file": "gene_Normal_Epithelial_KRT15.png",
+      "global_z_mean": 0.0024215432545095393,
+      "global_z_std": 0.002697371586424417,
+      "color_limits": [
+        -2.0,
+        2.0
+      ]
+    },
+    "CD3D": {
+      "group": "T cells",
+      "file": "gene_T_cells_CD3D.png",
+      "global_z_mean": 0.003295390126826471,
+      "global_z_std": 0.008079955736316556,
+      "color_limits": [
+        -2.0,
+        2.0
+      ]
+    },
+    "TRAC": {
+      "group": "T cells",
+      "file": "gene_T_cells_TRAC.png",
+      "global_z_mean": 0.01909710859100135,
+      "global_z_std": 0.03384775618632398,
+      "color_limits": [
+        -2.0,
+        2.0
+      ]
+    },
+    "MS4A1": {
+      "group": "B_Plasma",
+      "file": "gene_B_Plasma_MS4A1.png",
+      "global_z_mean": 0.0012610155889627235,
+      "global_z_std": 0.005345404825092994,
+      "color_limits": [
+        -2.0,
+        2.0
+      ]
+    },
+    "JCHAIN": {
+      "group": "B_Plasma",
+      "file": "gene_B_Plasma_JCHAIN.png",
+      "global_z_mean": 0.01179148640420641,
+      "global_z_std": 0.06644139059011032,
+      "color_limits": [
+        -2.0,
+        2.0
+      ]
+    },
+    "NKG7": {
+      "group": "NK",
+      "file": "gene_NK_NKG7.png",
+      "global_z_mean": 0.0027257665333657384,
+      "global_z_std": 0.006025842288074258,
+      "color_limits": [
+        -2.0,
+        2.0
+      ]
+    },
+    "GNLY": {
+      "group": "NK",
+      "file": "gene_NK_GNLY.png",
+      "global_z_mean": 0.0019835771283123246,
+      "global_z_std": 0.004070679249286587,
+      "color_limits": [
+        -2.0,
+        2.0
+      ]
+    },
+    "C1QA": {
+      "group": "Myeloid",
+      "file": "gene_Myeloid_C1QA.png",
+      "global_z_mean": 0.11844763769045996,
+      "global_z_std": 0.23475568093625188,
+      "color_limits": [
+        -2.0,
+        2.0
+      ]
+    },
+    "CD163": {
+      "group": "Myeloid",
+      "file": "gene_Myeloid_CD163.png",
+      "global_z_mean": 0.03061165970796111,
+      "global_z_std": 0.06133197308531794,
+      "color_limits": [
+        -2.0,
+        2.0
+      ]
+    },
+    "CD1C": {
+      "group": "Dendritic",
+      "file": "gene_Dendritic_CD1C.png",
+      "global_z_mean": 0.0016831757907963985,
+      "global_z_std": 0.0027201174774553034,
+      "color_limits": [
+        -2.0,
+        2.0
+      ]
+    },
+    "FCER1A": {
+      "group": "Dendritic",
+      "file": "gene_Dendritic_FCER1A.png",
+      "global_z_mean": 0.004480471853534563,
+      "global_z_std": 0.007071135154550773,
+      "color_limits": [
+        -2.0,
+        2.0
+      ]
+    },
+    "COL1A1": {
+      "group": "Fibroblast_PVL",
+      "file": "gene_Fibroblast_PVL_COL1A1.png",
+      "global_z_mean": 1.8073448777215075,
+      "global_z_std": 3.427518021311588,
+      "color_limits": [
+        -2.0,
+        2.0
+      ]
+    },
+    "RGS5": {
+      "group": "Fibroblast_PVL",
+      "file": "gene_Fibroblast_PVL_RGS5.png",
+      "global_z_mean": 0.1142385322700804,
+      "global_z_std": 0.18644114710954682,
+      "color_limits": [
+        -2.0,
+        2.0
+      ]
+    },
+    "VWF": {
+      "group": "Endothelial",
+      "file": "gene_Endothelial_VWF.png",
+      "global_z_mean": 0.0217035919997126,
+      "global_z_std": 0.03752666844806411,
+      "color_limits": [
+        -2.0,
+        2.0
+      ]
+    },
+    "CLDN5": {
+      "group": "Endothelial",
+      "file": "gene_Endothelial_CLDN5.png",
+      "global_z_mean": 0.010055677529087825,
+      "global_z_std": 0.016893898536137333,
+      "color_limits": [
+        -2.0,
+        2.0
+      ]
+    }
+  },
+  "embedded_titles_axes_legends_or_colorbars": false
+}
