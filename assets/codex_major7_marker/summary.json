@@ -1,0 +1,280 @@
+{
+  "source_codex_cells": "resources/dbitplus/spatial/GSM9239732_Human_lymph_node_2_50um/GSM9239732_CODEXfeature_labeled_aligned_inspots_50um.csv.gz",
+  "source_dbit_spot_expression": "resources/dbitplus/spatial/GSM9239732_Human_lymph_node_2_50um/GSM9239732_LN50UM_stdata_names.tsv.gz",
+  "coordinate_system": "x image = y_tform; y image = x_tform; y increases downward",
+  "canvas_size_wh": [
+    8058,
+    7932
+  ],
+  "n_cells": 27510,
+  "n_spots_expression": 2500,
+  "n_spots_with_codex_cells": 2280,
+  "cell_layer": "selected major type in its palette color; all other cells dark; transparent background",
+  "gene_layer": "raw DBiT spot counts; log1p; per-gene positive 99th percentile scaling; magma",
+  "major_type_order": [
+    "CD4",
+    "CD8",
+    "Bcell",
+    "NK",
+    "Macrophage",
+    "DC",
+    "Vascular"
+  ],
+  "major_type_colors": {
+    "CD4": "#4169E1",
+    "CD8": "#008000",
+    "Bcell": "#FFA500",
+    "NK": "#A52A2A",
+    "Macrophage": "#E75480",
+    "DC": "#FF0000",
+    "Vascular": "#00BFC4"
+  },
+  "major_type_counts": {
+    "CD4": 8172,
+    "CD8": 4457,
+    "Bcell": 8554,
+    "NK": 3044,
+    "Macrophage": 951,
+    "DC": 1246,
+    "Vascular": 1086
+  },
+  "markers": {
+    "CD4": [
+      "IL7R",
+      "TCF7",
+      "CCR7"
+    ],
+    "CD8": [
+      "CD8A",
+      "CD8B",
+      "CCL5"
+    ],
+    "Bcell": [
+      "MS4A1",
+      "CD74",
+      "CD22"
+    ],
+    "NK": [
+      "GNLY",
+      "KLRD1",
+      "GZMB"
+    ],
+    "Macrophage": [
+      "C1QA",
+      "C1QB",
+      "MARCO"
+    ],
+    "DC": [
+      "CD1C",
+      "CLEC10A",
+      "CLEC9A"
+    ],
+    "Vascular": [
+      "PECAM1",
+      "CLDN5",
+      "MYH11",
+      "MYLK"
+    ]
+  },
+  "cell_assets": {
+    "CD4": "cells_CD4.png",
+    "CD8": "cells_CD8.png",
+    "Bcell": "cells_Bcell.png",
+    "NK": "cells_NK.png",
+    "Macrophage": "cells_Macrophage.png",
+    "DC": "cells_DC.png",
+    "Vascular": "cells_Vascular.png"
+  },
+  "gene_assets": {
+    "IL7R": {
+      "file": "gene_IL7R.png",
+      "raw_min": 0.0,
+      "raw_max": 10.0,
+      "raw_total": 2946.0,
+      "detected_spots": 1469,
+      "log1p_positive_q99": 2.0794415416798357
+    },
+    "TCF7": {
+      "file": "gene_TCF7.png",
+      "raw_min": 0.0,
+      "raw_max": 5.0,
+      "raw_total": 709.0,
+      "detected_spots": 583,
+      "log1p_positive_q99": 1.3862943611198906
+    },
+    "CCR7": {
+      "file": "gene_CCR7.png",
+      "raw_min": 0.0,
+      "raw_max": 4.0,
+      "raw_total": 436.0,
+      "detected_spots": 378,
+      "log1p_positive_q99": 1.3862943611198906
+    },
+    "CD8A": {
+      "file": "gene_CD8A.png",
+      "raw_min": 0.0,
+      "raw_max": 2.0,
+      "raw_total": 193.0,
+      "detected_spots": 184,
+      "log1p_positive_q99": 1.0986122886681096
+    },
+    "CD8B": {
+      "file": "gene_CD8B.png",
+      "raw_min": 0.0,
+      "raw_max": 2.0,
+      "raw_total": 78.0,
+      "detected_spots": 75,
+      "log1p_positive_q99": 1.0986122886681096
+    },
+    "CCL5": {
+      "file": "gene_CCL5.png",
+      "raw_min": 0.0,
+      "raw_max": 3.0,
+      "raw_total": 71.0,
+      "detected_spots": 65,
+      "log1p_positive_q99": 1.2021778347507506
+    },
+    "MS4A1": {
+      "file": "gene_MS4A1.png",
+      "raw_min": 0.0,
+      "raw_max": 15.0,
+      "raw_total": 3766.0,
+      "detected_spots": 1561,
+      "log1p_positive_q99": 2.302585092994046
+    },
+    "CD74": {
+      "file": "gene_CD74.png",
+      "raw_min": 0.0,
+      "raw_max": 12.0,
+      "raw_total": 2821.0,
+      "detected_spots": 1489,
+      "log1p_positive_q99": 1.9459101490553132
+    },
+    "CD22": {
+      "file": "gene_CD22.png",
+      "raw_min": 0.0,
+      "raw_max": 9.0,
+      "raw_total": 2122.0,
+      "detected_spots": 1206,
+      "log1p_positive_q99": 1.9459101490553132
+    },
+    "GNLY": {
+      "file": "gene_GNLY.png",
+      "raw_min": 0.0,
+      "raw_max": 2.0,
+      "raw_total": 120.0,
+      "detected_spots": 115,
+      "log1p_positive_q99": 1.0986122886681096
+    },
+    "KLRD1": {
+      "file": "gene_KLRD1.png",
+      "raw_min": 0.0,
+      "raw_max": 3.0,
+      "raw_total": 126.0,
+      "detected_spots": 121,
+      "log1p_positive_q99": 1.0986122886681096
+    },
+    "GZMB": {
+      "file": "gene_GZMB.png",
+      "raw_min": 0.0,
+      "raw_max": 4.0,
+      "raw_total": 137.0,
+      "detected_spots": 125,
+      "log1p_positive_q99": 1.3172506637314645
+    },
+    "C1QA": {
+      "file": "gene_C1QA.png",
+      "raw_min": 0.0,
+      "raw_max": 12.0,
+      "raw_total": 3891.0,
+      "detected_spots": 1727,
+      "log1p_positive_q99": 2.1972245773362196
+    },
+    "C1QB": {
+      "file": "gene_C1QB.png",
+      "raw_min": 0.0,
+      "raw_max": 13.0,
+      "raw_total": 2442.0,
+      "detected_spots": 1379,
+      "log1p_positive_q99": 1.9459101490553132
+    },
+    "MARCO": {
+      "file": "gene_MARCO.png",
+      "raw_min": 0.0,
+      "raw_max": 4.0,
+      "raw_total": 361.0,
+      "detected_spots": 288,
+      "log1p_positive_q99": 1.6094379124341003
+    },
+    "CD1C": {
+      "file": "gene_CD1C.png",
+      "raw_min": 0.0,
+      "raw_max": 1.0,
+      "raw_total": 17.0,
+      "detected_spots": 17,
+      "log1p_positive_q99": 0.6931471805599453
+    },
+    "CLEC10A": {
+      "file": "gene_CLEC10A.png",
+      "raw_min": 0.0,
+      "raw_max": 1.0,
+      "raw_total": 46.0,
+      "detected_spots": 46,
+      "log1p_positive_q99": 0.6931471805599453
+    },
+    "CLEC9A": {
+      "file": "gene_CLEC9A.png",
+      "raw_min": 0.0,
+      "raw_max": 3.0,
+      "raw_total": 100.0,
+      "detected_spots": 95,
+      "log1p_positive_q99": 1.3862943611198906
+    },
+    "PECAM1": {
+      "file": "gene_PECAM1.png",
+      "raw_min": 0.0,
+      "raw_max": 5.0,
+      "raw_total": 1056.0,
+      "detected_spots": 790,
+      "log1p_positive_q99": 1.6094379124341003
+    },
+    "CLDN5": {
+      "file": "gene_CLDN5.png",
+      "raw_min": 0.0,
+      "raw_max": 5.0,
+      "raw_total": 927.0,
+      "detected_spots": 723,
+      "log1p_positive_q99": 1.3862943611198906
+    },
+    "MYH11": {
+      "file": "gene_MYH11.png",
+      "raw_min": 0.0,
+      "raw_max": 19.0,
+      "raw_total": 1804.0,
+      "detected_spots": 1008,
+      "log1p_positive_q99": 2.302585092994046
+    },
+    "MYLK": {
+      "file": "gene_MYLK.png",
+      "raw_min": 0.0,
+      "raw_max": 12.0,
+      "raw_total": 1762.0,
+      "detected_spots": 1098,
+      "log1p_positive_q99": 1.9459101490553132
+    }
+  },
+  "spot_grid_fit": {
+    "x_intercept_i_j": [
+      -122.24177596288031,
+      -0.00022695765612468222,
+      162.76731664216652
+    ],
+    "y_intercept_i_j": [
+      -120.24866519248322,
+      160.22311624309316,
+      -8.796866117677382e-05
+    ],
+    "observed_spots_use_official_bounds": 2280,
+    "missing_spots_use_fitted_regular_grid": 220
+  }
+}

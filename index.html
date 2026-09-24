@@ -4,7 +4,7 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>DBiTplus Image Comparison</title>
-  <link rel="stylesheet" href="styles.css?v=20260918-expr-cluster-1">
+  <link rel="stylesheet" href="styles.css?v=20260923-codex-major7-marker-1">
 </head>
 <body>
   <header class="app-header">
@@ -39,6 +39,24 @@
       <div class="control-group gene-group" id="expressionGeneGroup" hidden>
         <span class="control-label">Gene</span>
         <div class="segmented gene-segmented" id="expressionGeneButtons" role="group" aria-label="Expression gene"></div>
+      </div>
+
+      <div class="control-group codex-major-group">
+        <span class="control-label">CODEX cells / marker</span>
+        <div class="segmented codex-major-segmented" role="group" aria-label="CODEX major cell type and marker overlay">
+          <button class="segment" type="button" data-codex-major="CD4" aria-pressed="false">CD4</button>
+          <button class="segment" type="button" data-codex-major="CD8" aria-pressed="false">CD8</button>
+          <button class="segment" type="button" data-codex-major="Bcell" aria-pressed="false">B cell</button>
+          <button class="segment" type="button" data-codex-major="NK" aria-pressed="false">NK</button>
+          <button class="segment" type="button" data-codex-major="Macrophage" aria-pressed="false">Macrophage</button>
+          <button class="segment" type="button" data-codex-major="DC" aria-pressed="false">DC</button>
+          <button class="segment" type="button" data-codex-major="Vascular" aria-pressed="false">Vascular</button>
+        </div>
+      </div>
+
+      <div class="control-group codex-gene-group" id="codexGeneGroup" hidden>
+        <span class="control-label">Marker</span>
+        <div class="segmented codex-gene-segmented" id="codexGeneButtons" role="group" aria-label="CODEX major type marker gene"></div>
       </div>
 
       <div class="control-group mode-group">
@@ -113,6 +131,6 @@
     </details>
   </main>
 
-  <script src="app.js?v=20260918-expr-cluster-4"></script>
+  <script src="app.js?v=20260923-codex-major7-marker-1"></script>
 </body>
 </html>

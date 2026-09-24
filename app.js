@@ -2,6 +2,24 @@
   "use strict";
 
   const DEFAULT_CAPTION = "GSM9239732 · Human lymph node 2 · 50 µm DBiTplus · 10-type RCTD · 60 px grid";
+  const CODEX_ASSET_VERSION = "20260923-codex-major7-marker-1";
+  const codexAsset = (name) => window.CODEX_EMBEDDED_ASSETS?.[name]
+    || `assets/codex_major7_marker/${name}?v=${CODEX_ASSET_VERSION}`;
+  const CODEX_MAJOR_LEGEND = [
+    ["CD4 T cells", "#4169E1"], ["CD8 T cells", "#008000"],
+    ["B cells", "#FFA500"], ["NK cells", "#A52A2A"],
+    ["Macrophages", "#E75480"], ["Dendritic cells", "#FF0000"],
+    ["Vascular cells", "#00BFC4"],
+  ];
+  const CODEX_MAJOR_GROUPS = {
+    CD4: { label: "CD4", cellKey: "codexCellsCD4", genes: ["IL7R", "TCF7", "CCR7"] },
+    CD8: { label: "CD8", cellKey: "codexCellsCD8", genes: ["CD8A", "CD8B", "CCL5"] },
+    Bcell: { label: "B cell", cellKey: "codexCellsBcell", genes: ["MS4A1", "CD74", "CD22"] },
+    NK: { label: "NK", cellKey: "codexCellsNK", genes: ["GNLY", "KLRD1", "GZMB"] },
+    Macrophage: { label: "Macrophage", cellKey: "codexCellsMacrophage", genes: ["C1QA", "C1QB", "MARCO"] },
+    DC: { label: "DC", cellKey: "codexCellsDC", genes: ["CD1C", "CLEC10A", "CLEC9A"] },
+    Vascular: { label: "Vascular", cellKey: "codexCellsVascular", genes: ["PECAM1", "CLDN5", "MYH11", "MYLK"] },
+  };
   const DEFINITIONS = {
     he: { src: "assets/he.png", label: "H&E", legend: [] },
     spacerec: {
@@ -64,6 +82,24 @@
       legend: [],
     },
   };
+  Object.entries(CODEX_MAJOR_GROUPS).forEach(([majorType, group]) => {
+    DEFINITIONS[group.cellKey] = {
+      src: codexAsset(`cells_${majorType}.png`),
+      label: `${group.label} cells`,
+      legendTitle: `${group.label} selected · other cells dimmed`,
+      legend: CODEX_MAJOR_LEGEND,
+      width: 8058, height: 7932,
+    };
+    group.genes.forEach((gene) => {
+      DEFINITIONS[`codexGene${gene}`] = {
+        src: codexAsset(`gene_${gene}.png`),
+        label: `${gene} spot expression`,
+        legendTitle: `${gene} · raw DBiT spot expression`,
+        legend: [["Low", "#000004"], ["High", "#FCFDBF"]],
+        width: 8058, height: 7932,
+      };
+    });
+  });
   const EXPRESSION_GROUPS = {
     "0": { clusterKey: "cluster0", genes: [["IL7R", "expr0IL7R"], ["CXCL9", "expr0CXCL9"]] },
     "1": { clusterKey: "cluster1", genes: [["MS4A1", "expr1MS4A1"]] },
@@ -75,10 +111,17 @@
     "he-clusters": ["he", "clusters"],
     "spacerec-clusters": ["spacerec", "clusters"],
   };
-  const freshLayer = (key) => ({ ...DEFINITIONS[key], key, url: null, width: 0, height: 0 });
+  const freshLayer = (key) => ({
+    ...DEFINITIONS[key], key, url: null,
+    width: DEFINITIONS[key].width || 0,
+    height: DEFINITIONS[key].height || 0,
+  });
   const state = {
     mode: "swipe", pair: "he-clusters", value: 50, dragging: false,
     expressionGenes: { "0": "expr0IL7R", "1": "expr1MS4A1", "3": "expr3MYH11", "4": "expr4C1QA" },
+    codexGenes: Object.fromEntries(
+      Object.entries(CODEX_MAJOR_GROUPS).map(([type, group]) => [type, `codexGene${group.genes[0]}`]),
+    ),
     layers: Object.fromEntries(Object.keys(DEFINITIONS).map((key) => [key, freshLayer(key)])),
   };
   const byId = (id) => document.getElementById(id);
@@ -96,12 +139,18 @@
     modes: [...document.querySelectorAll("[data-mode]")], pairs: [...document.querySelectorAll("[data-pair]")],
     expressionClusters: [...document.querySelectorAll("[data-expr-cluster]")],
     expressionGeneGroup: byId("expressionGeneGroup"), expressionGeneButtons: byId("expressionGeneButtons"),
+    codexTypes: [...document.querySelectorAll("[data-codex-major]")],
+    codexGeneGroup: byId("codexGeneGroup"), codexGeneButtons: byId("codexGeneButtons"),
   };
 
   const expressionCluster = () => state.pair.startsWith("expr-cluster-") ? state.pair.split("-").at(-1) : null;
+  const codexMajorType = () => state.pair.startsWith("codex-major-") ? state.pair.slice("codex-major-".length) : null;
   const activeKeys = () => {
     const cluster = expressionCluster();
-    return cluster ? [state.expressionGenes[cluster], EXPRESSION_GROUPS[cluster].clusterKey] : PAIRS[state.pair];
+    if (cluster) return [state.expressionGenes[cluster], EXPRESSION_GROUPS[cluster].clusterKey];
+    const majorType = codexMajorType();
+    if (majorType) return [state.codexGenes[majorType], CODEX_MAJOR_GROUPS[majorType].cellKey];
+    return PAIRS[state.pair];
   };
   const activeLayers = () => activeKeys().map((key) => state.layers[key]);
   const clamp = (value) => Math.min(100, Math.max(0, Number(value)));
@@ -157,7 +206,7 @@
     elements.sideRightImage.src = right.src;
     elements.leftLabel.textContent = left.label;
     elements.rightLabel.textContent = right.label;
-    const showImageLabels = expressionCluster() === null;
+    const showImageLabels = expressionCluster() === null && codexMajorType() === null;
     elements.leftLabel.hidden = !showImageLabels;
     elements.rightLabel.hidden = !showImageLabels;
     elements.status.hidden = !showImageLabels;
@@ -200,6 +249,45 @@
     updateCompatibility();
   }
 
+  function renderCodexControls() {
+    const majorType = codexMajorType();
+    elements.codexTypes.forEach((button) => {
+      const active = button.dataset.codexMajor === majorType;
+      button.classList.toggle("active", active);
+      button.setAttribute("aria-pressed", String(active));
+    });
+    elements.codexGeneButtons.replaceChildren();
+    elements.codexGeneGroup.hidden = majorType === null;
+    if (majorType === null) return;
+    CODEX_MAJOR_GROUPS[majorType].genes.forEach((gene) => {
+      const key = `codexGene${gene}`;
+      const button = document.createElement("button");
+      button.className = `segment${state.codexGenes[majorType] === key ? " active" : ""}`;
+      button.type = "button";
+      button.textContent = gene;
+      button.dataset.codexGene = key;
+      button.setAttribute("aria-pressed", String(state.codexGenes[majorType] === key));
+      button.addEventListener("click", () => setCodexGene(majorType, key));
+      elements.codexGeneButtons.append(button);
+    });
+  }
+
+  function setCodexGene(majorType, key) {
+    if (!CODEX_MAJOR_GROUPS[majorType].genes.some((gene) => `codexGene${gene}` === key)) return;
+    state.codexGenes[majorType] = key;
+    renderCodexControls();
+    applyImages();
+    setMode(state.mode);
+    updateCompatibility();
+  }
+
+  function setCodexMajor(majorType) {
+    if (!CODEX_MAJOR_GROUPS[majorType]) return;
+    setPair(`codex-major-${majorType}`);
+    setMode("opacity");
+    updateValue(88);
+  }
+
   function setMode(mode) {
     state.mode = mode;
     elements.modes.forEach((button) => {
@@ -237,6 +325,7 @@
       button.setAttribute("aria-pressed", String(active));
     });
     renderExpressionControls();
+    renderCodexControls();
     applyImages();
     setMode(state.mode);
     updateCompatibility();
@@ -304,10 +393,13 @@
     elements.caption.value = DEFAULT_CAPTION;
     state.value = 50;
     state.expressionGenes = { "0": "expr0IL7R", "1": "expr1MS4A1", "3": "expr3MYH11", "4": "expr4C1QA" };
+    state.codexGenes = Object.fromEntries(
+      Object.entries(CODEX_MAJOR_GROUPS).map(([type, group]) => [type, `codexGene${group.genes[0]}`]),
+    );
     setPair("he-clusters");
     setMode("swipe");
     updateValue(50);
-    Object.keys(state.layers).forEach(loadDimensions);
+    Object.keys(state.layers).filter((key) => !state.layers[key].width).forEach(loadDimensions);
   }
 
   function loadedImage(src) {
@@ -455,6 +547,7 @@
   elements.modes.forEach((button) => button.addEventListener("click", () => setMode(button.dataset.mode)));
   elements.pairs.forEach((button) => button.addEventListener("click", () => setPair(button.dataset.pair)));
   elements.expressionClusters.forEach((button) => button.addEventListener("click", () => setPair(`expr-cluster-${button.dataset.exprCluster}`)));
+  elements.codexTypes.forEach((button) => button.addEventListener("click", () => setCodexMajor(button.dataset.codexMajor)));
   elements.range.addEventListener("input", () => updateValue(elements.range.value));
   elements.single.addEventListener("pointerdown", (event) => {
     if (state.mode !== "swipe") return;
@@ -488,6 +581,6 @@
   applyImages();
   setMode("swipe");
   updateValue(50);
-  Object.keys(state.layers).forEach(loadDimensions);
-  window.comparisonApp = { state, setMode, setPair, setExpressionGene, updateValue, reset, exportPng };
+  Object.keys(state.layers).filter((key) => !state.layers[key].width).forEach(loadDimensions);
+  window.comparisonApp = { state, setMode, setPair, setExpressionGene, setCodexMajor, setCodexGene, updateValue, reset, exportPng };
 })();
