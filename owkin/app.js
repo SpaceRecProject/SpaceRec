@@ -8,8 +8,9 @@
   const DEFAULT_CAPTION = "CAVG10673 · Owkin Visium · SpaceRec Stage 1 · 3 px grid";
   const cloneLayer = (key) => ({ ...DEFAULTS[key] });
   const state = {
-    mode: "swipe",
+    mode: "compare",
     value: 50,
+    opacity: 100,
     dragging: false,
     layers: { he: cloneLayer("he"), prediction: cloneLayer("prediction") },
   };
@@ -28,6 +29,9 @@
     rangeGroup: byId("rangeGroup"),
     rangeLabel: byId("rangeLabel"),
     rangeOutput: byId("rangeOutput"),
+    opacityGroup: byId("opacityGroup"),
+    opacityRange: byId("opacityRange"),
+    opacityOutput: byId("opacityOutput"),
     status: byId("imageStatus"),
     warning: byId("imageWarning"),
     caption: byId("captionInput"),
@@ -46,8 +50,15 @@
     elements.rangeOutput.textContent = `${Math.round(state.value)}%`;
     elements.divider.style.left = `${state.value}%`;
     elements.divider.setAttribute("aria-valuenow", String(Math.round(state.value)));
-    if (state.mode === "swipe") elements.clip.style.clipPath = `inset(0 ${100 - state.value}% 0 0)`;
-    if (state.mode === "opacity") elements.clip.style.opacity = String(state.value / 100);
+    if (state.mode === "compare") elements.clip.style.clipPath = `inset(0 0 0 ${state.value}%)`;
+  }
+
+  function updateOpacity(value) {
+    state.opacity = clamp(value);
+    elements.opacityRange.value = String(state.opacity);
+    elements.opacityOutput.value = `${Math.round(state.opacity)}%`;
+    elements.opacityOutput.textContent = `${Math.round(state.opacity)}%`;
+    elements.clip.style.opacity = String(state.opacity / 100);
   }
 
   function updateCompatibility() {
@@ -70,13 +81,8 @@
 
   function applyImages() {
     const { he, prediction } = state.layers;
-    if (state.mode === "opacity") {
-      elements.rightImage.src = he.src;
-      elements.leftImage.src = prediction.src;
-    } else {
-      elements.rightImage.src = prediction.src;
-      elements.leftImage.src = he.src;
-    }
+    elements.rightImage.src = he.src;
+    elements.leftImage.src = prediction.src;
     elements.sideLeftImage.src = he.src;
     elements.sideRightImage.src = prediction.src;
   }
@@ -93,14 +99,16 @@
     elements.single.hidden = side;
     elements.side.hidden = !side;
     elements.rangeGroup.hidden = side;
+    elements.opacityGroup.hidden = side;
     elements.stage.style.aspectRatio = side
       ? (window.matchMedia("(max-width: 520px)").matches ? "1 / 2" : "2 / 1")
       : "1 / 1";
-    elements.rangeLabel.textContent = mode === "opacity" ? "Prediction opacity" : "Position";
-    elements.clip.style.clipPath = mode === "opacity" ? "none" : `inset(0 ${100 - state.value}% 0 0)`;
-    elements.clip.style.opacity = mode === "opacity" ? String(state.value / 100) : "1";
+    elements.rangeLabel.textContent = "Position";
+    elements.clip.style.clipPath = `inset(0 0 0 ${state.value}%)`;
+    elements.clip.style.opacity = String(state.opacity / 100);
     applyImages();
     updateValue(state.value);
+    updateOpacity(state.opacity);
   }
 
   function loadDimensions(key) {
@@ -138,8 +146,10 @@
     elements.heUpload.value = "";
     elements.predictionUpload.value = "";
     elements.caption.value = DEFAULT_CAPTION;
-    setMode("swipe");
+    state.opacity = 100;
+    setMode("compare");
     updateValue(50);
+    updateOpacity(100);
     updateCompatibility();
   }
 
@@ -171,19 +181,15 @@
       if (side) {
         context.drawImage(he, 0, 0);
         context.drawImage(prediction, he.naturalWidth + gap, 0);
-      } else if (state.mode === "opacity") {
-        context.drawImage(he, 0, 0);
-        context.globalAlpha = state.value / 100;
-        context.drawImage(prediction, 0, 0);
-        context.globalAlpha = 1;
       } else {
-        context.drawImage(prediction, 0, 0);
+        context.drawImage(he, 0, 0);
         const split = Math.round(canvas.width * state.value / 100);
         context.save();
         context.beginPath();
-        context.rect(0, 0, split, canvas.height);
+        context.rect(split, 0, canvas.width - split, canvas.height);
         context.clip();
-        context.drawImage(he, 0, 0);
+        context.globalAlpha = state.opacity / 100;
+        context.drawImage(prediction, 0, 0);
         context.restore();
         context.fillStyle = "#ffffff";
         context.fillRect(split - 1, 0, 2, canvas.height);
@@ -207,8 +213,9 @@
 
   elements.modes.forEach((button) => button.addEventListener("click", () => setMode(button.dataset.mode)));
   elements.range.addEventListener("input", () => updateValue(elements.range.value));
+  elements.opacityRange.addEventListener("input", () => updateOpacity(elements.opacityRange.value));
   elements.single.addEventListener("pointerdown", (event) => {
-    if (state.mode !== "swipe") return;
+    if (state.mode !== "compare") return;
     event.preventDefault();
     state.dragging = true;
     elements.single.setPointerCapture(event.pointerId);
@@ -216,7 +223,7 @@
     updateValue(((event.clientX - rect.left) / rect.width) * 100);
   });
   elements.single.addEventListener("pointermove", (event) => {
-    if (!state.dragging || state.mode !== "swipe") return;
+    if (!state.dragging || state.mode !== "compare") return;
     const rect = elements.single.getBoundingClientRect();
     updateValue(((event.clientX - rect.left) / rect.width) * 100);
   });
@@ -237,8 +244,9 @@
   window.addEventListener("resize", () => setMode(state.mode));
 
   applyImages();
-  setMode("swipe");
+  setMode("compare");
   updateValue(50);
+  updateOpacity(100);
   updateCompatibility();
-  window.comparisonApp = { state, setMode, updateValue, reset, exportPng };
+  window.comparisonApp = { state, setMode, updateValue, updateOpacity, reset, exportPng };
 })();

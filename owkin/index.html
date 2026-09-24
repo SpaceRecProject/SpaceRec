@@ -4,7 +4,7 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>Owkin H&amp;E / Grid Type Prediction</title>
-  <link rel="stylesheet" href="styles.css?v=20260924-owkin-grid-1">
+  <link rel="stylesheet" href="styles.css?v=20260924-owkin-grid-2">
 </head>
 <body>
   <header class="app-header">
@@ -20,8 +20,7 @@
       <div class="control-group mode-group">
         <span class="control-label">View</span>
         <div class="segmented" role="group" aria-label="Comparison mode">
-          <button class="segment active" type="button" data-mode="swipe" aria-pressed="true">Swipe</button>
-          <button class="segment" type="button" data-mode="opacity" aria-pressed="false">Opacity</button>
+          <button class="segment active" type="button" data-mode="compare" aria-pressed="true">Swipe + opacity</button>
           <button class="segment" type="button" data-mode="side" aria-pressed="false">Side by side</button>
         </div>
       </div>
@@ -30,6 +29,12 @@
         <label class="control-label" id="rangeLabel" for="comparisonRange">Position</label>
         <input id="comparisonRange" type="range" min="0" max="100" value="50" step="1">
         <output id="rangeOutput" for="comparisonRange">50%</output>
+      </div>
+
+      <div class="control-group range-group" id="opacityGroup">
+        <label class="control-label" for="opacityRange">Prediction opacity</label>
+        <input id="opacityRange" type="range" min="0" max="100" value="100" step="1">
+        <output id="opacityOutput" for="opacityRange">100%</output>
       </div>
 
       <div class="control-group file-group">
@@ -49,11 +54,11 @@
     </div>
 
     <section class="viewer-wrap" aria-label="Image comparison">
-      <div class="comparison-stage mode-swipe" id="comparisonStage">
+      <div class="comparison-stage mode-compare" id="comparisonStage">
         <div class="single-view" id="singleView">
-          <img class="image-layer base-layer" id="rightImage" src="assets/grid_type_on_he.png?v=20260924-owkin-grid-1" alt="Grid type prediction on H&amp;E" draggable="false">
+          <img class="image-layer base-layer" id="rightImage" src="assets/he.png?v=20260924-owkin-grid-1" alt="H&amp;E histology" draggable="false">
           <div class="image-layer clipped-layer" id="comparisonClip">
-            <img id="leftImage" src="assets/he.png?v=20260924-owkin-grid-1" alt="H&amp;E histology" draggable="false">
+            <img id="leftImage" src="assets/grid_type_on_he.png?v=20260924-owkin-grid-1" alt="Grid type prediction on H&amp;E" draggable="false">
           </div>
           <div class="divider" id="divider" role="slider" tabindex="0" aria-label="H&amp;E reveal position" aria-valuemin="0" aria-valuemax="100" aria-valuenow="50">
             <span class="divider-line"></span>
@@ -97,6 +102,6 @@
     </section>
   </main>
 
-  <script src="app.js?v=20260924-owkin-grid-1"></script>
+  <script src="app.js?v=20260924-owkin-grid-2"></script>
 </body>
 </html>

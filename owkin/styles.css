@@ -96,6 +96,8 @@ main {
   overflow: hidden;
 }
 
+.mode-group .segmented { grid-template-columns: repeat(2, auto); }
+
 .segmented.expr-cluster-segmented { grid-template-columns: repeat(4, minmax(0, auto)); }
 .segmented.gene-segmented { display: inline-flex; }
 .segmented.codex-major-segmented { grid-template-columns: repeat(7, minmax(0, auto)); }
@@ -217,10 +219,6 @@ input[type="file"] {
   font-size: 20px;
   line-height: 1;
 }
-
-.mode-opacity .clipped-layer { clip-path: none !important; opacity: 0.5; }
-.mode-opacity .divider { display: none; }
-.mode-opacity .base-layer { content-visibility: auto; }
 
 .side-view { display: grid; grid-template-columns: 1fr 1fr; gap: 1px; width: 100%; height: 100%; background: #959ba1; }
 .side-view figure { display: grid; grid-template-rows: minmax(0, 1fr) 38px; margin: 0; min-width: 0; min-height: 0; background: white; }
