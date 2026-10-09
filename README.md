@@ -188,13 +188,13 @@ The model combines expression and cell-type supervision:
 
 $$
 \mathcal{L}_{expr}
-=\operatorname{Huber}\!\left(\log(1+\hat{x}_s),\log(1+x_s)\right),
+=\mathrm{Huber}\!\left(\log(1+\hat{x}_s),\log(1+x_s)\right),
 $$
 
 $$
 \mathcal{L}_{type}
 =\alpha\mathcal{L}_{conf}
-+(1-\alpha)\operatorname{KL}(p_s\parallel\hat{p}_s).
++(1-\alpha)D_{\mathrm{KL}}(p_s\parallel\hat{p}_s).
 $$
 
 ### Step 4: inspect grid predictions
@@ -208,9 +208,9 @@ Expression is standardized independently for the selected gene and bbox, then
 clipped to the displayed range:
 
 $$
-z_g=\operatorname{clip}\!\left(
-\frac{x_g-\mu_{\text{bbox}}}{\sigma_{\text{bbox}}},-2,2
-\right).
+z_g=\min\!\left(2,\max\!\left(-2,
+\frac{x_g-\mu_{\mathrm{bbox}}}{\sigma_{\mathrm{bbox}}}
+\right)\right).
 $$
 
 The type and expression panels retain the same spatial scale and aspect ratio.
