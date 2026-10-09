@@ -188,7 +188,7 @@ The model combines expression and cell-type supervision:
 
 $$
 \mathcal{L}_{expr}
-=\mathrm{Huber}\!\left(\log(1+\hat{x}_s),\log(1+x_s)\right),
+=\mathrm{Huber}\left(\log(1+\hat{x}_s),\log(1+x_s)\right),
 $$
 
 $$
@@ -208,7 +208,7 @@ Expression is standardized independently for the selected gene and bbox, then
 clipped to the displayed range:
 
 $$
-z_g=\min\!\left(2,\max\!\left(-2,
+z_g=\min\left(2,\max\left(-2,
 \frac{x_g-\mu_{\mathrm{bbox}}}{\sigma_{\mathrm{bbox}}}
 \right)\right).
 $$
