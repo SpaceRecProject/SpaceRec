@@ -28,7 +28,7 @@ import os
 
 import torch
 
-import spacerec_v2.api as spacerec
+import spacerec.api as spacerec
 
 root = Path.cwd()
 embedding_dir = root / "resources/brca/embedding"

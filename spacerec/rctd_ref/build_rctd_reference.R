@@ -60,6 +60,10 @@ barcodes <- as.character(h5[["matrix/barcodes"]]$read())
 genes <- as.character(h5[["matrix/features/name"]]$read())
 h5$close_all()
 
+# Match AnnData.var_names_make_unique(), which is used when the same 10x H5 is
+# converted for training. SpatialRNA requires unique gene row names.
+genes <- make.unique(genes, sep = "-")
+
 counts <- sparseMatrix(
   i = as.integer(indices) + 1L,
   p = as.integer(indptr),

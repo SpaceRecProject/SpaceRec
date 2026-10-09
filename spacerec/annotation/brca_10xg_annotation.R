@@ -24,7 +24,7 @@ paths <- list(
     sc_ref=pick_path("sc_ref_h5ad", file.path(repo, "resources/brca/deconv/reference/scRNA_adata_reannotated.h5ad")),
     xenium_outs=pick_path("xenium_outs", file.path(repo, "resources/brca/xen/outs")),
     out_dir=pick_path("output_dir", file.path(repo, "resources/brca/anno")),
-    merge_json=pick_path("merge_json", file.path(repo, "spacerec_v2/deconv/brca_type_merge_17to11.json"))
+    merge_json=pick_path("merge_json", file.path(repo, "spacerec/deconv/brca_type_merge_17to11.json"))
 )
 paths$bp_dir <- file.path(paths$out_dir, "bpcells")
 paths$reference_bp <- file.path(paths$bp_dir, "reference_counts")

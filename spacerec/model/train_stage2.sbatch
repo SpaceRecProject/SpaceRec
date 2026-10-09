@@ -32,11 +32,11 @@ import os
 
 import torch
 
-from spacerec_v2.model.model import prepare_data
-from spacerec_v2.model.training import _ensure_st_h5ad
+from spacerec.model.model import prepare_data
+from spacerec.model.training import _ensure_st_h5ad
 
 root = Path.cwd()
-train_dir = root / "resources/brca/type_pred/train_v2"
+train_dir = root / "resources/brca/type_pred/train"
 st_h5 = root / "resources/brca/syn_vis/filtered_synthetic_st_filtered_feature_bc_matrix_transcript.h5"
 st_h5ad = train_dir / "input/filtered_synthetic_st_filtered_feature_bc_matrix_transcript.h5ad"
 deconv_csv = root / "resources/brca/deconv/RCTD_BREAST_SYNTHETIC_TRANSCRIPT_proportions_merged11_spacerec.csv"
@@ -98,10 +98,10 @@ python - <<'PY'
 from pathlib import Path
 import json
 
-import spacerec_v2.api as spacerec
+import spacerec.api as spacerec
 
 root = Path.cwd()
-train_dir = root / "resources/brca/type_pred/train_v2"
+train_dir = root / "resources/brca/type_pred/train"
 type_pred_dir = root / "resources/brca/type_pred"
 summary = spacerec.stage2(
     dataset="brca",

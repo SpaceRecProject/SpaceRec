@@ -69,8 +69,22 @@ def read_gene_list(gene_list: str | Path | None) -> list[str] | None:
     if gene_list is None:
         return None
     path = Path(gene_list)
-    genes = [line.strip() for line in path.read_text().splitlines() if line.strip()]
+    genes: list[str] = []
+    seen: set[str] = set()
+    for line in path.read_text().splitlines():
+        gene = line.strip()
+        if gene and gene not in seen:
+            genes.append(gene)
+            seen.add(gene)
     return genes or None
+
+
+def intersect_genes_with_adata(gene_list: list[str], adata_var_names) -> list[str]:
+    adata_genes = set(map(str, adata_var_names))
+    genes = [gene for gene in gene_list if gene in adata_genes]
+    if not genes:
+        raise ValueError("No genes overlap between gene_list and the ST h5ad.")
+    return genes
 
 
 def dense_matrix(matrix) -> np.ndarray:
@@ -87,9 +101,7 @@ def load_spot_expression(
     adata = read_h5ad(st_h5ad)
     genes = read_gene_list(gene_list)
     if genes is not None:
-        genes = [gene for gene in genes if gene in adata.var_names]
-        if not genes:
-            raise ValueError("No requested genes were found in the ST h5ad.")
+        genes = intersect_genes_with_adata(genes, adata.var_names)
         adata = adata[:, genes].copy()
     expression = dense_matrix(adata.X).astype(np.float32, copy=False)
     spot_ids = np.asarray([normalize_spot_id(spot, sample_id) for spot in adata.obs_names], dtype=object)
@@ -101,15 +113,25 @@ def load_deconvolution(
     spot_ids: np.ndarray,
     sample_id: str | None = None,
 ) -> tuple[np.ndarray, list[str]]:
+    values, cell_type_names, _present = _load_deconvolution_with_presence(deconv_path, spot_ids, sample_id)
+    return values, cell_type_names
+
+
+def _load_deconvolution_with_presence(
+    deconv_path: str | Path,
+    spot_ids: np.ndarray,
+    sample_id: str | None = None,
+) -> tuple[np.ndarray, list[str], np.ndarray]:
     table = pd.read_csv(deconv_path, index_col=0)
     table.index = [normalize_spot_id(index, sample_id) for index in table.index]
     table = table.groupby(level=0).mean()
+    present = np.asarray([str(spot) in table.index for spot in spot_ids], dtype=np.bool_)
     table = table.reindex(spot_ids).fillna(0.0)
     values = table.to_numpy(dtype=np.float32)
     values = np.clip(values, 0.0, None)
     row_sum = values.sum(axis=1, keepdims=True)
     values = np.divide(values, np.maximum(row_sum, 1e-8), out=np.zeros_like(values), where=row_sum > 0)
-    return values.astype(np.float32), list(map(str, table.columns))
+    return values.astype(np.float32), list(map(str, table.columns)), present
 
 
 def safe_pearson(x: np.ndarray, y: np.ndarray) -> float:
@@ -289,7 +311,11 @@ def prepare_data(args: argparse.Namespace) -> DenseGridSpotData:
         args.gene_list,
         args.sample_id,
     )
-    proportions, cell_type_names = load_deconvolution(args.deconv_csv, spot_ids, args.sample_id)
+    proportions, cell_type_names, deconv_present = _load_deconvolution_with_presence(
+        args.deconv_csv,
+        spot_ids,
+        args.sample_id,
+    )
     normalized_position_spot_ids = np.asarray(
         [normalize_spot_id(spot, args.sample_id) for spot in dense["position_spot_ids"]],
         dtype=object,
@@ -305,6 +331,12 @@ def prepare_data(args: argparse.Namespace) -> DenseGridSpotData:
         kept_spot_indices = kept_spot_indices[:limit]
         kept_position_indices = kept_position_indices[:limit]
         spot_to_grids = spot_to_grids[:limit]
+    present_mask = deconv_present[kept_spot_indices]
+    kept_spot_indices = kept_spot_indices[present_mask]
+    kept_position_indices = kept_position_indices[present_mask]
+    spot_to_grids = [grids for grids, keep in zip(spot_to_grids, present_mask, strict=True) if bool(keep)]
+    if not spot_to_grids:
+        raise ValueError("No supervised spots have both tissue dense grids and deconvolution targets.")
     return DenseGridSpotData(
         features=dense["features"],
         center_xy=dense["center_xy"],
@@ -397,14 +429,21 @@ class DenseGridCore(nn.Module):
         n_genes: int,
         n_cell_types: int,
         projection_dim: int,
+        skip_input_projector: bool = False,
+        type_head_hidden_layers: int = 1,
     ):
         super().__init__()
-        self.input_projector = nn.Sequential(
-            nn.Linear(int(input_dim), int(projection_dim)),
-            nn.GELU(),
-            nn.LayerNorm(int(projection_dim)),
-        )
-        self.final_dim = int(projection_dim)
+        self.skip_input_projector = bool(skip_input_projector)
+        if self.skip_input_projector:
+            self.input_projector = nn.Identity()
+            self.final_dim = int(input_dim)
+        else:
+            self.input_projector = nn.Sequential(
+                nn.Linear(int(input_dim), int(projection_dim)),
+                nn.GELU(),
+                nn.LayerNorm(int(projection_dim)),
+            )
+            self.final_dim = int(projection_dim)
         self.gene_head = GeneHead(
             input_dim=self.final_dim,
             output_dim=int(n_genes),
@@ -417,6 +456,7 @@ class DenseGridCore(nn.Module):
             num_cell_types=int(n_cell_types),
             dropout=0.05,
             temperature=2.0,
+            hidden_layers=int(type_head_hidden_layers),
         )
 
     def encode_grids(self, grid_x: Tensor, grid_bag_index: Tensor) -> Tensor:

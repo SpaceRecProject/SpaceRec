@@ -1,6 +1,7 @@
 # Local data and generated artifacts
 data/
 results/
+resources/
 PROGRESS.md
 
 # Large archives prepared for external storage
@@ -21,6 +22,8 @@ __pycache__/
 
 # Jupyter local state
 .ipynb_checkpoints/
+spacerec/notebooks/run_spacerec_simu.ipynb
+spacerec/notebooks/run_spacerec.sbatch
 
 # OS and editor files
 .DS_Store

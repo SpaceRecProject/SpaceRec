@@ -27,80 +27,31 @@ def _ensure_dir(path: str | Path) -> Path:
     return selected
 
 
-def _load_type_merge(path: str | Path | None) -> dict[str, list[str]] | None:
-    if path is None:
-        return None
-    config = json.loads(Path(path).read_text(encoding="utf-8"))
-    merge = config.get("merge", config)
-    if not isinstance(merge, dict):
-        raise ValueError("type_merge_json must contain a mapping or a top-level 'merge' mapping.")
-    return {str(name): [str(item) for item in sources] for name, sources in merge.items()}
-
-
-def _merge_deconv_csv(
-    source_csv: Path,
-    output_csv: Path,
-    merge: dict[str, list[str]],
-    summary_json: Path | None = None,
-) -> dict[str, Any]:
-    import numpy as np
-    import pandas as pd
-
-    table = pd.read_csv(source_csv, index_col=0)
-    merged = pd.DataFrame(index=table.index)
-    for target_name, source_names in merge.items():
-        missing = [name for name in source_names if name not in table.columns]
-        if missing:
-            raise ValueError(f"Missing source type columns for {target_name}: {missing}")
-        merged[target_name] = table.loc[:, source_names].sum(axis=1)
-    values = np.clip(merged.to_numpy(dtype=float), 0.0, None)
-    row_sum = values.sum(axis=1, keepdims=True)
-    values = np.divide(values, row_sum.clip(min=1e-12), out=np.zeros_like(values), where=row_sum > 0)
-    merged.loc[:, :] = values
-    output_csv.parent.mkdir(parents=True, exist_ok=True)
-    merged.to_csv(output_csv)
-    summary = {
-        "source_csv": str(source_csv),
-        "output_csv": str(output_csv),
-        "source_shape": [int(table.shape[0]), int(table.shape[1])],
-        "output_shape": [int(merged.shape[0]), int(merged.shape[1])],
-        "source_columns": list(table.columns),
-        "output_columns": list(merged.columns),
-        "merge": {name: list(sources) for name, sources in merge.items()},
-        "row_sum_min": float(values.sum(axis=1).min()) if values.shape[0] else 0.0,
-        "row_sum_median": float(np.median(values.sum(axis=1))) if values.shape[0] else 0.0,
-        "row_sum_max": float(values.sum(axis=1).max()) if values.shape[0] else 0.0,
-    }
-    if summary_json is not None:
-        summary_json.parent.mkdir(parents=True, exist_ok=True)
-        summary_json.write_text(json.dumps(summary, indent=2), encoding="utf-8")
-    return summary
-
-
 def deconv(
     *,
     dataset: str,
     visium_dir: str | Path,
     sc_ref_h5ad: str | Path,
     output_dir: str | Path | None = None,
-    output_csv: str | Path | None = None,
     sample_id: str,
     annotation_column: str = "Level1",
     max_cores: int = 8,
-    type_merge_json: str | Path | None = None,
+    output_prefix: str | None = None,
+    umi_min: int | None = None,
+    r_env_prefix: str | Path | None = None,
+    merge: bool = True,
+    merge_json: str | Path | None = None,
     force: bool = False,
     run_rctd: bool = True,
     **kwargs: Any,
 ) -> dict[str, Any]:
-    """Run existing RCTD deconvolution and normalize outputs for the slim API."""
+    """Run RCTD deconvolution from h5ad reference and synthetic Visium inputs."""
 
     from .deconv import run_deconvolution
 
     selected = _dataset(dataset)
     selected_output = _ensure_dir(output_dir or _default_step_dir(selected, "deconv"))
-    selected_output_csv = Path(output_csv) if output_csv is not None else selected_output / "deconv.csv"
-    selected_output_csv.parent.mkdir(parents=True, exist_ok=True)
-    prefix = str(kwargs.pop("output_prefix", f"RCTD_{sample_id}"))
+    prefix = str(output_prefix or kwargs.pop("output_prefix", f"RCTD_{sample_id}"))
 
     summary = run_deconvolution(
         visium_dir=Path(visium_dir),
@@ -109,35 +60,141 @@ def deconv(
         sample_id=sample_id,
         annotation_column=annotation_column,
         max_cores=max_cores,
+        umi_min=umi_min,
+        r_env_prefix=None if r_env_prefix is None else Path(r_env_prefix),
+        merge=bool(merge),
+        merge_json=merge_json or Path(__file__).resolve().parent / "deconv" / "brca_type_merge_17to11.json",
         force=force,
         run_rctd=run_rctd,
         output_prefix=prefix,
         **kwargs,
     )
-
-    raw_csv = selected_output / "rctd" / f"{prefix}_proportions_spacerec.csv"
-    merge = _load_type_merge(type_merge_json)
-    if run_rctd and merge is not None:
-        merged_csv = selected_output / "deconv_merged.csv"
-        merge_summary_json = selected_output / "deconv_merge_summary.json"
-        merge_summary = _merge_deconv_csv(raw_csv, merged_csv, merge, merge_summary_json)
-        shutil.copy2(merged_csv, selected_output_csv)
-        summary["deconv_merged_csv"] = str(merged_csv)
-        summary["deconv_merge_summary_json"] = str(merge_summary_json)
-        summary["deconv_merge_summary"] = merge_summary
-    elif run_rctd and raw_csv.exists():
-        shutil.copy2(raw_csv, selected_output_csv)
-
     summary.update(
         {
             "dataset": selected,
             "output_dir": str(selected_output),
-            "deconv_csv": str(selected_output_csv),
-            "raw_deconv_csv": str(raw_csv),
-            "type_merge_json": None if type_merge_json is None else str(type_merge_json),
+            "deconv_csv": str(selected_output / f"{prefix}_proportions_merged11_spacerec.csv"),
+            "raw_deconv_csv": str(selected_output / f"{prefix}_proportions_spacerec.csv"),
         }
     )
     (selected_output / "deconv_summary.json").write_text(json.dumps(summary, indent=2), encoding="utf-8")
+    return summary
+
+
+def rctd_ref(
+    *,
+    dataset: str,
+    sc_ref_h5ad: str | Path,
+    synthetic_h5: str | Path,
+    output_dir: str | Path,
+    gene_list_txt: str | Path,
+    positions_csv: str | Path | None = None,
+    annotation_column: str = "Level1",
+    umi_min: int = 100,
+    r_env_prefix: str | Path | None = None,
+    merge_json: str | Path | None = None,
+    force: bool = False,
+) -> dict[str, Any]:
+    """Build the merged11 RCTD reference aligned to synthetic transcript Visium genes."""
+
+    selected = _dataset(dataset)
+    if selected != "brca":
+        raise ValueError("rctd_ref is currently implemented for dataset='brca' only.")
+    from .rctd_ref import build_reference
+
+    summary = build_reference(
+        sc_ref_h5ad=Path(sc_ref_h5ad),
+        synthetic_h5=Path(synthetic_h5),
+        output_dir=Path(output_dir),
+        gene_list_txt=Path(gene_list_txt),
+        positions_csv=None if positions_csv is None else Path(positions_csv),
+        annotation_column=annotation_column,
+        umi_min=int(umi_min),
+        r_env_prefix=None if r_env_prefix is None else Path(r_env_prefix),
+        merge_json=merge_json or Path(__file__).resolve().parent / "deconv" / "brca_type_merge_17to11.json",
+        force=bool(force),
+    )
+    summary["dataset"] = selected
+    return summary
+
+
+def simu(
+    *,
+    dataset: str,
+    xen_dir: str | Path,
+    output_syn_vis_dir: str | Path,
+    aligned_dir: str | Path | None = None,
+    sc_ref_h5ad: str | Path | None = None,
+    he_image: str | Path | None = None,
+    alignment_csv: str | Path | None = None,
+    xenium_pixel_size: float = 0.2125,
+    he_pixel_size: float = 0.363788,
+    spot_diameter_um: float = 55.0,
+    spot_spacing_um: float = 100.0,
+    margin_um: float = 50.0,
+    chunksize: int = 1_000_000,
+    matrix_direction: str = "he-to-xenium",
+    thumbnail_max_dim: int = 1000,
+    write_aligned_transcripts: bool = True,
+    max_transcripts: int | None = None,
+    force: bool = False,
+) -> dict[str, Any]:
+    """Run Step 0 simulation from Xenium outputs to aligned files and synthetic Visium files."""
+
+    selected = _dataset(dataset)
+    from .simulation import run_simulation
+
+    summary = run_simulation(
+        xen_dir=Path(xen_dir),
+        output_syn_vis_dir=Path(output_syn_vis_dir),
+        aligned_dir=None if aligned_dir is None else Path(aligned_dir),
+        sc_ref_h5ad=None if sc_ref_h5ad is None else Path(sc_ref_h5ad),
+        he_image=None if he_image is None else Path(he_image),
+        alignment_csv=None if alignment_csv is None else Path(alignment_csv),
+        xenium_pixel_size=float(xenium_pixel_size),
+        he_pixel_size=float(he_pixel_size),
+        spot_diameter_um=float(spot_diameter_um),
+        spot_spacing_um=float(spot_spacing_um),
+        margin_um=float(margin_um),
+        chunksize=int(chunksize),
+        matrix_direction=str(matrix_direction),
+        thumbnail_max_dim=int(thumbnail_max_dim),
+        write_aligned_transcripts=bool(write_aligned_transcripts),
+        max_transcripts=None if max_transcripts is None else int(max_transcripts),
+        force=bool(force),
+    )
+    summary["dataset"] = selected
+    return summary
+
+
+def anno(
+    *,
+    dataset: str,
+    xen_dir: str | Path,
+    aligned_dir: str | Path,
+    sc_ref_h5ad: str | Path,
+    output_dir: str | Path,
+    r_env_prefix: str | Path | None = None,
+    merge_json: str | Path | None = None,
+    force: bool = False,
+) -> dict[str, Any]:
+    """Run BRCA 10xG-style Xenium cell annotation into a package-local output directory."""
+
+    selected = _dataset(dataset)
+    if selected != "brca":
+        raise ValueError("Annotation is currently implemented for dataset='brca' only.")
+    from .annotation import run_annotation
+
+    summary = run_annotation(
+        xen_dir=Path(xen_dir),
+        aligned_dir=Path(aligned_dir),
+        sc_ref_h5ad=Path(sc_ref_h5ad),
+        output_dir=Path(output_dir),
+        r_env_prefix=None if r_env_prefix is None else Path(r_env_prefix),
+        merge_json=merge_json or Path(__file__).resolve().parent / "deconv" / "brca_type_merge_17to11.json",
+        force=bool(force),
+    )
+    summary["dataset"] = selected
     return summary
 
 
@@ -150,10 +207,14 @@ def ge(
     thumbnail_png: str | Path,
     output_dir: str | Path | None = None,
     output_h5: str | Path | None = None,
+    summary_json: str | Path | None = None,
+    patch_metadata_h5: str | Path | None = None,
+    progress_json: str | Path | None = None,
+    mask_preview_png: str | Path | None = None,
     patch_size: int = 288,
     stride: int = 72,
     concat_local: bool = True,
-    concat_nbr: bool = True,
+    concat_nbr: bool = False,
     model: str = "virchow2",
     batch_size: int = 4,
     num_workers: int = 4,
@@ -173,17 +234,24 @@ def ge(
     selected = _dataset(dataset)
     if model != "virchow2":
         raise ValueError("The slim API currently supports model='virchow2' only.")
-    if not concat_local or not concat_nbr:
-        raise ValueError("The fixed dense18_virchow2 flow requires concat_local=True and concat_nbr=True.")
+    if not concat_local:
+        raise ValueError("The fixed dense18_virchow2 flow requires concat_local=True.")
     if int(patch_size) % 16 != 0:
         raise ValueError("patch_size must be divisible by 16 for Virchow2 16x16 tokens.")
+    neighbor_feature_mode = str(kwargs.pop("neighbor_feature_mode", "mean" if concat_nbr else "none"))
+    if not concat_nbr and neighbor_feature_mode != "none":
+        raise ValueError("concat_nbr=False requires neighbor_feature_mode='none'.")
+    if concat_nbr and neighbor_feature_mode == "none":
+        raise ValueError("concat_nbr=True requires a neighbor_feature_mode other than 'none'.")
 
     selected_output = _ensure_dir(output_dir or _default_step_dir(selected, "grid_embedding"))
     selected_h5 = Path(output_h5) if output_h5 is not None else selected_output / "grid_embedding.h5"
-    summary_json = selected_output / "grid_embedding_summary.json"
-    patch_metadata_h5 = selected_output / "patch_metadata_h5.h5"
-    progress_json = selected_output / "grid_embedding_progress.json"
-    mask_preview = selected_output / "grid_embedding_mask_preview.png"
+    selected_summary_json = Path(summary_json) if summary_json is not None else selected_output / "grid_embedding_summary.json"
+    selected_patch_metadata_h5 = (
+        Path(patch_metadata_h5) if patch_metadata_h5 is not None else selected_output / "patch_metadata_h5.h5"
+    )
+    selected_progress_json = Path(progress_json) if progress_json is not None else selected_output / "grid_embedding_progress.json"
+    mask_preview = Path(mask_preview_png) if mask_preview_png is not None else selected_output / "grid_embedding_mask_preview.png"
     grid_size = int(patch_size) // 16
     gpu_selection = _auto_select_cuda_device() if auto_select_gpu and device is None else {
         "enabled": bool(auto_select_gpu),
@@ -207,12 +275,13 @@ def ge(
         scalefactors_json=Path(scalefactors_json),
         thumbnail_png=Path(thumbnail_png),
         output_h5=selected_h5,
-        summary_json=summary_json,
-        patch_metadata_h5=patch_metadata_h5,
-        progress_json=progress_json,
+        summary_json=selected_summary_json,
+        patch_metadata_h5=selected_patch_metadata_h5,
+        progress_json=selected_progress_json,
         patch_size=int(patch_size),
         grid_size=grid_size,
         stride=int(stride),
+        neighbor_feature_mode=neighbor_feature_mode,
         batch_size=int(batch_size),
         num_workers=int(num_workers),
         device=selected_device,
@@ -223,8 +292,8 @@ def ge(
     )
 
     summary: dict[str, Any] = {}
-    if summary_json.exists():
-        summary = json.loads(summary_json.read_text(encoding="utf-8"))
+    if selected_summary_json.exists():
+        summary = json.loads(selected_summary_json.read_text(encoding="utf-8"))
     diagnostic = summary.get("patch_summary", {}).get("diagnostic_plot") if summary else None
     if isinstance(diagnostic, dict) and diagnostic.get("output_png"):
         diagnostic_png = Path(str(diagnostic["output_png"]))
@@ -236,14 +305,95 @@ def ge(
             "stage": "dense18_virchow2",
             "output_dir": str(selected_output),
             "output_h5": str(selected_h5),
-            "summary_json": str(summary_json),
-            "patch_metadata_h5": str(patch_metadata_h5),
+            "summary_json": str(selected_summary_json),
+            "patch_metadata_h5": str(selected_patch_metadata_h5),
             "mask_preview_png": str(mask_preview),
+            "concat_local": bool(concat_local),
+            "concat_nbr": bool(concat_nbr),
+            "neighbor_feature_mode": neighbor_feature_mode,
+            "mask_step": "not applied by spacerec.ge; use spacerec.mask to create he_mask_grid.h5 and grid_embedding_train_filtered.h5",
             "gpu_selection": gpu_selection,
             "api_summary": run_summary,
         }
     )
-    summary_json.write_text(json.dumps(summary, indent=2), encoding="utf-8")
+    selected_summary_json.write_text(json.dumps(summary, indent=2), encoding="utf-8")
+    return summary
+
+
+def mask(
+    *,
+    dataset: str,
+    grid_embedding_h5: str | Path,
+    output_dir: str | Path | None = None,
+    output_h5: str | Path | None = None,
+    training_h5: str | Path | None = None,
+    he_image: str | Path | None = None,
+    mode: str = "he",
+    feature_key: str | None = None,
+    sample_size: int = 40000,
+    pca_components: int = 32,
+    k: int = 8,
+    chunk_size: int = 8192,
+    confident_blank: float = 0.02,
+    confident_tissue: float = 0.50,
+    tissue_fraction_threshold: float = 0.10,
+    cluster_tissue_mean: float = 0.20,
+    cluster_tissue_ratio: float = 0.15,
+    min_component_grids: int = 0,
+    max_hole_grids: int = 0,
+    thumbnail_max_side: int = 2600,
+    he_mask_max_side: int = 5000,
+    he_saturation_threshold: float = 0.055,
+    he_value_threshold: float = 0.985,
+    he_white_value: float = 0.88,
+    he_white_saturation: float = 0.10,
+    min_he_object_pixels: int = 64,
+    seed: int = 0,
+    force: bool = False,
+) -> dict[str, Any]:
+    """Create an H&E grid tissue mask and a training-filtered grid embedding H5.
+
+    The default mode is H&E-only. Embedding-assisted correction runs only when
+    mode='embedding' is passed explicitly.
+    """
+
+    from .mask import run_mask
+
+    selected = _dataset(dataset)
+    selected_output = _ensure_dir(output_dir or _default_step_dir(selected, "mask"))
+    summary = run_mask(
+        grid_embedding_h5=Path(grid_embedding_h5),
+        output_dir=selected_output,
+        output_h5=None if output_h5 is None else Path(output_h5),
+        training_h5=None if training_h5 is None else Path(training_h5),
+        he_image=None if he_image is None else Path(he_image),
+        mode=str(mode),
+        feature_key=feature_key,
+        sample_size=int(sample_size),
+        pca_components=int(pca_components),
+        k=int(k),
+        chunk_size=int(chunk_size),
+        confident_blank=float(confident_blank),
+        confident_tissue=float(confident_tissue),
+        tissue_fraction_threshold=float(tissue_fraction_threshold),
+        cluster_tissue_mean=float(cluster_tissue_mean),
+        cluster_tissue_ratio=float(cluster_tissue_ratio),
+        min_component_grids=int(min_component_grids),
+        max_hole_grids=int(max_hole_grids),
+        thumbnail_max_side=int(thumbnail_max_side),
+        he_mask_max_side=int(he_mask_max_side),
+        he_saturation_threshold=float(he_saturation_threshold),
+        he_value_threshold=float(he_value_threshold),
+        he_white_value=float(he_white_value),
+        he_white_saturation=float(he_white_saturation),
+        min_he_object_pixels=int(min_he_object_pixels),
+        seed=int(seed),
+        force=bool(force),
+    )
+    summary["dataset"] = selected
+    parent = sys.modules.get(__package__)
+    if parent is not None:
+        setattr(parent, "mask", mask)
     return summary
 
 
@@ -411,59 +561,106 @@ def _auto_select_cuda_device() -> dict[str, Any]:
     return result
 
 
-def train(
+def _run_finetune_mu_api(
     *,
     dataset: str,
     st_h5ad: str | Path,
     deconv_csv: str | Path,
     grid_embedding_h5: str | Path,
     gene_list: str | Path,
-    run_dir: str | Path | None = None,
-    projection_dim: int = 3584,
-    lambda_type: float = 1.0,
-    alpha: float = 0.05,
-    max_epochs: int = 120,
-    batch_size: int = 4,
-    lr: float = 5e-5,
-    no_export: bool = False,
-    auto_select_gpu: bool = True,
-    enable_progress_bar: bool = True,
-    progress_refresh_rate: int = 1,
-    stage_log_stdout: bool = False,
+    mu_ref: str | Path | None,
+    run_dir: str | Path | None,
+    projection_dim: int,
+    lambda_type: float,
+    alpha: float,
+    stage1_epochs: int,
+    stage2_epochs: int,
+    stage1_checkpoint: str | Path | None,
+    batch_size: int,
+    lr: float,
+    expr_loss: str,
+    delta_alpha: float,
+    init_scale: float,
+    skip_input_projector: bool,
+    type_head_hidden_layers: int,
+    factorized_head_hidden_layers: int,
+    scale_head_hidden_dim: int | None,
+    delta_head_hidden_dim: int | None,
+    mu_eps: float,
+    no_export: bool,
+    auto_select_gpu: bool,
+    enable_progress_bar: bool,
+    progress_refresh_rate: int,
+    stage_log_stdout: bool,
+    stop_after_stage1: bool,
+    stage1_export_type: bool,
+    stage1_agg: bool,
+    stage1_polygon_csv: str | Path | None,
+    stage1_grid_type_csv: str | Path | None,
+    stage1_cell_type_csv: str | Path | None,
+    stage2_agg: bool,
+    stage2_polygon_csv: str | Path | None,
+    grid_pred_expression_h5: str | Path | None,
+    cell_pred_expression_h5: str | Path | None,
+    summary_filename: str,
     **kwargs: Any,
 ) -> dict[str, Any]:
-    """Train the no-set-transformer SpaceRec model and export slim grid outputs."""
-
     gpu_selection = _auto_select_cuda_device() if auto_select_gpu else {"enabled": False, "selected": False}
     cuda_device_arg = gpu_selection.get("cuda_device_arg")
-    from .model import run_training
+    from .model import run_finetune_mu_training
 
     selected = _dataset(dataset)
     selected_run_dir = _ensure_dir(run_dir or _default_step_dir(selected, "train"))
-    summary = run_training(
+    selected_mu_ref = (
+        Path(mu_ref)
+        if mu_ref is not None
+        else Path.cwd() / "resources" / selected / "deconv" / "rctd_ref" / "rctd_reference_merged11.npy"
+    )
+    summary = run_finetune_mu_training(
         dataset=selected,
         dense_h5=Path(grid_embedding_h5),
         dense_feature_key=_feature_key_from_grid_embedding(Path(grid_embedding_h5)),
         st_h5ad=Path(st_h5ad),
         deconv_csv=Path(deconv_csv),
         gene_list=Path(gene_list),
+        mu_ref=selected_mu_ref,
         run_dir=selected_run_dir,
         projection_dim=int(projection_dim),
-        lambda_deconv=float(lambda_type),
-        type_confidence_alpha=float(alpha),
-        max_epochs=int(max_epochs),
+        stage1_epochs=int(stage1_epochs),
+        stage2_epochs=int(stage2_epochs),
+        stage1_checkpoint=None if stage1_checkpoint is None else Path(stage1_checkpoint),
+        lambda_conf=float(alpha),
         batch_size=int(batch_size),
         lr=float(lr),
+        expr_loss=str(expr_loss),
+        delta_alpha=float(delta_alpha),
+        init_scale=float(init_scale),
+        skip_input_projector=bool(skip_input_projector),
+        type_head_hidden_layers=int(type_head_hidden_layers),
+        factorized_head_hidden_layers=int(factorized_head_hidden_layers),
+        scale_head_hidden_dim=None if scale_head_hidden_dim is None else int(scale_head_hidden_dim),
+        delta_head_hidden_dim=None if delta_head_hidden_dim is None else int(delta_head_hidden_dim),
+        mu_eps=float(mu_eps),
         no_export=bool(no_export),
         cuda_device=None if cuda_device_arg is None else int(cuda_device_arg),
         gpu_selection=gpu_selection,
         enable_progress_bar=bool(enable_progress_bar),
         progress_refresh_rate=int(progress_refresh_rate),
         stage_log_stdout=bool(stage_log_stdout),
+        stop_after_stage1=bool(stop_after_stage1),
+        stage1_export_type=bool(stage1_export_type),
+        stage1_agg=bool(stage1_agg),
+        stage1_polygon_csv=None if stage1_polygon_csv is None else Path(stage1_polygon_csv),
+        stage1_grid_type_csv=None if stage1_grid_type_csv is None else Path(stage1_grid_type_csv),
+        stage1_cell_type_csv=None if stage1_cell_type_csv is None else Path(stage1_cell_type_csv),
+        stage2_agg=bool(stage2_agg),
+        stage2_polygon_csv=None if stage2_polygon_csv is None else Path(stage2_polygon_csv),
+        grid_pred_expression_h5=None if grid_pred_expression_h5 is None else Path(grid_pred_expression_h5),
+        cell_pred_expression_h5=None if cell_pred_expression_h5 is None else Path(cell_pred_expression_h5),
         **kwargs,
     )
     grid_h5 = selected_run_dir / "grid_predictions.h5"
-    if not no_export and grid_h5.exists():
+    if not no_export and not stop_after_stage1 and grid_h5.exists():
         summary.update(
             export_grid_predictions(
                 grid_h5,
@@ -476,11 +673,300 @@ def train(
             "dataset": selected,
             "run_dir": str(selected_run_dir),
             "grid_predictions_h5": str(grid_h5),
+            "mu_ref": str(selected_mu_ref),
+            "lambda_type_argument_ignored": float(lambda_type),
             "gpu_selection": gpu_selection,
         }
     )
-    (selected_run_dir / "slim_train_summary.json").write_text(json.dumps(summary, indent=2), encoding="utf-8")
+    (selected_run_dir / summary_filename).write_text(json.dumps(summary, indent=2), encoding="utf-8")
     return summary
+
+
+def train(
+    *,
+    dataset: str,
+    st_h5ad: str | Path,
+    deconv_csv: str | Path,
+    grid_embedding_h5: str | Path,
+    gene_list: str | Path,
+    mu_ref: str | Path | None = None,
+    run_dir: str | Path | None = None,
+    projection_dim: int = 2048,
+    lambda_type: float = 1.0,
+    alpha: float = 0.1,
+    max_epochs: int | None = None,
+    stage1_epochs: int = 70,
+    stage2_epochs: int = 70,
+    stage1_checkpoint: str | Path | None = None,
+    batch_size: int = 4,
+    lr: float = 5e-5,
+    expr_loss: str = "log1p_huber",
+    delta_alpha: float = 0.5,
+    init_scale: float = 128.0,
+    skip_input_projector: bool = True,
+    type_head_hidden_layers: int = 2,
+    factorized_head_hidden_layers: int = 3,
+    scale_head_hidden_dim: int | None = 512,
+    delta_head_hidden_dim: int | None = 2048,
+    mu_eps: float = 1e-8,
+    no_export: bool = False,
+    auto_select_gpu: bool = True,
+    enable_progress_bar: bool = True,
+    progress_refresh_rate: int = 1,
+    stage_log_stdout: bool = False,
+    **kwargs: Any,
+) -> dict[str, Any]:
+    """Train the finetune-mu two-stage model and export slim grid outputs."""
+
+    return _run_finetune_mu_api(
+        dataset=dataset,
+        st_h5ad=Path(st_h5ad),
+        deconv_csv=Path(deconv_csv),
+        grid_embedding_h5=Path(grid_embedding_h5),
+        gene_list=Path(gene_list),
+        mu_ref=mu_ref,
+        run_dir=run_dir,
+        projection_dim=int(projection_dim),
+        lambda_type=float(lambda_type),
+        alpha=float(alpha),
+        stage1_epochs=int(stage1_epochs if max_epochs is None else max_epochs),
+        stage2_epochs=int(stage2_epochs if max_epochs is None else max_epochs),
+        stage1_checkpoint=None if stage1_checkpoint is None else Path(stage1_checkpoint),
+        batch_size=int(batch_size),
+        lr=float(lr),
+        expr_loss=str(expr_loss),
+        delta_alpha=float(delta_alpha),
+        init_scale=float(init_scale),
+        skip_input_projector=bool(skip_input_projector),
+        type_head_hidden_layers=int(type_head_hidden_layers),
+        factorized_head_hidden_layers=int(factorized_head_hidden_layers),
+        scale_head_hidden_dim=None if scale_head_hidden_dim is None else int(scale_head_hidden_dim),
+        delta_head_hidden_dim=None if delta_head_hidden_dim is None else int(delta_head_hidden_dim),
+        mu_eps=float(mu_eps),
+        no_export=bool(no_export),
+        auto_select_gpu=bool(auto_select_gpu),
+        enable_progress_bar=bool(enable_progress_bar),
+        progress_refresh_rate=int(progress_refresh_rate),
+        stage_log_stdout=bool(stage_log_stdout),
+        stop_after_stage1=False,
+        stage1_export_type=False,
+        stage1_agg=False,
+        stage1_polygon_csv=None,
+        stage1_grid_type_csv=None,
+        stage1_cell_type_csv=None,
+        stage2_agg=True,
+        stage2_polygon_csv=None,
+        grid_pred_expression_h5=None,
+        cell_pred_expression_h5=None,
+        summary_filename="slim_train_summary.json",
+        **kwargs,
+    )
+
+
+def stage1(
+    *,
+    dataset: str,
+    st_h5ad: str | Path,
+    deconv_csv: str | Path,
+    grid_embedding_h5: str | Path,
+    gene_list: str | Path,
+    mu_ref: str | Path | None = None,
+    run_dir: str | Path | None = None,
+    projection_dim: int = 2048,
+    lambda_type: float = 1.0,
+    alpha: float = 0.1,
+    max_epochs: int | None = None,
+    stage1_epochs: int = 70,
+    batch_size: int = 4,
+    lr: float = 5e-5,
+    expr_loss: str = "log1p_huber",
+    delta_alpha: float = 0.5,
+    init_scale: float = 128.0,
+    skip_input_projector: bool = True,
+    type_head_hidden_layers: int = 2,
+    factorized_head_hidden_layers: int = 3,
+    scale_head_hidden_dim: int | None = 512,
+    delta_head_hidden_dim: int | None = 2048,
+    mu_eps: float = 1e-8,
+    auto_select_gpu: bool = True,
+    enable_progress_bar: bool = True,
+    progress_refresh_rate: int = 1,
+    stage_log_stdout: bool = False,
+    agg: bool = False,
+    cell_polygon_csv: str | Path | None = None,
+    type_pred_dir: str | Path | None = None,
+    grid_type_csv: str | Path | None = None,
+    cell_type_csv: str | Path | None = None,
+    **kwargs: Any,
+) -> dict[str, Any]:
+    """Train only the finetune-mu stage 1 router/type model."""
+
+    selected = _dataset(dataset)
+    selected_type_pred_dir = _ensure_dir(type_pred_dir or Path.cwd() / "resources" / selected / "type_pred")
+    selected_grid_type_csv = Path(grid_type_csv) if grid_type_csv is not None else selected_type_pred_dir / "stage1_grid_type.csv"
+    selected_cell_type_csv = None
+    if agg:
+        selected_cell_type_csv = (
+            Path(cell_type_csv) if cell_type_csv is not None else selected_type_pred_dir / "stage1_cell_type.csv"
+        )
+    selected_run_dir = Path(run_dir) if run_dir is not None else selected_type_pred_dir / "train"
+    selected_cell_polygon_csv = None
+    if agg:
+        selected_cell_polygon_csv = (
+            Path(cell_polygon_csv)
+            if cell_polygon_csv is not None
+            else Path.cwd() / "resources" / selected / "xen" / "aligned" / "he_alignmented_cell_boundaries.csv"
+        )
+    return _run_finetune_mu_api(
+        dataset=selected,
+        st_h5ad=Path(st_h5ad),
+        deconv_csv=Path(deconv_csv),
+        grid_embedding_h5=Path(grid_embedding_h5),
+        gene_list=Path(gene_list),
+        mu_ref=mu_ref,
+        run_dir=selected_run_dir,
+        projection_dim=int(projection_dim),
+        lambda_type=float(lambda_type),
+        alpha=float(alpha),
+        stage1_epochs=int(stage1_epochs if max_epochs is None else max_epochs),
+        stage2_epochs=0,
+        stage1_checkpoint=None,
+        batch_size=int(batch_size),
+        lr=float(lr),
+        expr_loss=str(expr_loss),
+        delta_alpha=float(delta_alpha),
+        init_scale=float(init_scale),
+        skip_input_projector=bool(skip_input_projector),
+        type_head_hidden_layers=int(type_head_hidden_layers),
+        factorized_head_hidden_layers=int(factorized_head_hidden_layers),
+        scale_head_hidden_dim=None if scale_head_hidden_dim is None else int(scale_head_hidden_dim),
+        delta_head_hidden_dim=None if delta_head_hidden_dim is None else int(delta_head_hidden_dim),
+        mu_eps=float(mu_eps),
+        no_export=True,
+        auto_select_gpu=bool(auto_select_gpu),
+        enable_progress_bar=bool(enable_progress_bar),
+        progress_refresh_rate=int(progress_refresh_rate),
+        stage_log_stdout=bool(stage_log_stdout),
+        stop_after_stage1=True,
+        stage1_export_type=True,
+        stage1_agg=bool(agg),
+        stage1_polygon_csv=selected_cell_polygon_csv,
+        stage1_grid_type_csv=selected_grid_type_csv,
+        stage1_cell_type_csv=selected_cell_type_csv,
+        stage2_agg=False,
+        stage2_polygon_csv=None,
+        grid_pred_expression_h5=None,
+        cell_pred_expression_h5=None,
+        summary_filename="slim_stage1_summary.json",
+        **kwargs,
+    )
+
+
+def stage2(
+    *,
+    dataset: str,
+    st_h5ad: str | Path,
+    deconv_csv: str | Path,
+    grid_embedding_h5: str | Path,
+    stage1_checkpoint: str | Path,
+    gene_txt: str | Path | None = None,
+    gene_list: str | Path | None = None,
+    mu_ref: str | Path | None = None,
+    run_dir: str | Path | None = None,
+    projection_dim: int = 2048,
+    lambda_type: float = 1.0,
+    alpha: float = 0.1,
+    max_epochs: int | None = None,
+    stage2_epochs: int = 70,
+    batch_size: int = 4,
+    lr: float = 5e-5,
+    expr_loss: str = "log1p_huber",
+    delta_alpha: float = 0.5,
+    init_scale: float = 128.0,
+    skip_input_projector: bool = True,
+    type_head_hidden_layers: int = 2,
+    factorized_head_hidden_layers: int = 3,
+    scale_head_hidden_dim: int | None = 512,
+    delta_head_hidden_dim: int | None = 2048,
+    mu_eps: float = 1e-8,
+    no_export: bool = False,
+    auto_select_gpu: bool = True,
+    enable_progress_bar: bool = True,
+    progress_refresh_rate: int = 1,
+    stage_log_stdout: bool = False,
+    agg: bool = True,
+    cell_polygon_csv: str | Path | None = None,
+    grid_pred_expression_h5: str | Path | None = None,
+    cell_pred_expression_h5: str | Path | None = None,
+    **kwargs: Any,
+) -> dict[str, Any]:
+    """Train Stage 2, export grid outputs, and optionally aggregate cells."""
+
+    selected = _dataset(dataset)
+    selected_run_dir = Path(run_dir) if run_dir is not None else Path.cwd() / "resources" / selected / "type_pred" / "train"
+    selected_gene_txt = Path(gene_txt) if gene_txt is not None else None
+    if selected_gene_txt is None:
+        selected_gene_txt = Path(gene_list) if gene_list is not None else None
+    if selected_gene_txt is None:
+        raise ValueError("stage2 requires gene_txt.")
+    selected_cell_polygon_csv = None
+    if agg:
+        selected_cell_polygon_csv = (
+            Path(cell_polygon_csv)
+            if cell_polygon_csv is not None
+            else Path.cwd() / "resources" / selected / "xen" / "aligned" / "he_alignmented_cell_boundaries.csv"
+        )
+    selected_grid_pred_expression_h5 = (
+        Path(grid_pred_expression_h5) if grid_pred_expression_h5 is not None else selected_run_dir / "grid_pred_expression.h5"
+    )
+    selected_cell_pred_expression_h5 = None
+    if agg:
+        selected_cell_pred_expression_h5 = (
+            Path(cell_pred_expression_h5) if cell_pred_expression_h5 is not None else selected_run_dir / "cell_pred_expression.h5"
+        )
+    return _run_finetune_mu_api(
+        dataset=selected,
+        st_h5ad=Path(st_h5ad),
+        deconv_csv=Path(deconv_csv),
+        grid_embedding_h5=Path(grid_embedding_h5),
+        gene_list=selected_gene_txt,
+        mu_ref=mu_ref,
+        run_dir=selected_run_dir,
+        projection_dim=int(projection_dim),
+        lambda_type=float(lambda_type),
+        alpha=float(alpha),
+        stage1_epochs=0,
+        stage2_epochs=int(stage2_epochs if max_epochs is None else max_epochs),
+        stage1_checkpoint=Path(stage1_checkpoint),
+        batch_size=int(batch_size),
+        lr=float(lr),
+        expr_loss=str(expr_loss),
+        delta_alpha=float(delta_alpha),
+        init_scale=float(init_scale),
+        skip_input_projector=bool(skip_input_projector),
+        type_head_hidden_layers=int(type_head_hidden_layers),
+        factorized_head_hidden_layers=int(factorized_head_hidden_layers),
+        scale_head_hidden_dim=None if scale_head_hidden_dim is None else int(scale_head_hidden_dim),
+        delta_head_hidden_dim=None if delta_head_hidden_dim is None else int(delta_head_hidden_dim),
+        mu_eps=float(mu_eps),
+        no_export=bool(no_export),
+        auto_select_gpu=bool(auto_select_gpu),
+        enable_progress_bar=bool(enable_progress_bar),
+        progress_refresh_rate=int(progress_refresh_rate),
+        stage_log_stdout=bool(stage_log_stdout),
+        stop_after_stage1=False,
+        stage1_export_type=False,
+        stage1_agg=False,
+        stage1_polygon_csv=None,
+        stage1_grid_type_csv=None,
+        stage1_cell_type_csv=None,
+        stage2_agg=bool(agg),
+        stage2_polygon_csv=selected_cell_polygon_csv,
+        grid_pred_expression_h5=selected_grid_pred_expression_h5,
+        cell_pred_expression_h5=selected_cell_pred_expression_h5,
+        summary_filename="slim_stage2_summary.json",
+        **kwargs,
+    )
 
 
 def plottype(

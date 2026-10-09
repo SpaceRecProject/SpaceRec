@@ -1,4 +1,17 @@
 {
+  "cell_type_order": [
+    "B Cells",
+    "T Cells",
+    "DCIS",
+    "Endothelial",
+    "Invasive Tumor",
+    "DCs",
+    "Macrophages",
+    "Mast Cells",
+    "Myoepi",
+    "Perivascular-Like",
+    "Stromal"
+  ],
   "merge": {
     "B Cells": ["B Cells"],
     "T Cells": ["CD4+ T Cells", "CD8+ T Cells"],

@@ -3,8 +3,8 @@
   <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
-    <title>Tutorials - SpaceRec</title>
-    <meta name="description" content="SpaceRec tutorials for dense spatial reconstruction from H&amp;E histology.">
+    <title>SpaceRec Tutorial</title>
+    <meta name="description" content="SpaceRec tutorial for grid-level expression and cell-type prediction from H&amp;E and Visium data.">
     <script>
       window.MathJax = {
         tex: {
@@ -26,14 +26,8 @@
         --code-bg: #f6f8fa;
       }
 
-      * {
-        box-sizing: border-box;
-      }
-
-      html {
-        scroll-behavior: smooth;
-      }
-
+      * { box-sizing: border-box; }
+      html { scroll-behavior: smooth; }
       body {
         margin: 0;
         color: var(--ink);
@@ -42,25 +36,20 @@
         font-size: 16px;
         line-height: 1.65;
       }
-
       a {
         color: var(--link);
         text-decoration-thickness: 1px;
         text-underline-offset: 2px;
       }
-
-      code,
-      pre {
+      code, pre {
         font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", monospace;
       }
-
       code {
         padding: 2px 5px;
         border-radius: 4px;
         background: var(--code-bg);
         font-size: 0.93em;
       }
-
       pre {
         margin: 14px 0 0;
         padding: 14px 16px;
@@ -70,18 +59,12 @@
         background: var(--code-bg);
         font-size: 14px;
       }
-
-      pre code {
-        padding: 0;
-        background: transparent;
-      }
-
+      pre code { padding: 0; background: transparent; }
       .layout {
         display: grid;
         grid-template-columns: 260px minmax(0, 1fr);
         min-height: 100vh;
       }
-
       .sidebar {
         position: sticky;
         top: 0;
@@ -91,7 +74,6 @@
         border-right: 1px solid var(--line);
         background: var(--surface);
       }
-
       .brand {
         display: block;
         margin-bottom: 26px;
@@ -100,7 +82,6 @@
         font-weight: 700;
         text-decoration: none;
       }
-
       .nav-title {
         margin: 22px 0 8px;
         color: var(--muted);
@@ -109,27 +90,15 @@
         letter-spacing: 0.06em;
         text-transform: uppercase;
       }
-
-      .nav {
-        display: grid;
-        gap: 2px;
-      }
-
+      .nav { display: grid; gap: 2px; }
       .nav a {
         padding: 5px 0;
         color: #39424e;
         font-size: 14px;
         text-decoration: none;
       }
-
-      .nav a:hover {
-        color: var(--link);
-      }
-
-      .content {
-        min-width: 0;
-      }
-
+      .nav a:hover { color: var(--link); }
+      .content { min-width: 0; }
       .topbar {
         display: flex;
         justify-content: flex-end;
@@ -138,35 +107,11 @@
         border-bottom: 1px solid var(--line);
         background: var(--surface);
       }
-
-      .topbar a {
-        font-size: 14px;
-        text-decoration: none;
-      }
-
-      main {
-        max-width: 920px;
-        padding: 40px min(7vw, 74px) 72px;
-      }
-
-      .breadcrumb {
-        margin: 0 0 14px;
-        color: var(--muted);
-        font-size: 14px;
-      }
-
-      h1,
-      h2,
-      h3 {
-        line-height: 1.25;
-      }
-
-      h1 {
-        margin: 0 0 16px;
-        font-size: 38px;
-        font-weight: 650;
-      }
-
+      .topbar a { font-size: 14px; text-decoration: none; }
+      main { max-width: 920px; padding: 40px min(7vw, 74px) 72px; }
+      .breadcrumb { margin: 0 0 14px; color: var(--muted); font-size: 14px; }
+      h1, h2, h3 { line-height: 1.25; }
+      h1 { margin: 0 0 16px; font-size: 38px; font-weight: 650; }
       h2 {
         margin: 38px 0 12px;
         padding-bottom: 6px;
@@ -174,48 +119,17 @@
         font-size: 26px;
         font-weight: 650;
       }
-
-      h3 {
-        margin: 26px 0 8px;
-        font-size: 20px;
-        font-weight: 650;
-      }
-
-      p {
-        margin: 10px 0 0;
-      }
-
-      ul,
-      ol {
-        margin: 10px 0 0;
-        padding-left: 24px;
-      }
-
-      li + li {
-        margin-top: 4px;
-      }
-
-      .lead {
-        color: var(--muted);
-        font-size: 17px;
-      }
-
-      .tutorial-list {
-        margin-top: 16px;
-        padding-left: 22px;
-      }
-
-      .tutorial-list li {
-        margin-top: 10px;
-      }
-
+      h3 { margin: 26px 0 8px; font-size: 20px; font-weight: 650; }
+      p { margin: 10px 0 0; }
+      ul, ol { margin: 10px 0 0; padding-left: 24px; }
+      li + li { margin-top: 4px; }
+      .lead { color: var(--muted); font-size: 17px; }
       .note {
         margin-top: 16px;
         padding: 12px 14px;
         border-left: 4px solid var(--line);
         background: var(--surface);
       }
-
       .formula {
         margin-top: 12px;
         padding: 10px 12px;
@@ -225,7 +139,6 @@
         background: var(--surface);
         font-size: 16px;
       }
-
       table {
         width: 100%;
         margin-top: 14px;
@@ -233,21 +146,13 @@
         border-collapse: collapse;
         background: var(--surface);
       }
-
-      th,
-      td {
+      th, td {
         padding: 10px 12px;
         border: 1px solid var(--line);
         text-align: left;
         vertical-align: top;
       }
-
-      th {
-        width: 190px;
-        background: var(--code-bg);
-        font-weight: 650;
-      }
-
+      th { background: var(--code-bg); font-weight: 650; }
       footer {
         margin-top: 46px;
         padding-top: 18px;
@@ -255,41 +160,20 @@
         color: var(--muted);
         font-size: 14px;
       }
-
       @media (max-width: 900px) {
-        .layout {
-          display: block;
-        }
-
+        .layout { display: block; }
         .sidebar {
           position: static;
           height: auto;
           border-right: 0;
           border-bottom: 1px solid var(--line);
         }
-
-        .topbar {
-          justify-content: flex-start;
-        }
+        .topbar { justify-content: flex-start; }
       }
-
       @media (max-width: 560px) {
-        main,
-        .topbar,
-        .sidebar {
-          padding-left: 18px;
-          padding-right: 18px;
-        }
-
-        h1 {
-          font-size: 32px;
-        }
-
-        th,
-        td {
-          display: block;
-          width: 100%;
-        }
+        main, .topbar, .sidebar { padding-left: 18px; padding-right: 18px; }
+        h1 { font-size: 32px; }
+        th, td { display: block; width: 100%; }
       }
     </style>
   </head>
@@ -301,357 +185,327 @@
         <p class="nav-title">General</p>
         <nav class="nav" aria-label="General navigation">
           <a href="../">Documentation home</a>
-          <a href="./">Tutorials</a>
+          <a href="./">Tutorial</a>
           <a href="https://github.com/SpaceRecProject/SpaceRec">GitHub</a>
-          <a href="https://github.com/SpaceRecProject/SpaceRec/blob/main/spacerec/notebooks/run_spacerec.ipynb">Notebook</a>
+          <a href="https://github.com/SpaceRecProject/SpaceRec/blob/main/spacerec/notebooks/spacerec.ipynb">Existing-data notebook</a>
         </nav>
 
         <p class="nav-title">On this page</p>
         <nav class="nav" aria-label="Page navigation">
           <a href="#setup">Setup</a>
-          <a href="#overview">Overview</a>
-          <a href="#system">Tested system</a>
+          <a href="#data">BRCA data</a>
           <a href="#quick-start">Quick start</a>
           <a href="#workflow">Workflow</a>
+          <a href="#settings">Settings</a>
           <a href="#outputs">Outputs</a>
         </nav>
 
         <p class="nav-title">Workflow steps</p>
         <nav class="nav" aria-label="Workflow steps">
-          <a href="#deconvolution">Deconvolution</a>
+          <a href="#reference">Expression reference</a>
           <a href="#grid-embedding">Grid embedding</a>
-          <a href="#training">Training</a>
-          <a href="#aggregation">Aggregation</a>
-          <a href="#evaluation">Evaluation</a>
+          <a href="#stage1">Stage 1</a>
+          <a href="#stage2">Stage 2</a>
+          <a href="#inspection">BBox inspection</a>
+          <a href="#aggregation">Optional aggregation</a>
         </nav>
       </aside>
 
       <div class="content">
         <div class="topbar">
           <a href="https://github.com/SpaceRecProject/SpaceRec">Repository</a>
-          <a href="https://github.com/SpaceRecProject/SpaceRec/blob/main/spacerec/notebooks/run_spacerec.ipynb">Notebook</a>
+          <a href="https://github.com/SpaceRecProject/SpaceRec/blob/main/spacerec/notebooks/spacerec.ipynb">Notebook</a>
         </div>
 
         <main>
-          <p class="breadcrumb"><a href="../">SpaceRec</a> / Tutorials</p>
-          <h1>Tutorials</h1>
+          <p class="breadcrumb"><a href="../">SpaceRec</a> / Tutorial</p>
+          <h1>Existing Visium data tutorial</h1>
           <p class="lead">
-            Step-by-step notes for running SpaceRec on the packaged BRCA workflow,
-            from H&amp;E and Visium inputs to dense expression maps and cell-type
-            predictions.
+            Run SpaceRec on BRCA Visium counts, H&amp;E imaging, and a single-cell
+            reference to generate dense grid-level cell-type and expression maps.
           </p>
 
           <section id="setup">
             <h2>Setup</h2>
             <p>
-              Clone the repository, create the conda environment, install the
-              Python dependencies, and verify the Python, CUDA, and R setup from
-              the repository root.
+              Work from an allocated Slurm compute node. Use a GPU for full image
+              embedding and both training stages. Activate the existing Python
+              environment and point SpaceRec to the separate R environment used by
+              RCTD.
             </p>
-
-            <pre><code>git clone https://github.com/SpaceRecProject/SpaceRec.git
-cd SpaceRec
-conda create -n spacerec python=3.10 -y
-conda activate spacerec
-pip install torch lightning numpy pandas scipy h5py anndata pillow matplotlib shapely timm
+            <pre><code>cd SpaceRec
+conda activate spacerec_env
+export SPACEREC_R_ENV="$HOME/.conda/envs/spacerec_r_env"
 
 python -c "import spacerec.api as spacerec; print(spacerec.__file__)"
 python -c "import torch; print(torch.cuda.is_available())"
-Rscript -e "library(Matrix); library(Seurat); library(spacexr)"</code></pre>
+"$SPACEREC_R_ENV/bin/Rscript" -e "library(Matrix); library(Seurat); library(spacexr); library(hdf5r)"</code></pre>
+            <div class="note">
+              The notebook can recover GPU indices from the active Slurm allocation
+              when <code>CUDA_VISIBLE_DEVICES</code> is absent. It does not submit a
+              new allocation by itself.
+            </div>
           </section>
 
-          <section id="overview">
-            <h2>Overview</h2>
+          <section id="data">
+            <h2>BRCA data</h2>
             <p>
-              SpaceRec predicts dense grid-level gene expression and cell-type
-              probabilities from histology using Visium supervision. The current
-              tutorial follows the main notebook and keeps the workflow in five
-              explicit stages.
+              Download the packaged data from the
+              <a href="https://drive.google.com/open?id=1Fxyag8rx4A-DDvfdCk6xUd_SKmtTz5vw">SpaceRec Google Drive folder</a>
+              and organize it under <code>resources/brca</code>.
             </p>
-
-            <ol class="tutorial-list">
-              <li><a href="#setup">Setup commands</a></li>
-              <li><a href="#quick-start">Step-by-step guide for H&amp;E-stained imaging data</a></li>
-              <li><a href="#workflow">Workflow overview</a></li>
-              <li><a href="#outputs">Output reference</a></li>
-            </ol>
-          </section>
-
-          <section id="system">
-            <h2>Tested system</h2>
-            <ul>
-              <li>Python 3.10 with PyTorch, Lightning, NumPy, pandas, h5py, AnnData, Pillow, Matplotlib, Shapely, and timm.</li>
-              <li>R packages: Matrix, Seurat, and spacexr for RCTD deconvolution.</li>
-              <li>CUDA is recommended for grid embedding and model training.</li>
-            </ul>
+            <pre><code>resources/brca/
+├── visium/
+│   ├── st_filtered_feature_bc_matrix.h5
+│   ├── tissue_positions.csv
+│   ├── scalefactors_json.json
+│   └── spatial/tissue_hires_image.png
+├── he/he.tif
+├── sc_ref/scRNA_adata_reannotated.h5ad
+├── deconv/deconv.csv
+├── truth/
+└── config/brca_type_merge_17to11.json</code></pre>
+            <p>
+              Inputs and generated artifacts use this single resource tree. Training
+              outputs are stored under <code>resources/brca/model_pred/train</code>.
+            </p>
           </section>
 
           <section id="quick-start">
             <h2>Quick start</h2>
-            <p>
-              After setup, place <code>data/</code> and <code>results/</code> at
-              the repository root and open the notebook.
-            </p>
-
             <table>
               <tbody>
                 <tr>
                   <th>Main notebook</th>
-                  <td><code>spacerec/notebooks/run_spacerec.ipynb</code></td>
+                  <td><code>spacerec/notebooks/spacerec.ipynb</code></td>
                 </tr>
                 <tr>
-                  <th>Dataset settings</th>
+                  <th>Dataset</th>
                   <td><code>dataset = "brca"</code>, <code>sample_id = "BREAST"</code></td>
                 </tr>
                 <tr>
-                  <th>Input folders</th>
-                  <td><code>data/</code> and <code>results/</code> at the repository root.</td>
-                </tr>
-                <tr>
-                  <th>Output root</th>
-                  <td><code>results/&lt;dataset&gt;/&lt;step&gt;/</code></td>
+                  <th>Input and output root</th>
+                  <td><code>resources/brca/</code></td>
                 </tr>
               </tbody>
             </table>
-
-            <div class="note">
-              For smoke tests, lower <code>max_patches</code>, <code>limit_spots</code>,
-              and <code>max_epochs</code> before running expensive cells.
-            </div>
+            <p>
+              Open <code>spacerec.ipynb</code>, select the <code>spacerec_env</code>
+              kernel, and run the cells in order. Stage 2 is restart-safe after Stage
+              1 because it reconstructs every required path from disk.
+            </p>
           </section>
 
           <section id="workflow">
             <h2>Workflow</h2>
             <ol>
-              <li>Deconvolution: estimate spot-level cell-type proportions.</li>
-              <li>Grid embedding: extract dense18 Virchow2 H&amp;E features.</li>
-              <li>Training: fit expression and type projection heads.</li>
-              <li>Aggregation: map grid predictions to polygons and cells.</li>
-              <li>Evaluation: render type and expression checks.</li>
+              <li>Validate supplied deconvolution proportions and build the RCTD expression reference.</li>
+              <li>Extract dense Virchow2 H&amp;E features and create the H&amp;E tissue mask.</li>
+              <li>Train the Stage 1 router and grid cell-type model.</li>
+              <li>Train the Stage 2 expression model from the Stage 1 checkpoint.</li>
+              <li>Inspect grid-level type and expression predictions in an editable bbox.</li>
             </ol>
           </section>
 
-          <section id="deconvolution">
-            <h2>Step 1: Deconvolution</h2>
+          <section id="reference">
+            <h2>Step 1: deconvolution and expression reference</h2>
             <p>
-              Use the Visium spot count matrix and the annotated scRNA reference
-              to estimate spot-level cell-type proportions. The output
-              <code>deconv.csv</code> is the weak supervision target for the
-              model's cell-type head.
+              The notebook reuses <code>deconv/deconv.csv</code> only after validating
+              barcode identity, finite nonnegative values, and row sums. It rebuilds
+              the ordered 11-cell-type expression prior from the single-cell reference
+              and real Visium gene space.
             </p>
-            <p>
-              For each spot \(s\), RCTD approximates its expression profile as
-              a mixture of reference type profiles:
-            </p>
-            <div class="formula">\[x_s \approx l_s\sum_k p_{s,k} r_k, \quad p_{s,k} \ge 0, \quad \sum_k p_{s,k}=1\]</div>
-            <p>
-              If <code>type_merge_json</code> is provided, source cell-type
-              columns are summed into the target ontology and row-normalized
-              again.
-            </p>
-            <pre><code>pprint(spacerec.deconv(
-    dataset=dataset,
-    visium_dir=visium_dir,
+            <div class="formula">\[x_s \approx l_s\sum_k p_{s,k}r_k, \qquad p_{s,k}\ge 0, \qquad \sum_k p_{s,k}=1\]</div>
+            <pre><code>rctd_ref_summary = spacerec.rctd_ref(
+    dataset="brca",
     sc_ref_h5ad=sc_ref_h5ad,
-    output_dir=deconv_dir,
-    output_csv=deconv_csv,
-    sample_id=sample_id,
-    annotation_column=annotation_column,
-    max_cores=8,
-    type_merge_json=type_merge_json,
-    force=False,
-    run_rctd=True,
-))</code></pre>
+    synthetic_h5=visium_h5,
+    positions_csv=positions_csv,
+    output_dir=rctd_ref_dir,
+    gene_list_txt=gene_list,
+    merge_json=brca_merge_json,
+    force=True,
+)</code></pre>
           </section>
 
           <section id="grid-embedding">
-            <h2>Step 2: Grid embedding</h2>
+            <h2>Step 2: grid embedding and H&amp;E mask</h2>
             <p>
-              Generate dense grid-level histology embeddings from the H&amp;E
-              image. The fixed BRCA flow crops 288px full-resolution patches,
-              resizes each patch to 224px for Virchow2, maps 16x16 tokens back
-              to dense18 full-resolution grids, and keeps grids inside the tissue
-              boundary.
+              The current configuration uses a 480px patch and 120px stride. It
+              concatenates the 1280-dimensional Virchow2 class token with 2560 local
+              tile features and leaves neighbor features disabled.
             </p>
-            <p>
-              Each grid view concatenates token, same-patch tile, and
-              neighbor-tile context:
-            </p>
-            <div class="formula">\[h_{g,v} = [t_{g,v}; u_v; n_v] \in \mathbb{R}^{6400}\]</div>
-            <p>
-              Overlapping patch views of the same final grid are combined with
-              raised-cosine / Hann-like weights after concatenation:
-            </p>
-            <div class="formula">\[h_g = \frac{\sum_v w_{g,v} h_{g,v}}{\sum_v w_{g,v}}\]</div>
+            <div class="formula">\[h_g=[t_g;u_g]\in\mathbb{R}^{3840}\]</div>
             <pre><code>ge_summary = spacerec.ge(
-    dataset=dataset,
+    dataset="brca",
     he_image=he_image,
     positions_csv=positions_csv,
     scalefactors_json=scalefactors_json,
     thumbnail_png=thumbnail_png,
-    output_dir=grid_dir,
-    output_h5=grid_embedding_h5,
-    patch_size=288,
-    stride=72,
+    output_dir=embedding_dir,
+    patch_size=480,
+    stride=120,
     concat_local=True,
-    concat_nbr=True,
+    concat_nbr=False,
     model="virchow2",
     batch_size=4,
-    num_workers=4,
-    device=None,
-    max_patches = None, # max_patches= 32 for smoke test
-    metadata_only=False,
     force=True,
-    auto_select_gpu=True,
-    enable_progress_bar=True,
-    progress_refresh_rate=1,
-    stage_log_stdout=False,
-)
-display_ge_summary(ge_summary)</code></pre>
+)</code></pre>
+            <p>
+              <code>spacerec.mask(...)</code> then removes background grids and writes
+              <code>embedding/grid_embedding_train_filtered.h5</code> for training.
+            </p>
           </section>
 
-          <section id="training">
-            <h2>Step 3: Training</h2>
+          <section id="stage1">
+            <h2>Step 3.1: router and cell-type model</h2>
             <p>
-              Train the no-Set-Transformer projection-heads model on dense grid
-              embeddings. In this notebook <code>projection_dim=512</code>, so
-              each 6400-dimensional grid vector is first projected as:
+              Stage 1 predicts a cell-type probability vector for every retained
+              30px grid. Grid probabilities are averaged inside each Visium spot for
+              supervision.
             </p>
-            <div class="formula">\[z_g = \mathrm{LayerNorm}(\mathrm{GELU}(W h_g + b))\]</div>
-            <p>
-              The gene head predicts nonnegative grid expression \(\hat{x}_g\),
-              and the type head predicts grid probabilities \(\hat{q}_g\):
-            </p>
-            <div class="formula">\[\hat{x}_g = \mathrm{Softplus}(f_{gene}(z_g)), \quad \hat{q}_g = \mathrm{Softmax}(f_{type}(z_g)/T)\]</div>
-            <p>
-              Training supervision is spot-level. For the grids \(G_s\) assigned
-              to spot \(s\):
-            </p>
-            <div class="formula">\[\hat{x}_s = \sum_{g \in G_s} \hat{x}_g, \quad \hat{p}_s = \frac{1}{|G_s|}\sum_{g \in G_s} \hat{q}_g\]</div>
-            <p>
-              The loss combines log-count expression regression and
-              deconvolution-proportion matching:
-            </p>
-            <div class="formula">\[L = \mathrm{Huber}(\log(1+\hat{x}_s), \log(1+x_s)) + \lambda [\alpha L_{conf} + (1-\alpha)\mathrm{KL}(p_s \Vert \hat{p}_s)]\]</div>
-            <p>
-              where \(L_{conf}=-\mathbb{E}_g\log \max_k \hat{q}_{g,k}\)
-              encourages confident grid-level type assignments.
-            </p>
-            <pre><code>train_summary = spacerec.train(
-    dataset=dataset,
-    st_h5ad=st_h5ad,
+            <div class="formula">\[\hat{p}_s=\frac{1}{|G_s|}\sum_{g\in G_s}\hat{q}_g\]</div>
+            <pre><code>stage1_summary = spacerec.stage1(
+    dataset="brca",
+    st_h5ad=visium_h5,
     deconv_csv=deconv_csv,
-    grid_embedding_h5=grid_embedding_h5,
+    grid_embedding_h5=training_grid_embedding_h5,
     gene_list=gene_list,
+    mu_ref=mu_ref,
     run_dir=train_dir,
-    projection_dim=512,
-    lambda_type=1.0,
-    alpha=0.05,
-    max_epochs=60,
+    projection_dim=2048,
     batch_size=4,
-    lr=5e-5,
-    limit_spots=None, # this para is for smoke test, you can set it to be 8 or 10
-    patience=20,
-    auto_select_gpu=True,
-    enable_progress_bar=True,
-    progress_refresh_rate=1,
-    stage_log_stdout=False,
+    stage1_epochs=70,
+    agg=False,
+)</code></pre>
+            <p>
+              Outputs are the Stage 1 checkpoint and grid-level type probabilities.
+              No polygon or cell aggregation runs in this stage.
+            </p>
+          </section>
+
+          <section id="stage2">
+            <h2>Step 3.2: expression model</h2>
+            <p>
+              Stage 2 loads the Stage 1 checkpoint and predicts nonnegative grid
+              expression. Grid values are summed to Visium spots for expression
+              supervision.
+            </p>
+            <div class="formula">\[\hat{x}_s=\sum_{g\in G_s}\hat{x}_g\]</div>
+            <div class="formula">\[\mathcal{L}_{expr}=\operatorname{Huber}(\log(1+\hat{x}_s),\log(1+x_s))\]</div>
+            <pre><code>stage2_summary = spacerec.stage2(
+    dataset="brca",
+    st_h5ad=visium_h5,
+    deconv_csv=deconv_csv,
+    grid_embedding_h5=training_grid_embedding_h5,
+    stage1_checkpoint=stage1_checkpoint,
+    gene_txt=gene_list,
+    mu_ref=mu_ref,
+    run_dir=train_dir,
+    projection_dim=2048,
+    batch_size=4,
+    stage2_epochs=70,
+    agg=False,
+)</code></pre>
+            <p>
+              Stage 2 writes its checkpoint, <code>grid_predictions.h5</code>,
+              <code>grid_type.csv</code>, and <code>grid_expr.h5ad</code>. Cell-level
+              aggregation remains separate.
+            </p>
+          </section>
+
+          <section id="inspection">
+            <h2>Step 4: inspect a spatial bbox</h2>
+            <p>
+              Set <code>bbox_xyxy=(x0,y0,x1,y1)</code> in full-resolution H&amp;E
+              coordinates and choose one gene. The notebook renders matching
+              grid-level type and expression panels without changing their spatial
+              aspect ratio.
+            </p>
+            <pre><code>type_plot = spacerec.plottype(
+    dataset="brca",
+    grid_type_csv=train_dir / "grid_type.csv",
+    window=bbox_xyxy,
+    output_dir=grid_window_dir,
 )
-display_train_summary(train_summary)</code></pre>
+
+expr_plot = spacerec.plotexpr(
+    dataset="brca",
+    grid_expr_h5ad=train_dir / "grid_expr.h5ad",
+    window=bbox_xyxy,
+    output_dir=grid_window_dir,
+    gene="KRT5",
+)</code></pre>
+            <p>
+              Each gene is standardized within its own bbox and clipped to the
+              displayed range.
+            </p>
+            <div class="formula">\[z_g=\operatorname{clip}\left(\frac{x_g-\mu_{bbox}}{\sigma_{bbox}},-2,2\right)\]</div>
           </section>
 
           <section id="aggregation">
-            <h2>Step 4: Aggregation</h2>
+            <h2>Optional cell aggregation</h2>
             <p>
-              Aggregate grid-level SpaceRec predictions to Xenium-like
-              polygon/cell regions. For a target polygon \(c\), overlapping
-              grids are weighted by overlap area:
+              Cell-level aggregation is not part of either training stage in the
+              main existing-data notebook. Run it separately only when a polygon file
+              is available.
             </p>
-            <div class="formula">\[a_{c,g} = \mathrm{area}(\mathrm{polygon}_c \cap \mathrm{grid}_g)\]</div>
-            <p>
-              Cell-level expression and type probabilities are area-weighted
-              averages of covered grids:
-            </p>
-            <div class="formula">\[\hat{x}_c = \frac{\sum_g a_{c,g}\hat{x}_g}{\sum_g a_{c,g}}, \quad \hat{p}_c = \frac{\sum_g a_{c,g}\hat{q}_g}{\sum_g a_{c,g}}\]</div>
-            <p>
-              The exported cell type is the maximum-probability class, and
-              invalid or uncovered polygons can be dropped with
-              <code>valid_only=True</code>.
-            </p>
-            <pre><code>spacerec.agg(
-    dataset=dataset,
-    grid_expr_h5ad=grid_expr_h5ad,
-    grid_type_csv=grid_type_csv,
-    grid_predictions_h5=grid_predictions_h5,
+            <pre><code>aggregate_summary = spacerec.agg(
+    dataset="brca",
+    grid_expr_h5ad=train_dir / "grid_expr.h5ad",
+    grid_type_csv=train_dir / "grid_type.csv",
+    grid_predictions_h5=train_dir / "grid_predictions.h5",
     polygon_csv=polygon_csv,
-    cell_metadata_csv=cell_metadata_csv,
     output_dir=aggregate_dir,
-    valid_only=True,
-    target_name="xen",
 )</code></pre>
           </section>
 
-          <section id="evaluation">
-            <h2>Step 5: Evaluation</h2>
-            <p>
-              The final cells render side-by-side checks for predicted and
-              measured cell types and expression in selected spatial windows.
-            </p>
-            <pre><code>type_plot = spacerec.plottype(
-    dataset=dataset,
-    grid_type_csv=grid_type_csv,
-    true_xen_type_csv=true_xen_type_csv,
-    type_merge_json=type_merge_json,
-    window=type_evaluation_window,
-    window_label=type_window_label,
-    output_dir=evaluation_dir,
-)
-display_image_pair(type_plot["true_type_png"], type_plot["grid_type_png"])
-
-expr_plot = spacerec.plotexpr(
-    dataset=dataset,
-    grid_expr_h5ad=grid_expr_h5ad,
-    true_xen_expr_h5=true_xen_expr_h5,
-    true_xen_type_csv=true_xen_type_csv,
-    polygon_window_label=expr_polygon_window_label,
-    window=expr_evaluation_window,
-    output_dir=evaluation_dir,
-    gene=evaluation_gene,
-)
-display_image_pair(expr_plot["xen_expr_png"], expr_plot["grid_expr_png"])</code></pre>
-          </section>
-
-          <section id="outputs">
-            <h2>Main outputs</h2>
+          <section id="settings">
+            <h2>Current BRCA settings</h2>
             <table>
+              <thead>
+                <tr><th>Component</th><th>Setting</th><th>Value</th></tr>
+              </thead>
               <tbody>
-                <tr>
-                  <th>Deconvolution</th>
-                  <td><code>results/brca/deconv/deconv.csv</code></td>
-                </tr>
-                <tr>
-                  <th>Grid embedding</th>
-                  <td><code>results/brca/grid_embedding/grid_embedding.h5</code></td>
-                </tr>
-                <tr>
-                  <th>Training</th>
-                  <td><code>grid_predictions.h5</code>, <code>grid_type.csv</code>, <code>grid_expr.h5ad</code>, <code>best_train_model.ckpt</code></td>
-                </tr>
-                <tr>
-                  <th>Aggregation</th>
-                  <td><code>spacerec_ct.csv</code>, <code>spacerec_polygon.csv</code>, <code>spacerec_expr.h5ad</code></td>
-                </tr>
-                <tr>
-                  <th>Evaluation</th>
-                  <td><code>xen_type.png</code>, <code>grid_type.png</code>, <code>xen_expr.png</code>, <code>grid_expr.png</code></td>
-                </tr>
+                <tr><td>Grid embedding</td><td><code>patch_size</code></td><td>480px</td></tr>
+                <tr><td>Grid embedding</td><td><code>stride</code></td><td>120px</td></tr>
+                <tr><td>Grid output</td><td>spacing</td><td>30px</td></tr>
+                <tr><td>Grid embedding</td><td>feature dimension</td><td>3840</td></tr>
+                <tr><td>Grid embedding</td><td>neighbor features</td><td>disabled</td></tr>
+                <tr><td>Stage 1 and 2</td><td><code>projection_dim</code></td><td>2048</td></tr>
+                <tr><td>Stage 1 and 2</td><td><code>batch_size</code></td><td>4</td></tr>
+                <tr><td>Stage 1</td><td>epochs</td><td>70</td></tr>
+                <tr><td>Stage 2</td><td>epochs</td><td>70</td></tr>
+                <tr><td>Stage 1 and 2</td><td>cell aggregation</td><td>disabled</td></tr>
               </tbody>
             </table>
           </section>
 
+          <section id="outputs">
+            <h2>Main outputs</h2>
+            <pre><code>resources/brca/
+├── deconv/rctd_ref/
+│   ├── rctd_reference_merged11.npy
+│   └── rctd_reference_merged11.csv
+├── embedding/
+│   ├── dense30_virchow2_3840_visium_he_bbox_allgrid.h5
+│   └── grid_embedding_train_filtered.h5
+├── mask/
+│   └── he_mask_grid.h5
+└── model_pred/
+    ├── stage1_grid_type.csv
+    └── train/
+        ├── model/stage1_router/checkpoints/best.ckpt
+        ├── model/stage2_expression/checkpoints/best.ckpt
+        ├── grid_predictions.h5
+        ├── grid_type.csv
+        ├── grid_expr.h5ad
+        └── metrics/windows/</code></pre>
+          </section>
+
           <footer>
-            This page mirrors the main SpaceRec notebook and is served from
-            <code>docs/tutorials/</code>.
+            This page follows <code>spacerec/notebooks/spacerec.ipynb</code> and
+            is served from <code>docs/tutorials/</code>.
           </footer>
         </main>
       </div>

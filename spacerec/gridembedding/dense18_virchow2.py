@@ -36,29 +36,44 @@ except ImportError:
     import _virchow2_utils as base
 
 
-FEATURE_KEY = "virchow2_token_tile_neighbor_concat6400"
+FEATURE_KEYS = {
+    "none": "virchow2_token_tile_concat3840",
+    "mean": "virchow2_token_tile_neighbor_concat6400",
+    "delta": "virchow2_token_tile_neighbor_delta_concat6400",
+}
+FEATURE_KEY = FEATURE_KEYS["none"]
 TOKEN_DIM = 1280
 TILE_DIM = 2560
 NEIGHBOR_TILE_DIM = 2560
-NEIGHBOR_STD_DIM = 2560
 STAGE_LOG_STDOUT = False
 
 
 def feature_dim_for_mode(mode: str) -> int:
+    if mode == "none":
+        return TOKEN_DIM + TILE_DIM
     if mode in {"mean", "delta"}:
         return TOKEN_DIM + TILE_DIM + NEIGHBOR_TILE_DIM
-    if mode == "delta_std":
-        return TOKEN_DIM + TILE_DIM + NEIGHBOR_TILE_DIM + NEIGHBOR_STD_DIM
     raise ValueError(f"Unknown neighbor feature mode: {mode}")
+
+
+def feature_key_for_mode(mode: str) -> str:
+    try:
+        return FEATURE_KEYS[str(mode)]
+    except KeyError as exc:
+        raise ValueError(f"Unknown neighbor feature mode: {mode}") from exc
+
+
+def uses_neighbor_features(mode: str) -> bool:
+    return str(mode) != "none"
 
 
 def parse_args() -> argparse.Namespace:
     parser = argparse.ArgumentParser(
         description=(
-            "Export dense18 Virchow2 token+tile+neighbor-tile embeddings. "
-            "Each dense grid receives token1280 + same-patch whole tile2560 + "
-            "mean adjacent-patch whole tile2560, then Hann averaging is applied "
-            "to the full 6400-dimensional vector."
+            "Export Virchow2 token+tile dense grid embeddings. "
+            "By default each dense grid receives token1280 + same-patch "
+            "whole tile2560, then Hann averaging is applied to the full "
+            "3840-dimensional vector."
         )
     )
     parser.add_argument("--he-image", type=Path, default=INPUT_DIR / "he" / "he.tif")
@@ -78,32 +93,36 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument(
         "--patch-metadata-h5",
         type=Path,
-        default=OUTPUT_DIR / "patch_metadata_dense18_virchow2_token_tile_neighbor_concat6400_288to224_stride72.h5",
+        default=OUTPUT_DIR / "patch_metadata_dense18_virchow2_token_tile_concat3840_288to224_stride72.h5",
     )
     parser.add_argument("--sample-id", default="COLON_P2")
     parser.add_argument("--feature-key", default=FEATURE_KEY)
     parser.add_argument(
         "--neighbor-feature-mode",
-        choices=["mean", "delta", "delta_std"],
-        default="mean",
+        choices=["none", "mean", "delta"],
+        default="none",
         help=(
+            "none: token + center tile; "
             "mean: token + center tile + neighbor mean; "
-            "delta: token + center tile + (neighbor mean - center tile); "
-            "delta_std: token + center tile + delta + neighbor std."
+            "delta: token + center tile + (neighbor mean - center tile)."
         ),
     )
     parser.add_argument("--planned-projection-dim", type=int, default=3584)
     parser.add_argument("--patch-size", type=int, default=288)
     parser.add_argument("--model-input-size", type=int, default=224)
-    parser.add_argument("--grid-size", type=int, default=18)
+    parser.add_argument("--grid-size", type=int, default=None)
     parser.add_argument("--stride", type=int, default=72)
     parser.add_argument("--batch-size", type=int, default=4)
     parser.add_argument("--num-workers", type=int, default=4)
     parser.add_argument("--device", default=None)
     parser.add_argument("--force", action="store_true")
     parser.add_argument("--metadata-only", action="store_true")
-    parser.add_argument("--filter-grid-tissue-boundary", action="store_true", default=True)
+    parser.add_argument("--filter-patch-tissue-boundary", action="store_true", default=False)
+    parser.add_argument("--no-filter-patch-tissue-boundary", dest="filter_patch_tissue_boundary", action="store_false")
+    parser.add_argument("--filter-grid-tissue-boundary", action="store_true", default=False)
     parser.add_argument("--no-filter-grid-tissue-boundary", dest="filter_grid_tissue_boundary", action="store_false")
+    parser.add_argument("--he-mask-h5", type=Path, default=None)
+    parser.add_argument("--he-mask-key", default="is_tissue_final")
     parser.add_argument("--progress-json", type=Path, default=None)
     parser.add_argument("--progress-every-patches", type=int, default=100)
     parser.add_argument("--enable-progress-bar", action="store_true")
@@ -155,8 +174,7 @@ def build_neighbor_tile_stats(
     patch_bbox: np.ndarray,
     tile_embeddings: np.ndarray,
     stride: int,
-    compute_std: bool = False,
-) -> tuple[np.ndarray, np.ndarray | None, np.ndarray]:
+) -> tuple[np.ndarray, np.ndarray]:
     patch_bbox = np.asarray(patch_bbox, dtype=np.int32)
     tile_embeddings = np.asarray(tile_embeddings, dtype=np.float32)
     stride = int(stride)
@@ -165,7 +183,6 @@ def build_neighbor_tile_stats(
         for index, (x0, y0, _x1, _y1) in enumerate(patch_bbox)
     }
     neighbor_mean = np.empty_like(tile_embeddings)
-    neighbor_std = np.zeros_like(tile_embeddings) if compute_std else None
     neighbor_count = np.zeros(patch_bbox.shape[0], dtype=np.int32)
     offsets = [
         (dx, dy)
@@ -182,12 +199,10 @@ def build_neighbor_tile_stats(
         if neighbors:
             neighbor_values = tile_embeddings[np.asarray(neighbors, dtype=np.int64)]
             neighbor_mean[index] = neighbor_values.mean(axis=0)
-            if neighbor_std is not None:
-                neighbor_std[index] = neighbor_values.std(axis=0)
             neighbor_count[index] = len(neighbors)
         else:
             neighbor_mean[index] = tile_embeddings[index]
-    return neighbor_mean.astype(np.float32, copy=False), neighbor_std, neighbor_count
+    return neighbor_mean.astype(np.float32, copy=False), neighbor_count
 
 
 def make_summary(
@@ -197,10 +212,12 @@ def make_summary(
     unique_bbox: np.ndarray,
     raw_bbox: np.ndarray,
     spot_index: np.ndarray,
+    is_tissue: np.ndarray,
     complete: bool,
     started: float,
 ) -> dict[str, object]:
     feature_dim = feature_dim_for_mode(str(args.neighbor_feature_mode))
+    uses_neighbor = uses_neighbor_features(str(args.neighbor_feature_mode))
     return {
         "output_h5": str(args.output_h5),
         "summary_json": str(args.summary_json),
@@ -210,12 +227,12 @@ def make_summary(
         "n_grids": int(unique_bbox.shape[0]),
         "n_supervised_grids": int((spot_index >= 0).sum()),
         "n_supervised_spots": int(np.unique(spot_index[spot_index >= 0]).size),
+        "n_he_mask_tissue_grids": int(np.asarray(is_tissue, dtype=bool).sum()),
         "feature_key": str(args.feature_key),
         "feature_dim": feature_dim,
         "token_feature_dim": TOKEN_DIM,
         "tile_feature_dim": TILE_DIM,
-        "neighbor_tile_feature_dim": NEIGHBOR_TILE_DIM,
-        "neighbor_std_feature_dim": NEIGHBOR_STD_DIM if str(args.neighbor_feature_mode) == "delta_std" else 0,
+        "neighbor_tile_feature_dim": NEIGHBOR_TILE_DIM if uses_neighbor else 0,
         "projection_dim_planned": int(args.planned_projection_dim),
         "patch_size_fullres": int(args.patch_size),
         "model_input_size": int(args.model_input_size),
@@ -223,12 +240,63 @@ def make_summary(
         "stride_fullres": int(args.stride),
         "token_layout": "16x16",
         "token_patch_size_input_px": int(args.model_input_size) // 16,
+        "filter_patch_tissue_boundary": bool(args.filter_patch_tissue_boundary),
         "filter_grid_tissue_boundary": bool(args.filter_grid_tissue_boundary),
+        "he_mask_h5": None if args.he_mask_h5 is None else str(args.he_mask_h5),
+        "he_mask_key": str(args.he_mask_key),
         "neighbor_feature_mode": str(args.neighbor_feature_mode),
-        "neighbor_rule": "available retained tissue patches at stride offsets in the 3x3 neighborhood, excluding center; fallback mean to self tile and std to zero if isolated",
+        "neighbor_rule": (
+            "disabled"
+            if not uses_neighbor
+            else "available retained tissue patches at stride offsets in the 3x3 neighborhood, excluding center; fallback mean to self tile and std to zero if isolated"
+        ),
         "hann_rule": f"Hann-like weights are applied after concatenating the full {feature_dim}-dimensional vector",
         "complete": bool(complete),
         "elapsed_seconds": float(time.time() - started),
+    }
+
+
+def _bbox_key(row: np.ndarray) -> tuple[int, int, int, int]:
+    return tuple(int(value) for value in row)
+
+
+def grid_mask_from_he(args: argparse.Namespace, bbox_xyxy: np.ndarray, center_xy: np.ndarray) -> tuple[np.ndarray, np.ndarray, dict[str, object]]:
+    """Return HE-derived grid mask metadata without deleting embedding rows."""
+
+    if args.he_mask_h5 is not None:
+        with h5py.File(args.he_mask_h5, "r") as handle:
+            if args.he_mask_key not in handle:
+                raise KeyError(f"Mask key {args.he_mask_key!r} was not found in {args.he_mask_h5}.")
+            mask_bbox = np.asarray(handle["bbox_xyxy"], dtype=np.int32)
+            mask_values = np.asarray(handle[args.he_mask_key], dtype=np.bool_)
+            if "grid_tissue_fraction" in handle:
+                mask_fraction = np.asarray(handle["grid_tissue_fraction"], dtype=np.float32)
+            else:
+                mask_fraction = mask_values.astype(np.float32)
+        if mask_bbox.shape[0] != mask_values.shape[0]:
+            raise ValueError(f"Mask bbox rows and {args.he_mask_key!r} rows differ in {args.he_mask_h5}.")
+        if mask_bbox.shape == bbox_xyxy.shape and bool(np.all(mask_bbox == bbox_xyxy)):
+            return mask_values.astype(np.bool_), mask_fraction.astype(np.float32), {
+                "source": str(args.he_mask_h5),
+                "key": str(args.he_mask_key),
+                "alignment": "row_order",
+            }
+        mask_by_bbox = {_bbox_key(row): index for index, row in enumerate(mask_bbox)}
+        indices = np.asarray([mask_by_bbox.get(_bbox_key(row), -1) for row in bbox_xyxy], dtype=np.int64)
+        missing = int((indices < 0).sum())
+        if missing:
+            raise ValueError(f"{missing} grid bboxes were not found in HE mask {args.he_mask_h5}.")
+        return mask_values[indices].astype(np.bool_), mask_fraction[indices].astype(np.float32), {
+            "source": str(args.he_mask_h5),
+            "key": str(args.he_mask_key),
+            "alignment": "bbox_xyxy",
+        }
+
+    values = np.ones(center_xy.shape[0], dtype=np.bool_)
+    return values, values.astype(np.float32), {
+        "source": None,
+        "key": "all_true",
+        "alignment": "no he_mask_h5 provided; all bbox grids are treated as tissue",
     }
 
 
@@ -237,6 +305,12 @@ def main() -> None:
     args = parse_args()
     STAGE_LOG_STDOUT = bool(args.stage_log_stdout)
     started = time.time()
+    if args.grid_size is None:
+        if int(args.patch_size) % 16 != 0:
+            raise ValueError("patch_size must be divisible by 16 when grid_size is inferred.")
+        args.grid_size = int(args.patch_size) // 16
+    if args.feature_key == FEATURE_KEY:
+        args.feature_key = feature_key_for_mode(str(args.neighbor_feature_mode))
     feature_dim = feature_dim_for_mode(str(args.neighbor_feature_mode))
     progress_json = args.progress_json or args.output_h5.with_name(args.output_h5.stem + "_progress.json")
     args.progress_json = progress_json
@@ -287,10 +361,10 @@ def main() -> None:
     )
     spot_index, nearest_spot_index, nearest_spot_distance = base.shared.assign_spots(center_xy, spot_xy, spot_diameter)
     is_supervised_grid = spot_index >= 0
-    is_tissue = np.ones(unique_bbox.shape[0], dtype=np.bool_)
-    grid_tissue_fraction = np.ones(unique_bbox.shape[0], dtype=np.float32)
+    is_tissue, grid_tissue_fraction, he_mask_summary = grid_mask_from_he(args, unique_bbox, center_xy)
 
-    summary = make_summary(args, patch_summary, patch_bbox, unique_bbox, raw_bbox, spot_index, False, started)
+    summary = make_summary(args, patch_summary, patch_bbox, unique_bbox, raw_bbox, spot_index, is_tissue, False, started)
+    summary["he_mask"] = he_mask_summary
     args.summary_json.parent.mkdir(parents=True, exist_ok=True)
     args.summary_json.write_text(json.dumps(summary, indent=2))
     emit("metadata_ready", progress_json, **summary)
@@ -319,60 +393,63 @@ def main() -> None:
     use_autocast = device.type == "cuda"
     progress_every = max(1, int(args.progress_every_patches))
 
-    emit("tile_cache_start", progress_json, total_patches=int(patch_bbox.shape[0]), tile_dim=TILE_DIM)
-    tile_embeddings = np.zeros((patch_bbox.shape[0], TILE_DIM), dtype=np.float32)
-    processed = 0
-    last_emit = time.time()
-    with torch.inference_mode():
-        for images, indices in progress_iter(
-            loader,
-            enabled=bool(args.enable_progress_bar),
-            total=len(loader),
-            desc="Tile embeddings",
-            unit="batch",
-            refresh_rate=float(args.progress_refresh_rate),
-        ):
-            batch_started = time.time()
-            images = images.to(device, non_blocking=True)
-            with torch.autocast(device_type=device.type, dtype=torch.float16, enabled=use_autocast):
-                _token_values, tile_values = model(images)
-            tile_np = tile_values.detach().cpu().float().numpy().astype(np.float32)
-            indices_np = indices.cpu().numpy().astype(np.int64)
-            tile_embeddings[indices_np] = tile_np
-            processed += int(indices.numel())
-            now = time.time()
-            if processed <= progress_every or processed % progress_every == 0 or now - last_emit >= 60:
-                emit(
-                    "tile_cache_progress",
-                    progress_json,
-                    processed_patches=int(processed),
-                    total_patches=int(patch_bbox.shape[0]),
-                    batch_seconds=float(now - batch_started),
-                    patches_per_second=float(processed / max(now - started, 1e-6)),
-                )
-                last_emit = now
+    needs_neighbor = uses_neighbor_features(str(args.neighbor_feature_mode))
+    tile_embeddings: np.ndarray | None = None
+    neighbor_tile_mean: np.ndarray | None = None
+    neighbor_count = np.zeros(patch_bbox.shape[0], dtype=np.int32)
+    if needs_neighbor:
+        emit("tile_cache_start", progress_json, total_patches=int(patch_bbox.shape[0]), tile_dim=TILE_DIM)
+        tile_embeddings = np.zeros((patch_bbox.shape[0], TILE_DIM), dtype=np.float32)
+        processed = 0
+        last_emit = time.time()
+        with torch.inference_mode():
+            for images, indices in progress_iter(
+                loader,
+                enabled=bool(args.enable_progress_bar),
+                total=len(loader),
+                desc="Tile embeddings",
+                unit="batch",
+                refresh_rate=float(args.progress_refresh_rate),
+            ):
+                batch_started = time.time()
+                images = images.to(device, non_blocking=True)
+                with torch.autocast(device_type=device.type, dtype=torch.float16, enabled=use_autocast):
+                    _token_values, tile_values = model(images)
+                tile_np = tile_values.detach().cpu().float().numpy().astype(np.float32)
+                indices_np = indices.cpu().numpy().astype(np.int64)
+                tile_embeddings[indices_np] = tile_np
+                processed += int(indices.numel())
+                now = time.time()
+                if processed <= progress_every or processed % progress_every == 0 or now - last_emit >= 60:
+                    emit(
+                        "tile_cache_progress",
+                        progress_json,
+                        processed_patches=int(processed),
+                        total_patches=int(patch_bbox.shape[0]),
+                        batch_seconds=float(now - batch_started),
+                        patches_per_second=float(processed / max(now - started, 1e-6)),
+                    )
+                    last_emit = now
 
-    emit(
-        "neighbor_tile_stats_start",
-        progress_json,
-        total_patches=int(patch_bbox.shape[0]),
-        stride=int(args.stride),
-        compute_std=str(args.neighbor_feature_mode) == "delta_std",
-    )
-    neighbor_tile_mean, neighbor_tile_std, neighbor_count = build_neighbor_tile_stats(
-        patch_bbox,
-        tile_embeddings,
-        int(args.stride),
-        compute_std=str(args.neighbor_feature_mode) == "delta_std",
-    )
-    emit(
-        "neighbor_tile_stats_done",
-        progress_json,
-        neighbor_count_min=int(neighbor_count.min()),
-        neighbor_count_median=float(np.median(neighbor_count)),
-        neighbor_count_max=int(neighbor_count.max()),
-        isolated_patches=int((neighbor_count == 0).sum()),
-    )
+        emit(
+            "neighbor_tile_stats_start",
+            progress_json,
+            total_patches=int(patch_bbox.shape[0]),
+            stride=int(args.stride),
+        )
+        neighbor_tile_mean, neighbor_count = build_neighbor_tile_stats(
+            patch_bbox,
+            tile_embeddings,
+            int(args.stride),
+        )
+        emit(
+            "neighbor_tile_stats_done",
+            progress_json,
+            neighbor_count_min=int(neighbor_count.min()),
+            neighbor_count_median=float(np.median(neighbor_count)),
+            neighbor_count_max=int(neighbor_count.max()),
+            isolated_patches=int((neighbor_count == 0).sum()),
+        )
 
     emit("prepare_accumulators_start", progress_json, n_grids=int(unique_bbox.shape[0]), feature_dim=feature_dim)
     feature_sum = np.zeros((unique_bbox.shape[0], feature_dim), dtype=np.float32)
@@ -424,6 +501,7 @@ def main() -> None:
             with torch.autocast(device_type=device.type, dtype=torch.float16, enabled=use_autocast):
                 token_values, _tile_values = model(images)
             token_np = token_values.detach().cpu().float().numpy().astype(np.float32)
+            tile_np = _tile_values.detach().cpu().float().numpy().astype(np.float32)
             batch_views = 0
             for batch_offset, patch_index in enumerate(indices.cpu().numpy().astype(np.int64)):
                 start = int(raw_offsets_by_patch[int(patch_index)])
@@ -441,21 +519,24 @@ def main() -> None:
                     weight = raw_weight[raw_indices]
                 token_values_patch = token_np[batch_offset, token_linear, :]
                 n_views = token_values_patch.shape[0]
-                tile_values_patch = np.broadcast_to(tile_embeddings[patch_index][None, :], (n_views, TILE_DIM))
-                if str(args.neighbor_feature_mode) == "mean":
+                if str(args.neighbor_feature_mode) == "none":
+                    tile_values_patch = np.broadcast_to(tile_np[batch_offset][None, :], (n_views, TILE_DIM))
+                    values = np.concatenate([token_values_patch, tile_values_patch], axis=1)
+                elif str(args.neighbor_feature_mode) == "mean":
+                    if tile_embeddings is None or neighbor_tile_mean is None:
+                        raise RuntimeError("Neighbor feature mode requires cached tile embeddings.")
+                    tile_values_patch = np.broadcast_to(tile_embeddings[patch_index][None, :], (n_views, TILE_DIM))
                     neighbor_values_patch = np.broadcast_to(neighbor_tile_mean[patch_index][None, :], (n_views, NEIGHBOR_TILE_DIM))
                     values = np.concatenate([token_values_patch, tile_values_patch, neighbor_values_patch], axis=1)
                 elif str(args.neighbor_feature_mode) == "delta":
+                    if tile_embeddings is None or neighbor_tile_mean is None:
+                        raise RuntimeError("Neighbor feature mode requires cached tile embeddings.")
+                    tile_values_patch = np.broadcast_to(tile_embeddings[patch_index][None, :], (n_views, TILE_DIM))
                     delta_patch = neighbor_tile_mean[patch_index] - tile_embeddings[patch_index]
                     delta_values_patch = np.broadcast_to(delta_patch[None, :], (n_views, NEIGHBOR_TILE_DIM))
                     values = np.concatenate([token_values_patch, tile_values_patch, delta_values_patch], axis=1)
                 else:
-                    if neighbor_tile_std is None:
-                        raise RuntimeError("neighbor_tile_std is required for delta_std mode.")
-                    delta_patch = neighbor_tile_mean[patch_index] - tile_embeddings[patch_index]
-                    delta_values_patch = np.broadcast_to(delta_patch[None, :], (n_views, NEIGHBOR_TILE_DIM))
-                    std_values_patch = np.broadcast_to(neighbor_tile_std[patch_index][None, :], (n_views, NEIGHBOR_STD_DIM))
-                    values = np.concatenate([token_values_patch, tile_values_patch, delta_values_patch, std_values_patch], axis=1)
+                    raise ValueError(f"Unknown neighbor feature mode: {args.neighbor_feature_mode}")
                 if np.unique(target).size == target.size:
                     feature_sum[target] += values * weight[:, None]
                     weight_sum[target] += weight
@@ -515,10 +596,12 @@ def main() -> None:
         handle.attrs["feature_dim"] = feature_dim
         handle.attrs["token_feature_dim"] = TOKEN_DIM
         handle.attrs["tile_feature_dim"] = TILE_DIM
-        handle.attrs["neighbor_tile_feature_dim"] = NEIGHBOR_TILE_DIM
-        handle.attrs["neighbor_std_feature_dim"] = NEIGHBOR_STD_DIM if str(args.neighbor_feature_mode) == "delta_std" else 0
+        handle.attrs["neighbor_tile_feature_dim"] = NEIGHBOR_TILE_DIM if needs_neighbor else 0
         handle.attrs["neighbor_feature_mode"] = str(args.neighbor_feature_mode)
-        handle.attrs["embedding"] = f"official_virchow2_token_tile_{args.neighbor_feature_mode}_dense18_288to224_stride72_hann"
+        handle.attrs["embedding"] = (
+            f"official_virchow2_token_tile_concat{feature_dim}_dense{int(args.grid_size)}_"
+            f"{int(args.patch_size)}to{int(args.model_input_size)}_stride{int(args.stride)}_hann"
+        )
         handle.attrs["model"] = "paige-ai/Virchow2"
         handle.attrs["model_architecture"] = "ViT-H/14"
         handle.attrs["model_input_size"] = int(args.model_input_size)
@@ -528,13 +611,28 @@ def main() -> None:
         handle.attrs["grid_size_fullres"] = int(args.grid_size)
         handle.attrs["stride_fullres"] = int(args.stride)
         handle.attrs["blend"] = f"raised_cosine_hann_like_center_weight_after_concat{feature_dim}"
-        handle.attrs["selection_rule"] = "Virchow2 dense18 patch token plus same-patch tile embedding plus adjacent retained-patch context inside tissue_positions bbox"
-        handle.attrs["resize_rule"] = "crop 288x288 full-resolution pixels, bicubic resize to 224x224 model input, map 16x16 tokens back to 18x18 full-resolution grids"
-        handle.attrs["tile_embedding_rule"] = "concat(class_token, mean(patch_tokens)) from each 288px-to-224px Virchow2 forward pass"
-        handle.attrs["neighbor_tile_rule"] = "mean, mean-self delta, or delta+std of available retained tissue patch tile embeddings at stride offsets in 3x3 neighborhood excluding center; fallback mean to self tile and std to zero when isolated"
-        handle.attrs["duplicate_rule"] = "same final dense18 grid bbox weighted-averaged across overlapping 288px patch views after feature concatenation"
+        handle.attrs["selection_rule"] = "Virchow2 patch token plus same-patch tile embedding inside tissue_positions bbox"
+        handle.attrs["resize_rule"] = (
+            f"crop {int(args.patch_size)}x{int(args.patch_size)} full-resolution pixels, bicubic resize to "
+            f"{int(args.model_input_size)}x{int(args.model_input_size)} model input, map 16x16 tokens back to "
+            f"{int(args.grid_size)}x{int(args.grid_size)} full-resolution grids"
+        )
+        handle.attrs["tile_embedding_rule"] = (
+            f"concat(class_token, mean(patch_tokens)) from each {int(args.patch_size)}px-to-"
+            f"{int(args.model_input_size)}px Virchow2 forward pass"
+        )
+        handle.attrs["neighbor_tile_rule"] = (
+            "disabled"
+            if not needs_neighbor
+            else "mean or mean-self delta of available retained tissue patch tile embeddings at stride offsets in 3x3 neighborhood excluding center; fallback mean to self tile when isolated"
+        )
+        handle.attrs["duplicate_rule"] = (
+            f"same final dense{int(args.grid_size)} grid bbox weighted-averaged across overlapping "
+            f"{int(args.patch_size)}px patch views after feature concatenation"
+        )
         handle.attrs["coordinate_system"] = "full-resolution he.tif coordinates; no offset"
         handle.attrs["spot_diameter_fullres"] = float(spot_diameter)
+        handle.attrs["he_mask"] = json.dumps(he_mask_summary)
     emit("write_h5_done", progress_json, output_h5=str(args.output_h5))
 
     summary.update(

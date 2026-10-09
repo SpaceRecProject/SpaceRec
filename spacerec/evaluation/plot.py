@@ -25,26 +25,26 @@ CELL_TYPE_ORDER = [
     "Invasive Tumor",
     "DCs",
     "Macrophages",
-    "Mast Cells",
     "Myoepi",
     "Perivascular-Like",
     "Stromal",
+    "Mast Cells",
 ]
 CELL_TYPE_COLORS = {
-    "B Cells": "#fa786e",
-    "T Cells": "#dc8c00",
-    "DCIS": "#64b400",
-    "Endothelial": "#00be5a",
-    "Invasive Tumor": "#00c3a5",
-    "DCs": "#b487ff",
-    "Macrophages": "#00b9dc",
-    "Mast Cells": "#8f7aff",
-    "Myoepi": "#00a5ff",
-    "Perivascular-Like": "#d07cff",
-    "Stromal": "#f069eb",
+    "B Cells": "#d62728",
+    "T Cells": "#ff7f00",
+    "DCIS": "#2ca02c",
+    "Endothelial": "#17becf",
+    "Invasive Tumor": "#e7298a",
+    "DCs": "#8c564b",
+    "Macrophages": "#6a3d9a",
+    "Myoepi": "#1f77b4",
+    "Perivascular-Like": "#b7ad00",
+    "Stromal": "#d8caec",
+    "Mast Cells": "#a65628",
     "Unassigned": "#bdbdbd",
     "Unlabeled": "#bdbdbd",
-    "Others": "#7f7f7f",
+    "Others": "#ffffff",
 }
 MARKER_GROUPS = {
     "Lymphoid": {"CD3D", "CD3E", "TRAC"},
@@ -71,6 +71,31 @@ def _window_name(window: tuple[int, int, int, int]) -> str:
 def _intersects(table: pd.DataFrame, window: tuple[int, int, int, int]) -> pd.Series:
     x0, y0, x1, y1 = window
     return (table["bbox_x1"] > x0) & (table["bbox_x0"] < x1) & (table["bbox_y1"] > y0) & (table["bbox_y0"] < y1)
+
+
+def _grid_lattice(
+    table: pd.DataFrame,
+    window: tuple[int, int, int, int],
+) -> tuple[np.ndarray, np.ndarray, tuple[int, int], tuple[float, float, float, float]]:
+    if table.empty:
+        raise ValueError(f"No predicted grids intersect window {window}.")
+    widths = table["bbox_x1"].to_numpy(dtype=np.float64) - table["bbox_x0"].to_numpy(dtype=np.float64)
+    heights = table["bbox_y1"].to_numpy(dtype=np.float64) - table["bbox_y0"].to_numpy(dtype=np.float64)
+    grid_size = int(round(float(np.median(widths))))
+    if grid_size <= 0 or not np.allclose(widths, grid_size) or not np.allclose(heights, grid_size):
+        raise ValueError("Grid bboxes must be uniform squares.")
+    x0, y0, x1, y1 = window
+    start_x = int(np.floor(x0 / grid_size) * grid_size)
+    start_y = int(np.floor(y0 / grid_size) * grid_size)
+    stop_x = int(np.ceil(x1 / grid_size) * grid_size)
+    stop_y = int(np.ceil(y1 / grid_size) * grid_size)
+    n_cols = (stop_x - start_x) // grid_size
+    n_rows = (stop_y - start_y) // grid_size
+    cols = np.rint((table["bbox_x0"].to_numpy(dtype=np.float64) - start_x) / grid_size).astype(np.int32)
+    rows = np.rint((table["bbox_y0"].to_numpy(dtype=np.float64) - start_y) / grid_size).astype(np.int32)
+    if np.any(cols < 0) or np.any(cols >= n_cols) or np.any(rows < 0) or np.any(rows >= n_rows):
+        raise ValueError("An intersecting grid could not be placed in the bbox lattice.")
+    return rows, cols, (n_rows, n_cols), (float(start_x), float(stop_x), float(stop_y), float(start_y))
 
 
 def _hex_to_rgb(color: str) -> list[int]:
@@ -247,28 +272,31 @@ def plot_type_grid(
         raise ValueError(f"grid_type_csv missing columns: {missing}")
     table = table.loc[_intersects(table, selected_window)].copy()
 
-    image = np.full((y1 - y0, x1 - x0, 3), 255, dtype=np.uint8)
+    table = table.reset_index(drop=True)
+    rows, cols, lattice_shape, extent = _grid_lattice(table, selected_window)
+    image = np.full((*lattice_shape, 3), 255, dtype=np.uint8)
     counts = {name: 0 for name in CELL_TYPE_ORDER + ["Unassigned"]}
-    for row in table.itertuples(index=False):
-        gx0, gy0, gx1, gy1 = int(row.bbox_x0), int(row.bbox_y0), int(row.bbox_x1), int(row.bbox_y1)
-        lx0 = max(gx0, x0) - x0
-        ly0 = max(gy0, y0) - y0
-        lx1 = min(gx1, x1) - x0
-        ly1 = min(gy1, y1) - y0
-        if lx1 <= lx0 or ly1 <= ly0:
-            continue
-        label = str(row.predicted_type)
+    labels: list[str] = []
+    for value in table["predicted_type"]:
+        label = str(value)
         if label not in CELL_TYPE_COLORS:
             label = "Unassigned"
-        image[ly0:ly1, lx0:lx1] = _hex_to_rgb(CELL_TYPE_COLORS[label])
+        labels.append(label)
         counts[label] = counts.get(label, 0) + 1
+    label_array = np.asarray(labels, dtype=object)
+    for label in CELL_TYPE_ORDER + ["Unassigned"]:
+        selected = label_array == label
+        if np.any(selected):
+            image[rows[selected], cols[selected]] = _hex_to_rgb(CELL_TYPE_COLORS[label])
 
     output_png = Path(output_dir) / output_name
     output_png.parent.mkdir(parents=True, exist_ok=True)
-    width = max(8.5, min(12.0, (x1 - x0) / 160.0))
-    height = max(6.4, min(9.0, (y1 - y0) / 165.0))
-    fig, ax = plt.subplots(figsize=(width, height), dpi=dpi)
-    ax.imshow(image, interpolation="nearest")
+    fig = plt.figure(figsize=(12.0, 9.0), dpi=dpi, facecolor="white")
+    ax = fig.add_axes([0.01, 0.01, 0.78, 0.98])
+    ax.imshow(image, interpolation="nearest", origin="upper", extent=extent)
+    ax.set_xlim(x0, x1)
+    ax.set_ylim(y1, y0)
+    ax.set_aspect("equal")
     ax.set_axis_off()
     present = [label for label in CELL_TYPE_ORDER + ["Unassigned"] if counts.get(label, 0)]
     handles = [
@@ -277,23 +305,25 @@ def plot_type_grid(
     ]
     if handles:
         fig.legend(handles=handles, loc="center right", bbox_to_anchor=(0.995, 0.5), frameon=False, fontsize=9)
-    fig.subplots_adjust(left=0.01, right=0.79, top=0.99, bottom=0.01)
-    fig.savefig(output_png, bbox_inches="tight", pad_inches=0.04)
+    fig.savefig(output_png, facecolor="white")
     plt.close(fig)
 
     return {"output_png": str(output_png)}
 
 
 def _adata_to_frame(grid_expr_h5ad: str | Path, genes: list[str]) -> tuple[pd.DataFrame, np.ndarray, list[str]]:
-    adata = ad.read_h5ad(grid_expr_h5ad)
-    present = [gene for gene in genes if gene in adata.var_names]
-    if not present:
-        raise ValueError(f"None of the requested genes are present: {genes}")
-    obs = adata.obs.copy()
-    matrix = adata[:, present].X
-    if not isinstance(matrix, np.ndarray):
-        matrix = matrix.toarray()
-    return obs, np.asarray(matrix, dtype=np.float32), present
+    adata = ad.read_h5ad(grid_expr_h5ad, backed="r")
+    try:
+        present = [gene for gene in genes if gene in adata.var_names]
+        if not present:
+            raise ValueError(f"None of the requested genes are present: {genes}")
+        obs = adata.obs.copy()
+        matrix = adata[:, present].X
+        if not isinstance(matrix, np.ndarray):
+            matrix = matrix.toarray()
+        return obs, np.asarray(matrix, dtype=np.float32), present
+    finally:
+        adata.file.close()
 
 
 def plot_grid_expression(
@@ -316,40 +346,46 @@ def plot_grid_expression(
     if missing:
         raise ValueError(f"grid_expr_h5ad obs missing columns: {missing}")
     table = table.loc[_intersects(table, selected_window)].copy()
+    window_values = table["value"].to_numpy(dtype=np.float32)
+    window_mean = float(np.nanmean(window_values))
+    window_std = float(np.nanstd(window_values))
+    table["zvalue"] = np.clip(_zscore(window_values), -2.0, 2.0)
 
-    image = np.full((y1 - y0, x1 - x0), np.nan, dtype=np.float32)
-    zvalues = _zscore(table["value"].to_numpy(dtype=np.float32))
-    for row, zvalue in zip(table.itertuples(index=False), zvalues, strict=False):
-        gx0, gy0, gx1, gy1 = int(row.bbox_x0), int(row.bbox_y0), int(row.bbox_x1), int(row.bbox_y1)
-        lx0 = max(gx0, x0) - x0
-        ly0 = max(gy0, y0) - y0
-        lx1 = min(gx1, x1) - x0
-        ly1 = min(gy1, y1) - y0
-        if lx1 <= lx0 or ly1 <= ly0:
-            continue
-        image[ly0:ly1, lx0:lx1] = float(zvalue)
+    table = table.reset_index(drop=True)
+    rows, cols, lattice_shape, extent = _grid_lattice(table, selected_window)
+    image = np.full(lattice_shape, np.nan, dtype=np.float32)
+    image[rows, cols] = table["zvalue"].to_numpy(dtype=np.float32)
 
     masked = np.ma.masked_invalid(image)
     output_png = Path(output_dir) / output_name
     output_png.parent.mkdir(parents=True, exist_ok=True)
-    fig = plt.figure(figsize=(6.85, 7.22), dpi=dpi, facecolor="black")
-    grid = fig.add_gridspec(1, 2, width_ratios=[1, 0.035], wspace=0.035)
-    ax = fig.add_subplot(grid[0, 0])
-    cax = fig.add_subplot(grid[0, 1])
+    fig = plt.figure(figsize=(12.0, 9.0), dpi=dpi, facecolor="black")
+    # Keep the spatial panel at exactly the same normalized position and size
+    # as plot_type_grid.  The legend/colorbar use the reserved right gutter.
+    ax = fig.add_axes([0.01, 0.01, 0.78, 0.98])
+    cax = fig.add_axes([0.82, 0.08, 0.025, 0.84])
     ax.set_facecolor("black")
     cmap = plt.get_cmap("magma").copy()
     cmap.set_bad("black")
-    im = ax.imshow(masked, cmap=cmap, vmin=-2, vmax=2, interpolation="nearest")
+    im = ax.imshow(masked, cmap=cmap, vmin=-2, vmax=2, interpolation="nearest", origin="upper", extent=extent)
+    ax.set_xlim(x0, x1)
+    ax.set_ylim(y1, y0)
+    ax.set_aspect("equal")
     ax.set_axis_off()
-    ax.set_title(f"SpaceRec grid {gene}", color="white", fontsize=10, pad=54)
-    fig.suptitle(f"{_window_name(selected_window)}: {_gene_group(gene)} / {gene}", color="white", fontsize=13, y=0.99)
     colorbar = fig.colorbar(im, cax=cax)
     colorbar.ax.tick_params(colors="white", labelsize=8)
     colorbar.outline.set_edgecolor("white")
-    fig.savefig(output_png, facecolor="black", bbox_inches="tight", pad_inches=0.02)
+    fig.savefig(output_png, facecolor="black")
     plt.close(fig)
 
-    return {"output_png": str(output_png)}
+    return {
+        "output_png": str(output_png),
+        "gene": gene,
+        "n_window_grids": int(len(table)),
+        "normalization": "per_gene_per_window_zscore_clipped_to_minus2_plus2",
+        "window_mean": window_mean,
+        "window_std": window_std,
+    }
 
 
 def plot_xenium_expression(

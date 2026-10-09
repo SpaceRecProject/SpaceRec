@@ -2,218 +2,263 @@
 
 # SpaceRec
 
-**predicting high resolution gene expression and cell type composition in spatial transcriptomics.**
+**Predict grid-level gene expression and cell types from H&E images under spatial transcriptomics supervision.**
 
-[Tutorial](https://spacerecproject.github.io/SpaceRec/tutorials/) · [Notebook](spacerec/notebooks/run_spacerec.ipynb) · [API Overview](#api-overview) · [Workflow](#workflow)
+[Notebook](spacerec/notebooks/spacerec.ipynb) · [API](#api) · [Workflow](#workflow)
 
 </div>
 
 ---
 
-SpaceRec builds a histology-guided model for high-resolution spatial
-reconstruction, learning to predict dense grid-level gene expression and
-cell-type probabilities from H&E image features under Visium supervision.
+SpaceRec learns dense spatial predictions from H&E image features and Visium
+measurements. The current BRCA workflow builds a cell-type expression
+reference, extracts and filters image-grid embeddings, trains cell-type and
+expression models in two stages, and visualizes grid predictions inside a
+user-selected full-resolution H&E bounding box.
 
-
-## At A Glance
-
-| Stage | Purpose | Main output |
-| --- | --- | --- |
-| 1. Deconvolution    | Estimate spot-level cell-type proportions with RCTD. | `results/brca/deconv/deconv.csv` |
-| 2. Grid Embedding | Extract dense18 Virchow2 H&E grid features. | `results/brca/grid_embedding/grid_embedding.h5` |
-| 3. Train | Train expression and type projection heads. | `results/brca/train/grid_predictions.h5` |
-| 4. Aggregate | Aggregate grid predictions to polygon-level expression and type assignments. | `results/brca/aggregate/spacerec_ct.csv` |
-| 5. Evaluation | Render side-by-side type and expression checks. | `results/brca/Evaluation/` |
-
-## Data
-
-Large artifacts are not stored in GitHub. After downloading, place them at the
-repository root:
+## Repository layout
 
 ```text
 SpaceRec/
-  data/
-  results/
+├── spacerec/                    # active Python package
+│   ├── notebooks/
+│   │   └── spacerec.ipynb      # existing Visium data
+│   ├── deconv/
+│   ├── gridembedding/
+│   ├── mask/
+│   ├── model/
+│   ├── evaluation/
+│   └── rctd_ref/
+└── resources/brca/              # BRCA inputs and generated outputs
 ```
 
-Download link:
+The active import is:
+
+```python
+import spacerec.api as spacerec
+```
+
+## BRCA data
+
+Download the BRCA data from:
 
 ```text
-Google Drive: https://drive.google.com/open?id=1Fxyag8rx4A-DDvfdCk6xUd_SKmtTz5vw
+https://drive.google.com/open?id=1Fxyag8rx4A-DDvfdCk6xUd_SKmtTz5vw
 ```
 
-`data/` contains the packaged BRCA example inputs. `results/` contains generated
-deconvolution, grid embedding, training, aggregation, and evaluation outputs.
+Organize the files under `resources/brca`:
 
-## Environment Setup
+```text
+resources/brca/
+├── visium/
+│   ├── st_filtered_feature_bc_matrix.h5
+│   ├── tissue_positions.csv
+│   ├── scalefactors_json.json
+│   └── spatial/tissue_hires_image.png
+├── he/he.tif
+├── sc_ref/scRNA_adata_reannotated.h5ad
+├── deconv/deconv.csv
+├── truth/
+└── config/brca_type_merge_17to11.json
+```
 
-Clone the repository, enter it, and create a dedicated conda environment:
+Generated files remain in the same resource tree:
+
+```text
+resources/brca/
+├── deconv/rctd_ref/
+├── gene_list/
+├── embedding/
+├── mask/
+├── model_pred/
+│   ├── stage1_grid_type.csv
+│   └── train/
+└── Evaluation/
+```
+
+## Environment
+
+The project uses the existing Python environment `spacerec_env` and a separate
+R environment for RCTD:
 
 ```bash
-git clone https://github.com/SpaceRecProject/SpaceRec.git
-cd SpaceRec
-conda create -n spacerec python=3.10 -y
-conda activate spacerec
-pip install torch lightning numpy pandas scipy h5py anndata pillow matplotlib shapely timm
+conda activate spacerec_env
+export SPACEREC_R_ENV="$HOME/.conda/envs/spacerec_r_env"
 ```
 
-RCTD also needs the R packages `Matrix`, `Seurat`, and `spacexr`. Check the
-setup from the repository root before running the notebook:
+Validate the package and core runtimes from the repository root:
 
 ```bash
 python -c "import spacerec.api as spacerec; print(spacerec.__file__)"
 python -c "import torch; print(torch.cuda.is_available())"
-Rscript -e "library(Matrix); library(Seurat); library(spacexr)"
+"$SPACEREC_R_ENV/bin/Rscript" -e "library(Matrix); library(Seurat); library(spacexr); library(hdf5r)"
 ```
 
-## Quick Start
+Training and full image embedding should run inside an allocated Slurm compute
+job with a GPU. Plotting and lightweight inspection can run on a CPU compute
+node. The notebook can discover GPUs assigned to the current Slurm job when
+`CUDA_VISIBLE_DEVICES` is absent.
 
-Open the [tutorial](https://spacerecproject.github.io/SpaceRec/tutorials/) or run the notebook directly:
+## Notebooks
+
+### Existing spatial transcriptomics data
+
+Open:
 
 ```text
-spacerec/notebooks/run_spacerec.ipynb
+spacerec/notebooks/spacerec.ipynb
 ```
 
-The notebook is organized into five explicit execution stages:
+This is the main BRCA notebook. It starts from existing Visium, H&E, and
+single-cell reference inputs. It reuses the supplied deconvolution proportions
+after validation and regenerates the expression reference and downstream
+outputs. Stage 1 and Stage 2 write grid-level outputs only; cell aggregation is
+not performed in these training cells.
 
-```text
-Step 1: Deconvolution
-Step 2: Grid Embedding
-Step 3: Train
-Step 4: Aggregate
-Step 5: Evaluation
-```
+## Workflow
 
-Current BRCA notebook settings:
-
-| Step | Setting | Value |
+| Step | Operation | Main output |
 | --- | --- | --- |
-| Step 2 | `max_patches` | `None` |
-| Step 3 | `projection_dim` | `512` |
-| Step 3 | `max_epochs` | `60` |
-| Step 3 | `batch_size` | `4` |
-| Step 3 | `limit_spots` | `None` |
+| 1 | Validate supplied deconvolution and build the RCTD expression reference | `deconv/rctd_ref/rctd_reference_merged11.npy` |
+| 2 | Extract dense Virchow2 grid features and build the H&E tissue mask | `embedding/grid_embedding_train_filtered.h5` |
+| 3.1 | Train the router and cell-type model | Stage 1 checkpoint and `model_pred/stage1_grid_type.csv` |
+| 3.2 | Train the expression model from the Stage 1 checkpoint | Stage 2 checkpoint, `grid_type.csv`, and `grid_expr.h5ad` |
+| 4 | Plot cell type and gene expression for an editable H&E bbox | `model_pred/train/metrics/windows/<window>/` |
 
-For smoke tests, use a small `max_patches`, a small `limit_spots`, and fewer
-epochs.
+### Step 1: deconvolution and expression reference
 
-## API Overview
+The supplied spot proportions are validated against the Visium barcodes and
+must be finite, nonnegative, and row-normalized. The expression reference uses
+the single-cell reference and Visium gene space:
+
+```python
+spacerec.rctd_ref(...)
+```
+
+$$
+x_s \approx l_s \sum_k p_{s,k} r_k,
+\qquad p_{s,k}\ge 0,
+\qquad \sum_k p_{s,k}=1.
+$$
+
+### Step 2: grid embedding and H&E mask
+
+```python
+spacerec.ge(...)
+spacerec.mask(...)
+```
+
+The current configuration concatenates the Virchow2 class token and local tile
+features:
+
+$$
+h_g=[t_g;u_g]\in\mathbb{R}^{3840}.
+$$
+
+The H&E mask removes background grids before training.
+
+### Step 3.1: cell-type training
+
+```python
+spacerec.stage1(..., agg=False)
+```
+
+Grid probabilities are pooled to the Visium spot level for supervision:
+
+$$
+\hat{p}_s=\frac{1}{|G_s|}\sum_{g\in G_s}\hat{q}_g.
+$$
+
+Stage 1 writes the best router checkpoint and grid-level cell-type
+probabilities.
+
+### Step 3.2: expression training
+
+```python
+spacerec.stage2(..., stage1_checkpoint=..., agg=False)
+```
+
+Grid expression is summed to the spot level:
+
+$$
+\hat{x}_s=\sum_{g\in G_s}\hat{x}_g.
+$$
+
+The model combines expression and cell-type supervision:
+
+$$
+\mathcal{L}_{expr}
+=\operatorname{Huber}\!\left(\log(1+\hat{x}_s),\log(1+x_s)\right),
+$$
+
+$$
+\mathcal{L}_{type}
+=\alpha\mathcal{L}_{conf}
++(1-\alpha)\operatorname{KL}(p_s\parallel\hat{p}_s).
+$$
+
+### Step 4: inspect grid predictions
+
+```python
+spacerec.plottype(..., window=(x0, y0, x1, y1))
+spacerec.plotexpr(..., window=(x0, y0, x1, y1), gene="KRT5")
+```
+
+Expression is standardized independently for the selected gene and bbox, then
+clipped to the displayed range:
+
+$$
+z_g=\operatorname{clip}\!\left(
+\frac{x_g-\mu_{\text{bbox}}}{\sigma_{\text{bbox}}},-2,2
+\right).
+$$
+
+The type and expression panels retain the same spatial scale and aspect ratio.
+
+## Current BRCA settings
+
+| Component | Setting | Value |
+| --- | --- | --- |
+| Grid embedding | `patch_size` | `480` px |
+| Grid embedding | `stride` | `120` px |
+| Grid output | grid spacing | `30` px |
+| Grid embedding | feature dimension | `3840` |
+| Grid embedding | neighbor features | disabled |
+| Stage 1 and 2 | `projection_dim` | `2048` |
+| Stage 1 and 2 | `batch_size` | `4` |
+| Stage 1 | epochs | `70` |
+| Stage 2 | epochs | `70` |
+| Stage 1 and 2 | cell aggregation | disabled |
+
+## API
 
 ```python
 import spacerec.api as spacerec
 
-spacerec.deconv(...)    # spot-level cell-type proportions
-spacerec.ge(...)        # dense18 Virchow2 grid embeddings
-spacerec.train(...)     # projection-heads model training
-spacerec.agg(...)       # grid-to-polygon/cell aggregation
-spacerec.plottype(...)  # type visualization
-spacerec.plotexpr(...)  # expression visualization
+spacerec.rctd_ref(...)  # expression reference from single-cell and Visium data
+spacerec.ge(...)        # dense Virchow2 grid embeddings
+spacerec.mask(...)      # H&E tissue mask and filtered training embeddings
+spacerec.stage1(...)    # router and grid cell-type predictions
+spacerec.stage2(...)    # grid cell-type and expression predictions
+spacerec.agg(...)       # optional grid-to-cell aggregation
+spacerec.plottype(...)  # grid-level cell-type visualization
+spacerec.plotexpr(...)  # grid-level expression visualization
 ```
 
-Default outputs are written under:
+Cell-level outputs can be generated separately with `spacerec.agg(...)` when a
+polygon file is available. The main existing-data notebook keeps aggregation
+separate from both training stages.
+
+## Main outputs
 
 ```text
-results/<dataset>/<step>/
+resources/brca/model_pred/
+├── stage1_grid_type.csv
+└── train/
+    ├── model/stage1_router/checkpoints/best.ckpt
+    ├── model/stage2_expression/checkpoints/best.ckpt
+    ├── grid_predictions.h5
+    ├── grid_type.csv
+    ├── grid_expr.h5ad
+    └── metrics/windows/
 ```
-
-Supported API dataset names are `brca` and `crc`; this packaged example is BRCA.
-
-## Workflow
-
-### Step 1: Deconvolution
-
-```python
-spacerec.deconv(...)
-```
-
-$$
-x_s \approx l_s \sum_k p_{s,k} r_k,\quad
-p_{s,k} \ge 0,\quad \sum_k p_{s,k}=1.
-$$
-
-Output: `results/brca/deconv/deconv.csv`
-
-### Step 2: Grid Embedding
-
-```python
-spacerec.ge(...)
-```
-
-$$
-h_{g,v} = [t_{g,v}; u_v; n_v] \in \mathbb{R}^{6400},\quad
-h_g = \frac{\sum_v w_{g,v}h_{g,v}}{\sum_v w_{g,v}}.
-$$
-
-Output: `results/brca/grid_embedding/grid_embedding.h5`
-
-### Step 3: Train
-
-```python
-spacerec.train(...)
-```
-
-$$
-\hat{x}_s = \sum_{g \in G_s}\hat{x}_g,\quad
-\hat{p}_s = \frac{1}{|G_s|}\sum_{g \in G_s}\hat{q}_g.
-$$
-
-$$
-\mathcal{L}_{expr} = \mathrm{Huber}(\log(1+\hat{x}_s),\log(1+x_s)).
-$$
-
-$$
-\mathcal{L}_{type} = \alpha\mathcal{L}_{conf} + (1-\alpha)\mathrm{KL}(p_s\parallel\hat{p}_s).
-$$
-
-$$
-\mathcal{L} = \mathcal{L}_{expr} + \lambda_{type}\mathcal{L}_{type}.
-$$
-
-Outputs: `results/brca/train/grid_predictions.h5`, `grid_type.csv`, `grid_expr.h5ad`, `model/best_train_model.ckpt`
-
-### Step 4: Aggregate
-
-```python
-spacerec.agg(...)
-```
-
-$$
-\tilde{e}_a=\sum_{g\in\mathcal{G}(a)}\rho_{a,g}\hat{e}_g,\quad
-\hat{e}_a=\log\left(1+\max(\tilde{e}_a,0)\right).
-$$
-
-$$
-\tilde{p}_a=\sum_{g\in\mathcal{G}(a)}\rho_{a,g}\hat{p}_g,\quad
-\hat{p}_{a,c}=\frac{\tilde{p}_{a,c}}{\sum_{c'=1}^{C}\tilde{p}_{a,c'}},\quad
-\hat{c}_a=\arg\max_c \hat{p}_{a,c}.
-$$
-
-Outputs: `results/brca/aggregate/spacerec_ct.csv`, `spacerec_polygon.csv`, `spacerec_expr.h5ad`
-
-### Step 5: Evaluation
-
-```python
-spacerec.plottype(...)
-spacerec.plotexpr(...)
-```
-
-Outputs: `results/brca/Evaluation/xen_type.png`, `grid_type.png`, `xen_expr.png`, `grid_expr.png`
-
-## Current BRCA Run
-
-The current full BRCA run reports:
-
-| Step | Metric | Value |
-| --- | --- | --- |
-| Grid embedding | `n_export_patches` | `24423` |
-| Grid embedding | `n_grids` | `391344` |
-| Grid embedding | `n_supervised_grids` | `172966` |
-| Grid embedding | `feature_dim` | `6400` |
-| Training | `n_supervised_spots` | `4740` |
-| Training | `n_genes` | `4000` |
-| Training | `n_cell_types` | `11` |
-| Training | `mean_gene_PCC` | `~0.7751` |
-| Training | `mean_spot_gene_PCC` | `~0.8607` |
-| Aggregation | `n_output_cells` | `134364` |
-
-These are run artifacts, not fixed expected values.

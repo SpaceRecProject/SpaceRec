@@ -241,6 +241,7 @@ def build_patch_metadata(args: argparse.Namespace) -> tuple[dict[str, object], n
     bbox = bbox_from_spots(spots)
     scale = float(json.loads(args.scalefactors_json.read_text())["tissue_hires_scalef"])
     tissue_mask, thumb_size = estimate_tissue_boundary_on_thumbnail(args.thumbnail_png)
+    filter_tissue = bool(getattr(args, "filter_patch_tissue_boundary", False))
 
     patch_size = int(args.patch_size)
     stride = int(args.stride)
@@ -249,6 +250,7 @@ def build_patch_metadata(args: argparse.Namespace) -> tuple[dict[str, object], n
 
     kept_x: list[int] = []
     kept_y: list[int] = []
+    kept_inside_tissue: list[bool] = []
     bbox_candidate_count = 0
     for y1 in range(0, trimmed_h - patch_size + 1, stride):
         center_y = float(y1) + patch_size / 2.0
@@ -261,13 +263,16 @@ def build_patch_metadata(args: argparse.Namespace) -> tuple[dict[str, object], n
             bbox_candidate_count += 1
             tx = int(np.clip(round(center_x * scale), 0, tissue_mask.shape[1] - 1))
             ty = int(np.clip(round(center_y * scale), 0, tissue_mask.shape[0] - 1))
-            if not bool(tissue_mask[ty, tx]):
+            inside_tissue = bool(tissue_mask[ty, tx])
+            if filter_tissue and not inside_tissue:
                 continue
             kept_x.append(int(x1))
             kept_y.append(int(y1))
+            kept_inside_tissue.append(inside_tissue)
 
     x1 = np.asarray(kept_x, dtype=np.int32)
     y1 = np.asarray(kept_y, dtype=np.int32)
+    inside_tissue_boundary = np.asarray(kept_inside_tissue, dtype=np.bool_)
     x2 = x1 + patch_size
     y2 = y1 + patch_size
     patch_bbox = np.stack([x1, y1, x2, y2], axis=1).astype(np.int32)
@@ -291,13 +296,18 @@ def build_patch_metadata(args: argparse.Namespace) -> tuple[dict[str, object], n
         handle.create_dataset("center_xy", data=patch_center.astype(np.float32), compression="gzip")
         handle.create_dataset("corners_xy", data=patch_corners, compression="gzip")
         handle.create_dataset("inside_bbox", data=np.ones(patch_bbox.shape[0], dtype=np.bool_), compression="gzip")
-        handle.create_dataset("inside_tissue_boundary", data=np.ones(patch_bbox.shape[0], dtype=np.bool_), compression="gzip")
+        handle.create_dataset("inside_tissue_boundary", data=inside_tissue_boundary, compression="gzip")
         handle.attrs["he_image"] = str(args.he_image)
         handle.attrs["image_size"] = json.dumps([int(width), int(height)])
         handle.attrs["patch_size"] = patch_size
         handle.attrs["stride"] = stride
-        handle.attrs["selection_rule"] = "patch center inside in_tissue tissue_positions bbox and thumbnail-derived tissue boundary"
+        handle.attrs["selection_rule"] = (
+            "patch center inside in_tissue tissue_positions bbox"
+            if not filter_tissue
+            else "patch center inside in_tissue tissue_positions bbox and thumbnail-derived tissue boundary"
+        )
         handle.attrs["coordinate_system"] = "full-resolution he.tif coordinates; no offset"
+        handle.attrs["patch_tissue_boundary_filter"] = filter_tissue
         handle.attrs["grid_filter"] = "disabled"
         handle.attrs["fullres_bbox"] = json.dumps(bbox)
         handle.attrs["tissue_hires_scalef"] = scale
@@ -312,8 +322,14 @@ def build_patch_metadata(args: argparse.Namespace) -> tuple[dict[str, object], n
         "n_positions_in_tissue": int(spots.shape[0]),
         "n_bbox_patch_candidates": int(bbox_candidate_count),
         "n_retained_patches": int(patch_bbox.shape[0]),
+        "n_retained_patches_inside_tissue_boundary": int(inside_tissue_boundary.sum()),
         "patch_metadata_h5": str(args.patch_metadata_h5),
-        "selection_rule": "patch center inside bbox AND inside tissue boundary; no offset",
+        "filter_patch_tissue_boundary": filter_tissue,
+        "selection_rule": (
+            "patch center inside bbox; tissue boundary recorded but not used for selection"
+            if not filter_tissue
+            else "patch center inside bbox AND inside tissue boundary; no offset"
+        ),
     }
     return summary, patch_bbox, patch_center.astype(np.float32), patch_corners
 

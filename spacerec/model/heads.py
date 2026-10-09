@@ -109,16 +109,17 @@ class ResidualTypeHead(nn.Module):
         num_cell_types: int,
         dropout: float,
         temperature: float,
+        hidden_layers: int = 1,
     ):
         super().__init__()
         self.norm = nn.LayerNorm(input_dim)
-        self.block = nn.Sequential(
-            nn.Linear(input_dim, hidden_dim),
-            nn.GELU(),
-            nn.Dropout(dropout),
-            nn.Linear(hidden_dim, input_dim),
-            nn.Dropout(dropout),
-        )
+        layers: list[nn.Module] = []
+        in_dim = int(input_dim)
+        for _ in range(int(hidden_layers)):
+            layers.extend([nn.Linear(in_dim, int(hidden_dim)), nn.GELU(), nn.Dropout(dropout)])
+            in_dim = int(hidden_dim)
+        layers.extend([nn.Linear(in_dim, int(input_dim)), nn.Dropout(dropout)])
+        self.block = nn.Sequential(*layers)
         self.classifier = nn.Sequential(
             nn.GELU(),
             nn.Linear(input_dim, num_cell_types),

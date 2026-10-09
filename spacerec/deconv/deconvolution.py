@@ -14,6 +14,16 @@ from scipy.io import mmwrite
 
 PACKAGE_ROOT = Path(__file__).resolve().parents[1]
 SCRIPT_DIR = Path(__file__).resolve().parent
+BRCA_MERGE_JSON = SCRIPT_DIR / "brca_type_merge_17to11.json"
+SYNTHETIC_H5_CANDIDATES = [
+    "filtered_synthetic_st_filtered_feature_bc_matrix_transcript.h5",
+    "synthetic_st_filtered_feature_bc_matrix_transcript.h5",
+    "st_filtered_feature_bc_matrix.h5",
+]
+SYNTHETIC_POSITION_CANDIDATES = [
+    "synthetic_tissue_positions_transcript_filtered.csv",
+    "tissue_positions.csv",
+]
 CRC_CELL_TYPE_ORDER = [
     "B cells",
     "T cells",
@@ -44,19 +54,20 @@ BRCA_CELL_TYPE_ORDER = [
     "Prolif Invasive Tumor",
     "Stromal",
 ]
-BRCA_MERGED11_CELL_TYPE_GROUPS: list[tuple[str, tuple[str, ...]]] = [
-    ("B Cells", ("B Cells",)),
-    ("T Cells", ("CD4+ T Cells", "CD8+ T Cells")),
-    ("DCIS", ("DCIS 1", "DCIS 2")),
-    ("Endothelial", ("Endothelial",)),
-    ("Invasive Tumor", ("Invasive Tumor", "Prolif Invasive Tumor")),
-    ("DCs", ("IRF7+ DCs", "LAMP3+ DCs")),
-    ("Macrophages", ("Macrophages 1", "Macrophages 2")),
-    ("Mast Cells", ("Mast Cells",)),
-    ("Myoepi", ("Myoepi ACTA2+", "Myoepi KRT15+")),
-    ("Perivascular-Like", ("Perivascular-Like",)),
-    ("Stromal", ("Stromal",)),
-]
+
+
+def is_brca_sample(sample_id: str) -> bool:
+    return str(sample_id) == "BREAST" or str(sample_id).startswith("BREAST_")
+
+
+def load_brca_merge_groups(path: str | Path = BRCA_MERGE_JSON) -> list[tuple[str, tuple[str, ...]]]:
+    payload = json.loads(Path(path).read_text(encoding="utf-8"))
+    order = [str(name) for name in payload["cell_type_order"]]
+    merge = payload["merge"]
+    return [(name, tuple(str(source) for source in merge[name])) for name in order]
+
+
+BRCA_MERGED11_CELL_TYPE_GROUPS = load_brca_merge_groups()
 
 
 def require_file(path: Path) -> Path:
@@ -143,6 +154,14 @@ def read_tissue_positions(path: Path) -> pd.DataFrame:
     return table
 
 
+def first_existing(root: Path, names: list[str]) -> Path:
+    for name in names:
+        path = root / name
+        if path.is_file():
+            return path
+    raise FileNotFoundError(f"None of these files exist under {root}: {names}")
+
+
 def export_spatial(visium_dir: Path, rctd_input_dir: Path, sample_id: str) -> dict[str, object]:
     visium_dir = require_dir(Path(visium_dir))
     rctd_input_dir.mkdir(parents=True, exist_ok=True)
@@ -169,8 +188,8 @@ def export_spatial(visium_dir: Path, rctd_input_dir: Path, sample_id: str) -> di
             "n_duplicate_gene_rows_collapsed": 0,
         }
 
-    h5_path = require_file(visium_dir / "st_filtered_feature_bc_matrix.h5")
-    tissue_positions = require_file(visium_dir / "tissue_positions.csv")
+    h5_path = first_existing(visium_dir, SYNTHETIC_H5_CANDIDATES)
+    tissue_positions = first_existing(visium_dir, SYNTHETIC_POSITION_CANDIDATES)
     with h5py.File(h5_path, "r") as handle:
         matrix = handle["matrix"]
         shape = tuple(int(value) for value in matrix["shape"][:])
@@ -196,7 +215,7 @@ def export_spatial(visium_dir: Path, rctd_input_dir: Path, sample_id: str) -> di
     out.columns = ["x", "y"]
     out.to_csv(rctd_input_dir / f"{sample_id}_coords.csv")
     return {
-        "source": "st_filtered_feature_bc_matrix.h5",
+        "source": h5_path.name,
         "st_h5": str(h5_path),
         "tissue_positions": str(tissue_positions),
         "n_spatial_genes": int(len(genes)),
@@ -328,27 +347,49 @@ def remove_outputs_for_prefix(output_dir: Path, output_prefix: str) -> None:
             path.unlink()
 
 
+def r_command(script: Path, args: list[str], *, r_env_prefix: str | Path | None) -> list[str]:
+    command = ["Rscript", str(script), *args]
+    if r_env_prefix is None:
+        return command
+    return ["conda", "run", "-p", str(Path(r_env_prefix)), *command]
+
+
 def run_command(command: list[str], env: dict[str, str]) -> None:
     print(" ".join(command), flush=True)
     subprocess.run(command, check=True, env=env)
 
 
-def validate_rctd_output(output_dir: Path, output_prefix: str, method_input_dir: Path, rctd_input_dir: Path, sample_id: str) -> dict[str, object]:
+def validate_rctd_output(
+    output_dir: Path,
+    output_prefix: str,
+    method_input_dir: Path | None = None,
+    rctd_input_dir: Path | None = None,
+    sample_id: str | None = None,
+) -> dict[str, object]:
     paths = {
-        "proportions": output_dir / f"{output_prefix}_proportions.csv",
         "spacerec": output_dir / f"{output_prefix}_proportions_spacerec.csv",
         "rds": output_dir / f"{output_prefix}_result.rds",
     }
     missing = [str(path) for path in paths.values() if not path.exists()]
     if missing:
         raise FileNotFoundError(missing)
+    proportions_csv = output_dir / f"{output_prefix}_proportions.csv"
+    if proportions_csv.exists():
+        paths["proportions"] = proportions_csv
     frame = pd.read_csv(paths["spacerec"], index_col=0)
-    expected = read_h5ad_strings_from_text(method_input_dir / "celltype_order.tsv")
-    if sorted(frame.columns) != sorted(expected):
-        raise ValueError(f"Unexpected RCTD columns: {list(frame.columns)}; expected set: {expected}")
-    expected_spots = read_h5ad_strings_from_text(rctd_input_dir / f"{sample_id}_spots.tsv")
-    if list(frame.index) != expected_spots:
-        raise ValueError("RCTD output spot names do not match the Visium spot order.")
+    if method_input_dir is not None:
+        expected = read_h5ad_strings_from_text(method_input_dir / "celltype_order.tsv")
+        if sorted(frame.columns) != sorted(expected):
+            raise ValueError(f"Unexpected RCTD columns: {list(frame.columns)}; expected set: {expected}")
+    if rctd_input_dir is not None and sample_id is not None:
+        expected_spots = read_h5ad_strings_from_text(rctd_input_dir / f"{sample_id}_spots.tsv")
+        spot_rank = {spot: index for index, spot in enumerate(expected_spots)}
+        missing_spots = [spot for spot in frame.index if spot not in spot_rank]
+        if missing_spots:
+            raise ValueError(f"RCTD output contains spots absent from Visium input; first={missing_spots[0]}")
+        ordered_ranks = [spot_rank[spot] for spot in frame.index]
+        if ordered_ranks != sorted(ordered_ranks):
+            raise ValueError("RCTD output spot names are not in Visium input order.")
     values = frame.to_numpy(dtype=float)
     if not np.isfinite(values).all():
         raise ValueError("Non-finite values in RCTD proportions.")
@@ -357,7 +398,7 @@ def validate_rctd_output(output_dir: Path, output_prefix: str, method_input_dir:
         "prefix": output_prefix,
         "shape": [int(frame.shape[0]), int(frame.shape[1])],
         "columns": list(frame.columns),
-        "spot_names_match_visium": True,
+        "spot_names_match_visium": rctd_input_dir is not None and sample_id is not None,
         "row_sum_min": float(row_sums.min()),
         "row_sum_median": float(np.median(row_sums)),
         "row_sum_max": float(row_sums.max()),
@@ -367,12 +408,21 @@ def validate_rctd_output(output_dir: Path, output_prefix: str, method_input_dir:
     return summary
 
 
-def merge_brca_rctd_output(output_dir: Path, output_prefix: str) -> dict[str, object]:
+def merge_brca_rctd_output(
+    output_dir: Path,
+    output_prefix: str,
+    merge_json: str | Path = BRCA_MERGE_JSON,
+) -> dict[str, object]:
     source_path = output_dir / f"{output_prefix}_proportions_spacerec.csv"
     merged_path = output_dir / f"{output_prefix}_proportions_merged11_spacerec.csv"
     source = pd.read_csv(require_file(source_path), index_col=0)
+    merge_groups = load_brca_merge_groups(merge_json)
+    mapped_sources = {source_name for _name, source_names in merge_groups for source_name in source_names}
+    unmapped = [name for name in source.columns if name not in mapped_sources]
+    if unmapped:
+        raise ValueError(f"BRCA merge JSON does not map RCTD columns: {unmapped}")
     merged = pd.DataFrame(index=source.index)
-    for merged_name, source_names in BRCA_MERGED11_CELL_TYPE_GROUPS:
+    for merged_name, source_names in merge_groups:
         missing = [name for name in source_names if name not in source.columns]
         if missing:
             raise ValueError(f"Missing BRCA RCTD columns for {merged_name}: {missing}")
@@ -389,7 +439,8 @@ def merge_brca_rctd_output(output_dir: Path, output_prefix: str) -> dict[str, ob
         "shape": [int(merged.shape[0]), int(merged.shape[1])],
         "source_columns": list(source.columns),
         "columns": list(merged.columns),
-        "merge_groups": {name: list(sources) for name, sources in BRCA_MERGED11_CELL_TYPE_GROUPS},
+        "merge_json": str(Path(merge_json)),
+        "merge_groups": {name: list(sources) for name, sources in merge_groups},
         "row_sum_min": float(normalized_row_sums.min()),
         "row_sum_median": float(np.median(normalized_row_sums)),
         "row_sum_max": float(normalized_row_sums.max()),
@@ -411,14 +462,17 @@ def run_deconvolution(
     output_prefix: str | None = None,
     umi_min: int | None = None,
     max_cores: int = 8,
+    r_env_prefix: str | Path | None = None,
     force: bool = False,
     run_rctd: bool = True,
+    merge: bool = True,
+    merge_json: str | Path = BRCA_MERGE_JSON,
 ) -> dict[str, object]:
     output_dir = Path(output_dir)
-    rctd_output_dir = output_dir / "rctd"
+    rctd_output_dir = output_dir
     rctd_output_dir.mkdir(parents=True, exist_ok=True)
     prefix = output_prefix or f"RCTD_{sample_id}"
-    selected_umi_min = 30 if umi_min is None and sample_id == "BREAST" else (100 if umi_min is None else int(umi_min))
+    selected_umi_min = 30 if umi_min is None and is_brca_sample(sample_id) else (100 if umi_min is None else int(umi_min))
     if force:
         remove_outputs_for_prefix(rctd_output_dir, prefix)
     patient_suffix = None
@@ -429,11 +483,40 @@ def run_deconvolution(
     elif reference_filter == "p2crc":
         patient_suffix = "P2CRC"
         allowed_cell_types = CRC_CELL_TYPE_ORDER
-    elif reference_filter in {None, "allscrna"}:
-        if sample_id == "BREAST":
+    elif reference_filter in {None, "brca17"}:
+        if is_brca_sample(sample_id):
             allowed_cell_types = BRCA_CELL_TYPE_ORDER
+    elif reference_filter == "allscrna":
+        pass
     else:
         raise ValueError(f"Unsupported reference_filter: {reference_filter!r}")
+
+    summary = {
+        "prepared": None,
+        "rctd": None,
+        "output_dir": str(output_dir),
+        "input_subdir": input_subdir,
+        "output_prefix": prefix,
+        "reference_filter": reference_filter,
+        "umi_min": selected_umi_min,
+        "merge": bool(merge),
+        "merge_json": str(Path(merge_json)),
+        "sc_ref_h5ad": str(Path(sc_ref_h5ad)),
+        "visium_dir": str(Path(visium_dir)),
+    }
+    if not run_rctd:
+        return summary
+
+    if not force:
+        try:
+            summary["rctd"] = validate_rctd_output(rctd_output_dir, prefix)
+            if merge and is_brca_sample(sample_id):
+                summary["rctd_merged11"] = merge_brca_rctd_output(rctd_output_dir, prefix, merge_json)
+            summary["reused_existing"] = True
+            (output_dir / f"{prefix}_deconvolution_summary.json").write_text(json.dumps(summary, indent=2), encoding="utf-8")
+            return summary
+        except FileNotFoundError:
+            pass
 
     prepared = prepare_deconvolution_inputs(
         visium_dir=Path(visium_dir),
@@ -447,17 +530,7 @@ def run_deconvolution(
         allowed_cell_types=allowed_cell_types,
     )
     method_input_dir = Path(prepared["method_input_dir"])
-    summary = {
-        "prepared": prepared,
-        "rctd": None,
-        "output_dir": str(output_dir),
-        "input_subdir": input_subdir,
-        "output_prefix": prefix,
-        "reference_filter": reference_filter,
-        "umi_min": selected_umi_min,
-    }
-    if not run_rctd:
-        return summary
+    summary["prepared"] = prepared
 
     env = os.environ.copy()
     threads = str(max_cores)
@@ -466,37 +539,41 @@ def run_deconvolution(
     env["OPENBLAS_NUM_THREADS"] = threads
 
     run_command(
-        [
-            "Rscript",
-            str(SCRIPT_DIR / "make_reference_seurat.R"),
-            "--method-input-dir",
-            str(method_input_dir),
-            "--output-rds",
-            str(method_input_dir / "reference_seurat.rds"),
-        ],
+        r_command(
+            SCRIPT_DIR / "make_reference_seurat.R",
+            [
+                "--method-input-dir",
+                str(method_input_dir),
+                "--output-rds",
+                str(method_input_dir / "rctd_reference_cache.rds"),
+            ],
+            r_env_prefix=r_env_prefix,
+        ),
         env,
     )
     run_command(
-        [
-            "Rscript",
-            str(SCRIPT_DIR / "rctd.R"),
-            "--rctd-input-dir",
-            str(Path(prepared["rctd_input_dir"])),
-            "--sc-ref-rds",
-            str(method_input_dir / "reference_seurat.rds"),
-            "--output-dir",
-            str(rctd_output_dir),
-            "--sample-id",
-            sample_id,
-            "--annotation-column",
-            "Annotation",
-            "--umi-min",
-            str(selected_umi_min),
-            "--max-cores",
-            str(max_cores),
-            "--output-prefix",
-            prefix,
-        ],
+        r_command(
+                SCRIPT_DIR / "run_rctd.R",
+            [
+                "--rctd-input-dir",
+                str(Path(prepared["rctd_input_dir"])),
+                "--sc-ref-rds",
+                str(method_input_dir / "rctd_reference_cache.rds"),
+                "--output-dir",
+                str(rctd_output_dir),
+                "--sample-id",
+                sample_id,
+                "--annotation-column",
+                "Annotation",
+                "--umi-min",
+                str(selected_umi_min),
+                "--max-cores",
+                str(max_cores),
+                "--output-prefix",
+                prefix,
+            ],
+            r_env_prefix=r_env_prefix,
+        ),
         env,
     )
     summary["rctd"] = validate_rctd_output(
@@ -506,7 +583,7 @@ def run_deconvolution(
         Path(prepared["rctd_input_dir"]),
         sample_id,
     )
-    if sample_id == "BREAST":
-        summary["rctd_merged11"] = merge_brca_rctd_output(rctd_output_dir, prefix)
+    if merge and is_brca_sample(sample_id):
+        summary["rctd_merged11"] = merge_brca_rctd_output(rctd_output_dir, prefix, merge_json)
     (output_dir / f"{prefix}_deconvolution_summary.json").write_text(json.dumps(summary, indent=2), encoding="utf-8")
     return summary

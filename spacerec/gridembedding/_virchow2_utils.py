@@ -150,7 +150,7 @@ def build_grid_set(
 ) -> tuple[np.ndarray, np.ndarray, np.ndarray, np.ndarray, np.ndarray, np.ndarray, np.ndarray, np.ndarray]:
     grid_n = int(args.patch_size) // int(args.grid_size)
     if grid_n != 16 or grid_n * int(args.grid_size) != int(args.patch_size):
-        raise ValueError("dense18 Virchow2 expects patch_size=288 and grid_size=18, producing 16x16 tokens.")
+        raise ValueError("Virchow2 grid embedding expects patch_size / grid_size == 16 to match the 16x16 token layout.")
 
     gy, gx = np.meshgrid(np.arange(grid_n, dtype=np.int32), np.arange(grid_n, dtype=np.int32), indexing="ij")
     gx = gx.ravel()

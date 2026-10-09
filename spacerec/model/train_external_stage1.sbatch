@@ -1,6 +1,7 @@
 #!/bin/bash
-#SBATCH --job-name=brca_stage1
+#SBATCH --job-name=brca_external_stage1
 #SBATCH --partition=camacho_gpu
+#SBATCH --nodelist=g141
 #SBATCH --gres=gpu:1
 #SBATCH --time=02:00:00
 #SBATCH --cpus-per-task=4
@@ -26,21 +27,18 @@ python - <<'PY'
 from pathlib import Path
 from argparse import Namespace
 import json
-from spacerec_v2.model.model import prepare_data
-from spacerec_v2.model.training import _ensure_st_h5ad
+
+from spacerec.model.model import prepare_data
+from spacerec.model.training import _ensure_st_h5ad
 
 root = Path.cwd()
-dataset = "brca"
 type_pred_dir = root / "resources/brca/type_pred"
-train_dir = type_pred_dir / "train_v2"
-type_pred_dir.mkdir(parents=True, exist_ok=True)
+train_dir = type_pred_dir / "external_train"
 st_h5 = root / "resources/brca/syn_vis/filtered_synthetic_st_filtered_feature_bc_matrix_transcript.h5"
 st_h5ad = train_dir / "input/filtered_synthetic_st_filtered_feature_bc_matrix_transcript.h5ad"
-deconv_csv = root / "resources/brca/deconv/RCTD_BREAST_SYNTHETIC_TRANSCRIPT_proportions_merged11_spacerec.csv"
+deconv_csv = root / "resources/brca/deconv/external_RCTD_BREAST_SYNTHETIC_TRANSCRIPT_proportions_spacerec.csv"
 grid_embedding_h5 = root / "resources/brca/embedding/grid_embedding_train_filtered.h5"
 gene_list = root / "resources/brca/gene_list/gene.txt"
-mu_ref = root / "resources/brca/deconv/rctd_ref/rctd_reference_merged11.npy"
-cell_polygon_csv = root / "resources/brca/xen/aligned/he_alignmented_cell_boundaries.csv"
 
 _ensure_st_h5ad(st_h5, st_h5ad, force=True)
 preflight_args = Namespace(
@@ -54,7 +52,7 @@ preflight_args = Namespace(
 )
 preflight_data = prepare_data(preflight_args)
 preflight_summary = {
-    "stage": "stage1_preflight_ok",
+    "stage": "external_stage1_preflight_ok",
     "st_h5ad": str(st_h5ad),
     "dense_feature_shape": list(preflight_data.features.shape),
     "n_position_spot_ids": len(preflight_data.position_spot_ids),
@@ -72,11 +70,11 @@ print(json.dumps(preflight_summary, indent=2), flush=True)
 if preflight_summary["n_position_spot_ids"] != 4816:
     raise RuntimeError(f"Unexpected synthetic spot count: {preflight_summary['n_position_spot_ids']}")
 if preflight_summary["n_supervised_spots"] <= 0:
-    raise RuntimeError("No supervised spots passed Stage 1 preflight.")
-if preflight_summary["n_genes"] != 306 or preflight_summary["n_cell_types"] != 11:
-    raise RuntimeError("Unexpected Stage 1 gene/type dimensions.")
+    raise RuntimeError("No supervised spots passed external Stage 1 preflight.")
+if preflight_summary["n_genes"] != 306 or preflight_summary["n_cell_types"] != 9:
+    raise RuntimeError("Unexpected external Stage 1 gene/type dimensions.")
 if preflight_summary["zero_target_rows"] != 0:
-    raise RuntimeError("Stage 1 preflight found zero deconvolution target rows.")
+    raise RuntimeError("External Stage 1 preflight found zero deconvolution target rows.")
 PY
 
 python - <<'PY'
@@ -86,19 +84,17 @@ import os
 
 import torch
 
-import spacerec_v2.api as spacerec
+import spacerec.api as spacerec
 
 root = Path.cwd()
-dataset = "brca"
 type_pred_dir = root / "resources/brca/type_pred"
-train_dir = type_pred_dir / "train_v2"
+train_dir = type_pred_dir / "external_train"
 st_h5ad = train_dir / "input/filtered_synthetic_st_filtered_feature_bc_matrix_transcript.h5ad"
-deconv_csv = root / "resources/brca/deconv/RCTD_BREAST_SYNTHETIC_TRANSCRIPT_proportions_merged11_spacerec.csv"
+deconv_csv = root / "resources/brca/deconv/external_RCTD_BREAST_SYNTHETIC_TRANSCRIPT_proportions_spacerec.csv"
 grid_embedding_h5 = root / "resources/brca/embedding/grid_embedding_train_filtered.h5"
 gene_list = root / "resources/brca/gene_list/gene.txt"
-mu_ref = root / "resources/brca/deconv/rctd_ref/rctd_reference_merged11.npy"
+mu_ref = root / "resources/brca/deconv/external_rctd_ref/external_rctd_reference_wu9_placeholder.npy"
 cell_polygon_csv = root / "resources/brca/xen/aligned/he_alignmented_cell_boundaries.csv"
-type_pred_dir.mkdir(parents=True, exist_ok=True)
 
 cuda_summary = {
     "host": os.uname().nodename,
@@ -111,7 +107,7 @@ if not torch.cuda.is_available():
     raise RuntimeError("CUDA is not available in the Slurm allocation.")
 
 summary = spacerec.stage1(
-    dataset=dataset,
+    dataset="brca",
     st_h5ad=st_h5ad,
     deconv_csv=deconv_csv,
     grid_embedding_h5=grid_embedding_h5,
@@ -137,16 +133,18 @@ summary = spacerec.stage1(
     agg=True,
     cell_polygon_csv=cell_polygon_csv,
     type_pred_dir=type_pred_dir,
+    grid_type_csv=type_pred_dir / "external_stage1_grid_type.csv",
+    cell_type_csv=type_pred_dir / "external_stage1_cell_type.csv",
 )
 
 required = [
     Path(summary["stage1_checkpoint"]),
-    type_pred_dir / "stage1_grid_type.csv",
-    type_pred_dir / "stage1_cell_type.csv",
+    type_pred_dir / "external_stage1_grid_type.csv",
+    type_pred_dir / "external_stage1_cell_type.csv",
 ]
 missing = [str(path) for path in required if not path.exists()]
 if missing:
-    raise FileNotFoundError("Missing expected Stage 1 outputs: " + ", ".join(missing))
+    raise FileNotFoundError("Missing expected external Stage 1 outputs: " + ", ".join(missing))
 
 print(json.dumps(summary, indent=2, sort_keys=True), flush=True)
 PY

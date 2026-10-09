@@ -31,7 +31,24 @@ def _require_file(path: Path) -> Path:
 def _read_10x_genes(path: Path) -> list[str]:
     with h5py.File(path, "r") as handle:
         values = handle["matrix/features/name"][:]
-    return [value.decode("utf-8") if isinstance(value, bytes) else str(value) for value in values]
+    genes = [value.decode("utf-8") if isinstance(value, (bytes, np.bytes_)) else str(value) for value in values]
+    used = set(genes)
+    occurrence: dict[str, int] = {}
+    seen: set[str] = set()
+    for index, gene in enumerate(genes):
+        if gene not in seen:
+            seen.add(gene)
+            continue
+        count = occurrence.get(gene, 0)
+        while True:
+            count += 1
+            candidate = f"{gene}-{count}"
+            if candidate not in used:
+                genes[index] = candidate
+                used.add(candidate)
+                occurrence[gene] = count
+                break
+    return genes
 
 
 def _default_positions_csv(synthetic_h5: Path) -> Path:
