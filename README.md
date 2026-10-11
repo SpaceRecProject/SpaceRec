@@ -43,7 +43,7 @@ import spacerec.api as spacerec
 Download the BRCA data from:
 
 ```text
-[https://drive.google.com/open?id=1Fxyag8rx4A-DDvfdCk6xUd_SKmtTz5vw](https://zenodo.org/records/23265742)
+https://zenodo.org/records/23265742
 ```
 
 Organize the files under `resources/brca`:
