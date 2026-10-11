@@ -2,7 +2,7 @@
 
 # SpaceRec
 
-**Predict grid-level gene expression and cell types from H&E images under spatial transcriptomics supervision.**
+**Predicting high resolution gene expression and cell type composition in spatial transcriptomic**
 
 [Notebook](spacerec/notebooks/spacerec.ipynb) · [API](#api) · [Workflow](#workflow)
 
