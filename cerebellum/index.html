@@ -1,0 +1,111 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="description" content="Cerebellum DAPI and SpaceRec Stage 1 grid-type comparison for C2 and C3.">
+  <title>Cerebellum SpaceRec visualizer</title>
+  <link rel="stylesheet" href="styles.css?v=20261102-cerebellum-1">
+</head>
+<body>
+  <header class="app-header">
+    <div>
+      <p class="eyebrow">CEREBELLUM · OPENPHENOM · 30 PX</p>
+      <h1>SpaceRec grid type visualizer</h1>
+    </div>
+    <button class="button primary" id="exportButton" type="button">Export PNG</button>
+  </header>
+
+  <main>
+    <section class="toolbar" aria-label="Comparison controls">
+      <div class="control-group sample-group">
+        <span class="control-label">Sample</span>
+        <div class="segmented sample-segmented" role="group" aria-label="Cerebellum sample">
+          <button class="segment active" type="button" data-sample="C2" aria-pressed="true">C2</button>
+          <button class="segment" type="button" data-sample="C3" aria-pressed="false">C3</button>
+        </div>
+      </div>
+
+      <div class="control-group mode-group">
+        <span class="control-label">View</span>
+        <div class="segmented mode-segmented" role="group" aria-label="Comparison mode">
+          <button class="segment active" type="button" data-mode="compare" aria-pressed="true">Swipe + opacity</button>
+          <button class="segment" type="button" data-mode="side" aria-pressed="false">Side by side</button>
+        </div>
+      </div>
+
+      <div class="control-group range-group" id="rangeGroup">
+        <label class="control-label" for="comparisonRange">Position</label>
+        <input id="comparisonRange" type="range" min="0" max="100" value="50" step="1">
+        <output id="rangeOutput" for="comparisonRange">50%</output>
+      </div>
+
+      <div class="control-group range-group" id="opacityGroup">
+        <label class="control-label" for="opacityRange">Grid opacity</label>
+        <input id="opacityRange" type="range" min="0" max="100" value="85" step="1">
+        <output id="opacityOutput" for="opacityRange">85%</output>
+      </div>
+
+      <div class="control-group file-group">
+        <span class="control-label">Images</span>
+        <label class="button file-button" for="dapiUpload">Choose DAPI</label>
+        <input id="dapiUpload" type="file" accept="image/*">
+        <label class="button file-button" for="predictionUpload">Choose grid map</label>
+        <input id="predictionUpload" type="file" accept="image/*">
+      </div>
+
+      <button class="button" id="resetButton" type="button">Reset</button>
+    </section>
+
+    <div class="status-row">
+      <p id="imageStatus" aria-live="polite"></p>
+      <p class="warning" id="imageWarning" role="alert" hidden></p>
+    </div>
+
+    <section class="viewer-wrap" aria-label="DAPI and grid type comparison">
+      <div class="comparison-stage mode-compare" id="comparisonStage">
+        <div class="single-view" id="singleView">
+          <img class="image-layer base-layer" id="dapiImage" alt="DAPI channel" draggable="false">
+          <div class="image-layer clipped-layer" id="comparisonClip">
+            <img id="gridImage" alt="SpaceRec grid type prediction" draggable="false">
+          </div>
+          <span class="image-label label-left">DAPI</span>
+          <span class="image-label label-right">Grid type</span>
+          <div class="divider" id="divider" role="slider" tabindex="0" aria-label="DAPI and grid type reveal position" aria-valuemin="0" aria-valuemax="100" aria-valuenow="50">
+            <span class="divider-line"></span>
+            <span class="divider-handle" aria-hidden="true"><span>‹</span><span>›</span></span>
+          </div>
+        </div>
+
+        <div class="side-view" id="sideView" hidden>
+          <figure>
+            <div class="side-image"><img id="sideDapiImage" alt="DAPI channel" draggable="false"></div>
+            <figcaption>DAPI</figcaption>
+          </figure>
+          <figure>
+            <div class="side-image grid-background"><img id="sideGridImage" alt="SpaceRec grid type prediction" draggable="false"></div>
+            <figcaption>Grid type</figcaption>
+          </figure>
+        </div>
+      </div>
+    </section>
+
+    <section class="legend-band" aria-label="Cell type color legend">
+      <h2>Grid type</h2>
+      <div class="legend-list" id="legendList"></div>
+    </section>
+
+    <section class="caption-band">
+      <label for="captionInput">Sample ID or description</label>
+      <input id="captionInput" type="text" maxlength="180">
+    </section>
+
+    <details class="instructions">
+      <summary>About this view</summary>
+      <p>The base is OME channel 1 (DAPI) from the full-resolution image. The colored layer is the masked 30 px SpaceRec Stage 1 Top-1 grid type map. Both layers use the same 20,296 × 20,296 coordinate frame and are displayed at 3,200 × 3,200.</p>
+    </details>
+  </main>
+
+  <script src="app.js?v=20261102-cerebellum-1"></script>
+</body>
+</html>

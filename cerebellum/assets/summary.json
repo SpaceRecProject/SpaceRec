@@ -1,0 +1,91 @@
+{
+  "status": "complete",
+  "coordinate_alignment": "Both layers originate from the same 20296 x 20296 full-resolution OME coordinate frame and are resized to exactly 3200 x 3200.",
+  "dapi_rendering": "OME channel 1; linear 0.2th to 99.8th percentile stretch; blue display with green at 1/8 intensity.",
+  "grid_rendering": "Canonical masked mean-fusion 30 px Stage 1 Top-1 preview; source black pixels made transparent without changing class RGB.",
+  "expression_assets_included": false,
+  "type_colors": {
+    "other_neurons": "#E69F00",
+    "excitatory_neurons": "#CC79A7",
+    "inhibitory_neurons": "#0072B2",
+    "astroglia": "#009E73",
+    "oligodendroglia": "#56B4E9",
+    "immune": "#D55E00",
+    "vascular_stromal": "#F0E442",
+    "ventricular_epithelium": "#999999"
+  },
+  "samples": {
+    "C2": {
+      "tag": "GSM6320947_37_46_C2",
+      "source_ome": "resources/handoff_cerebellum/images/GSM6320947_37_46_C2_fullres_4ch.ome.tif",
+      "source_ome_channel_index": 1,
+      "source_ome_channel_name": "dapi",
+      "source_grid_preview": "resources/handoff_cerebellum/spacerec_v2_openphenom_mean_30px/C2/visualization/grid_type_map_30px_preview.png",
+      "source_fullres_size_wh": [
+        20296,
+        20296
+      ],
+      "web_size_wh": [
+        3200,
+        3200
+      ],
+      "n_grids": 156321,
+      "grid_size_px_fullres": 30,
+      "predicted_grid_counts": {
+        "other_neurons": 67699,
+        "excitatory_neurons": 40686,
+        "inhibitory_neurons": 18901,
+        "astroglia": 7738,
+        "oligodendroglia": 10042,
+        "immune": 1524,
+        "vascular_stromal": 9136,
+        "ventricular_epithelium": 595
+      },
+      "assets": {
+        "dapi": "c2_dapi.png",
+        "grid_type": "c2_grid_type.png"
+      },
+      "sha256": {
+        "dapi": "a69245d44994c501771e7208dc39d8ce35ef090f0f2e6585a34bf41e2efbfd3e",
+        "grid_type": "2dbc244c4ff0ec84666bb3b35ebc37efd85182c21cd400d5af7d4e7987819458"
+      },
+      "opaque_grid_pixels_web": 3496385
+    },
+    "C3": {
+      "tag": "GSM6320948_37_46_C3",
+      "source_ome": "resources/handoff_cerebellum/images/GSM6320948_37_46_C3_fullres_4ch.ome.tif",
+      "source_ome_channel_index": 1,
+      "source_ome_channel_name": "dapi",
+      "source_grid_preview": "resources/handoff_cerebellum/spacerec_v2_openphenom_mean_30px/C3/visualization/grid_type_map_30px_preview.png",
+      "source_fullres_size_wh": [
+        20296,
+        20296
+      ],
+      "web_size_wh": [
+        3200,
+        3200
+      ],
+      "n_grids": 178064,
+      "grid_size_px_fullres": 30,
+      "predicted_grid_counts": {
+        "other_neurons": 68084,
+        "excitatory_neurons": 44991,
+        "inhibitory_neurons": 26052,
+        "astroglia": 9767,
+        "oligodendroglia": 15498,
+        "immune": 2443,
+        "vascular_stromal": 10832,
+        "ventricular_epithelium": 397
+      },
+      "assets": {
+        "dapi": "c3_dapi.png",
+        "grid_type": "c3_grid_type.png"
+      },
+      "sha256": {
+        "dapi": "979794750819b5318a1a10f7fc046595d40cac8a8cc60d1d9ffc83dc65699fb3",
+        "grid_type": "407d4c08119d4f64857c1871d0c98572d397c31d4ed9dba90b2f3c71392ef8e9"
+      },
+      "opaque_grid_pixels_web": 3982996
+    }
+  }
+}
