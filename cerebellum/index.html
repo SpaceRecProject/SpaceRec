@@ -3,9 +3,9 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <meta name="description" content="Cerebellum DAPI and SpaceRec Stage 1 grid-type comparison for C2 and C3.">
+  <meta name="description" content="Cerebellum three-channel fluorescence and SpaceRec Stage 1 grid-type comparison for C2 and C3.">
   <title>Cerebellum SpaceRec visualizer</title>
-  <link rel="stylesheet" href="styles.css?v=20261102-cerebellum-1">
+  <link rel="stylesheet" href="styles.css?v=20261103-cerebellum-3ch-1">
 </head>
 <body>
   <header class="app-header">
@@ -48,8 +48,8 @@
 
       <div class="control-group file-group">
         <span class="control-label">Images</span>
-        <label class="button file-button" for="dapiUpload">Choose DAPI</label>
-        <input id="dapiUpload" type="file" accept="image/*">
+        <label class="button file-button" for="baseUpload">Choose 3-channel</label>
+        <input id="baseUpload" type="file" accept="image/*">
         <label class="button file-button" for="predictionUpload">Choose grid map</label>
         <input id="predictionUpload" type="file" accept="image/*">
       </div>
@@ -62,16 +62,16 @@
       <p class="warning" id="imageWarning" role="alert" hidden></p>
     </div>
 
-    <section class="viewer-wrap" aria-label="DAPI and grid type comparison">
+    <section class="viewer-wrap" aria-label="Three-channel fluorescence and grid type comparison">
       <div class="comparison-stage mode-compare" id="comparisonStage">
         <div class="single-view" id="singleView">
-          <img class="image-layer base-layer" id="dapiImage" alt="DAPI channel" draggable="false">
+          <img class="image-layer base-layer" id="baseImage" alt="Three-channel fluorescence composite" draggable="false">
           <div class="image-layer clipped-layer" id="comparisonClip">
             <img id="gridImage" alt="SpaceRec grid type prediction" draggable="false">
           </div>
-          <span class="image-label label-left">DAPI</span>
+          <span class="image-label label-left">3-channel</span>
           <span class="image-label label-right">Grid type</span>
-          <div class="divider" id="divider" role="slider" tabindex="0" aria-label="DAPI and grid type reveal position" aria-valuemin="0" aria-valuemax="100" aria-valuenow="50">
+          <div class="divider" id="divider" role="slider" tabindex="0" aria-label="Three-channel fluorescence and grid type reveal position" aria-valuemin="0" aria-valuemax="100" aria-valuenow="50">
             <span class="divider-line"></span>
             <span class="divider-handle" aria-hidden="true"><span>‹</span><span>›</span></span>
           </div>
@@ -79,8 +79,8 @@
 
         <div class="side-view" id="sideView" hidden>
           <figure>
-            <div class="side-image"><img id="sideDapiImage" alt="DAPI channel" draggable="false"></div>
-            <figcaption>DAPI</figcaption>
+            <div class="side-image"><img id="sideBaseImage" alt="Three-channel fluorescence composite" draggable="false"></div>
+            <figcaption>3-channel</figcaption>
           </figure>
           <figure>
             <div class="side-image grid-background"><img id="sideGridImage" alt="SpaceRec grid type prediction" draggable="false"></div>
@@ -102,10 +102,10 @@
 
     <details class="instructions">
       <summary>About this view</summary>
-      <p>The base is OME channel 1 (DAPI) from the full-resolution image. The colored layer is the masked 30 px SpaceRec Stage 1 Top-1 grid type map. Both layers use the same 20,296 × 20,296 coordinate frame and are displayed at 3,200 × 3,200.</p>
+      <p>The base is a three-channel fluorescence composite from the full-resolution OME: phalloidin in red, CD31 in green, and max(DAPI, phalloidin/3) in blue. The colored layer is the masked 30 px SpaceRec Stage 1 Top-1 grid type map. Both layers use the same 20,296 × 20,296 coordinate frame and are displayed at 3,200 × 3,200.</p>
     </details>
   </main>
 
-  <script src="app.js?v=20261102-cerebellum-1"></script>
+  <script src="app.js?v=20261103-cerebellum-3ch-1"></script>
 </body>
 </html>

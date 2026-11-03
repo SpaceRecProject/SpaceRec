@@ -1,7 +1,7 @@
 (() => {
   "use strict";
 
-  const VERSION = "20261102-cerebellum-1";
+  const VERSION = "20261103-cerebellum-3ch-1";
   const TYPE_CONFIG = [
     ["other_neurons", "Other neurons", "#E69F00"],
     ["excitatory_neurons", "Excitatory neurons", "#CC79A7"],
@@ -26,10 +26,10 @@
   };
   const asset = (name) => `assets/${name}?v=${VERSION}`;
   const defaultsFor = (sample) => ({
-    dapi: { src: asset(`${sample.toLowerCase()}_dapi.png`), label: "DAPI", width: 3200, height: 3200, url: null },
+    base: { src: asset(`${sample.toLowerCase()}_3ch.png`), label: "3-channel", width: 3200, height: 3200, url: null },
     grid: { src: asset(`${sample.toLowerCase()}_grid_type.png`), label: "Grid type", width: 3200, height: 3200, url: null },
   });
-  const captionFor = (sample) => `${SAMPLE_CONFIG[sample].tag} · DAPI · SpaceRec Stage 1 · 30 px grid`;
+  const captionFor = (sample) => `${SAMPLE_CONFIG[sample].tag} · 3-channel fluorescence · SpaceRec Stage 1 · 30 px grid`;
   const state = {
     sample: "C2",
     mode: "compare",
@@ -41,13 +41,13 @@
   const byId = (id) => document.getElementById(id);
   const elements = {
     stage: byId("comparisonStage"), single: byId("singleView"), side: byId("sideView"),
-    dapi: byId("dapiImage"), grid: byId("gridImage"),
-    sideDapi: byId("sideDapiImage"), sideGrid: byId("sideGridImage"),
+    base: byId("baseImage"), grid: byId("gridImage"),
+    sideBase: byId("sideBaseImage"), sideGrid: byId("sideGridImage"),
     clip: byId("comparisonClip"), divider: byId("divider"),
     range: byId("comparisonRange"), rangeGroup: byId("rangeGroup"), rangeOutput: byId("rangeOutput"),
     opacity: byId("opacityRange"), opacityGroup: byId("opacityGroup"), opacityOutput: byId("opacityOutput"),
     status: byId("imageStatus"), warning: byId("imageWarning"), caption: byId("captionInput"),
-    legend: byId("legendList"), dapiUpload: byId("dapiUpload"), predictionUpload: byId("predictionUpload"),
+    legend: byId("legendList"), baseUpload: byId("baseUpload"), predictionUpload: byId("predictionUpload"),
     reset: byId("resetButton"), export: byId("exportButton"),
     samples: [...document.querySelectorAll("[data-sample]")], modes: [...document.querySelectorAll("[data-mode]")],
   };
@@ -85,10 +85,10 @@
   }
 
   function updateCompatibility() {
-    const { dapi, grid } = state.layers;
-    const match = dapi.width === grid.width && dapi.height === grid.height;
-    const ratioDifference = Math.abs(dapi.width / dapi.height - grid.width / grid.height) / (dapi.width / dapi.height);
-    elements.status.textContent = `${state.sample} · ${SAMPLE_CONFIG[state.sample].grids.toLocaleString()} grids · ${dapi.label} ${dapi.width}×${dapi.height} · ${grid.label} ${grid.width}×${grid.height}`;
+    const { base, grid } = state.layers;
+    const match = base.width === grid.width && base.height === grid.height;
+    const ratioDifference = Math.abs(base.width / base.height - grid.width / grid.height) / (base.width / base.height);
+    elements.status.textContent = `${state.sample} · ${SAMPLE_CONFIG[state.sample].grids.toLocaleString()} grids · ${base.label} ${base.width}×${base.height} · ${grid.label} ${grid.width}×${grid.height}`;
     if (!match || ratioDifference > 0.001) {
       elements.warning.hidden = false;
       elements.warning.textContent = ratioDifference > 0.001
@@ -101,9 +101,9 @@
   }
 
   function applyImages() {
-    elements.dapi.src = state.layers.dapi.src;
+    elements.base.src = state.layers.base.src;
     elements.grid.src = state.layers.grid.src;
-    elements.sideDapi.src = state.layers.dapi.src;
+    elements.sideBase.src = state.layers.base.src;
     elements.sideGrid.src = state.layers.grid.src;
     renderLegend();
     updateCompatibility();
@@ -119,7 +119,7 @@
       button.classList.toggle("active", active);
       button.setAttribute("aria-pressed", String(active));
     });
-    elements.dapiUpload.value = "";
+    elements.baseUpload.value = "";
     elements.predictionUpload.value = "";
     elements.caption.value = captionFor(sample);
     applyImages();
@@ -192,18 +192,18 @@
     elements.export.disabled = true;
     elements.export.textContent = "Preparing…";
     try {
-      const [dapi, grid] = await Promise.all([loadedImage(state.layers.dapi.src), loadedImage(state.layers.grid.src)]);
+      const [base, grid] = await Promise.all([loadedImage(state.layers.base.src), loadedImage(state.layers.grid.src)]);
       const side = state.mode === "side";
       const gap = side ? 24 : 0;
       const canvas = document.createElement("canvas");
-      canvas.width = side ? dapi.naturalWidth + grid.naturalWidth + gap : dapi.naturalWidth;
-      canvas.height = Math.max(dapi.naturalHeight, grid.naturalHeight);
+      canvas.width = side ? base.naturalWidth + grid.naturalWidth + gap : base.naturalWidth;
+      canvas.height = Math.max(base.naturalHeight, grid.naturalHeight);
       const context = canvas.getContext("2d");
       context.fillStyle = "#02050b";
       context.fillRect(0, 0, canvas.width, canvas.height);
-      context.drawImage(dapi, 0, 0);
+      context.drawImage(base, 0, 0);
       if (side) {
-        context.drawImage(grid, dapi.naturalWidth + gap, 0);
+        context.drawImage(grid, base.naturalWidth + gap, 0);
       } else {
         const split = Math.round(canvas.width * state.value / 100);
         context.save();
@@ -260,7 +260,7 @@
     else if (event.key === "End") updatePosition(100);
     else updatePosition(state.value + (event.key === "ArrowRight" ? step : -step));
   });
-  elements.dapiUpload.addEventListener("change", () => upload("dapi", elements.dapiUpload.files[0]));
+  elements.baseUpload.addEventListener("change", () => upload("base", elements.baseUpload.files[0]));
   elements.predictionUpload.addEventListener("change", () => upload("grid", elements.predictionUpload.files[0]));
   elements.reset.addEventListener("click", reset);
   elements.export.addEventListener("click", exportPng);

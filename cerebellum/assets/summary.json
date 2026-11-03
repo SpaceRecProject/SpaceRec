@@ -1,7 +1,7 @@
 {
   "status": "complete",
   "coordinate_alignment": "Both layers originate from the same 20296 x 20296 full-resolution OME coordinate frame and are resized to exactly 3200 x 3200.",
-  "dapi_rendering": "OME channel 1; linear 0.2th to 99.8th percentile stretch; blue display with green at 1/8 intensity.",
+  "composite_3ch_rendering": "Each channel uses a linear 0.2th to 99.8th percentile stretch. RGB is phalloidin, CD31, and max(DAPI, phalloidin / 3).",
   "grid_rendering": "Canonical masked mean-fusion 30 px Stage 1 Top-1 preview; source black pixels made transparent without changing class RGB.",
   "expression_assets_included": false,
   "type_colors": {
@@ -18,8 +18,16 @@
     "C2": {
       "tag": "GSM6320947_37_46_C2",
       "source_ome": "resources/handoff_cerebellum/images/GSM6320947_37_46_C2_fullres_4ch.ome.tif",
-      "source_ome_channel_index": 1,
-      "source_ome_channel_name": "dapi",
+      "source_ome_channel_indices": [
+        1,
+        2,
+        3
+      ],
+      "source_ome_channel_names": [
+        "dapi",
+        "phalloidin",
+        "CD31"
+      ],
       "source_grid_preview": "resources/handoff_cerebellum/spacerec_v2_openphenom_mean_30px/C2/visualization/grid_type_map_30px_preview.png",
       "source_fullres_size_wh": [
         20296,
@@ -42,11 +50,11 @@
         "ventricular_epithelium": 595
       },
       "assets": {
-        "dapi": "c2_dapi.png",
+        "composite_3ch": "c2_3ch.png",
         "grid_type": "c2_grid_type.png"
       },
       "sha256": {
-        "dapi": "a69245d44994c501771e7208dc39d8ce35ef090f0f2e6585a34bf41e2efbfd3e",
+        "composite_3ch": "12a665c51a7aef56362ba43fc1487217a2cf7df54ea7a4fbc13513fefca46063",
         "grid_type": "2dbc244c4ff0ec84666bb3b35ebc37efd85182c21cd400d5af7d4e7987819458"
       },
       "opaque_grid_pixels_web": 3496385
@@ -54,8 +62,16 @@
     "C3": {
       "tag": "GSM6320948_37_46_C3",
       "source_ome": "resources/handoff_cerebellum/images/GSM6320948_37_46_C3_fullres_4ch.ome.tif",
-      "source_ome_channel_index": 1,
-      "source_ome_channel_name": "dapi",
+      "source_ome_channel_indices": [
+        1,
+        2,
+        3
+      ],
+      "source_ome_channel_names": [
+        "dapi",
+        "phalloidin",
+        "CD31"
+      ],
       "source_grid_preview": "resources/handoff_cerebellum/spacerec_v2_openphenom_mean_30px/C3/visualization/grid_type_map_30px_preview.png",
       "source_fullres_size_wh": [
         20296,
@@ -78,11 +94,11 @@
         "ventricular_epithelium": 397
       },
       "assets": {
-        "dapi": "c3_dapi.png",
+        "composite_3ch": "c3_3ch.png",
         "grid_type": "c3_grid_type.png"
       },
       "sha256": {
-        "dapi": "979794750819b5318a1a10f7fc046595d40cac8a8cc60d1d9ffc83dc65699fb3",
+        "composite_3ch": "b7da0352706ebaa8a9e1230c13c950f910904535ceb88d4cf241048fd87e0dd9",
         "grid_type": "407d4c08119d4f64857c1871d0c98572d397c31d4ed9dba90b2f3c71392ef8e9"
       },
       "opaque_grid_pixels_web": 3982996
