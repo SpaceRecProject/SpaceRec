@@ -1,291 +1,128 @@
 (() => {
   "use strict";
 
-  const DEFAULT_CAPTION = "GSM9239732 · Human lymph node 2 · 50 µm DBiTplus · 10-type RCTD · 60 px grid";
-  const CODEX_ASSET_VERSION = "20260923-codex-major7-marker-2";
-  const codexAsset = (name) => window.CODEX_EMBEDDED_ASSETS?.[name]
-    || `assets/codex_major7_marker/${name}?v=${CODEX_ASSET_VERSION}`;
-  const CODEX_MAJOR_LEGEND = [
-    ["CD4 T cells", "#4169E1"], ["CD8 T cells", "#008000"],
-    ["B cells", "#FFA500"], ["NK cells", "#A52A2A"],
-    ["Macrophages", "#E75480"], ["Dendritic cells", "#FF0000"],
-    ["Vascular cells", "#00BFC4"],
+  const VERSION = "20261102-cerebellum-1";
+  const TYPE_CONFIG = [
+    ["other_neurons", "Other neurons", "#E69F00"],
+    ["excitatory_neurons", "Excitatory neurons", "#CC79A7"],
+    ["inhibitory_neurons", "Inhibitory neurons", "#0072B2"],
+    ["astroglia", "Astroglia", "#009E73"],
+    ["oligodendroglia", "Oligodendroglia", "#56B4E9"],
+    ["immune", "Immune", "#D55E00"],
+    ["vascular_stromal", "Vascular / stromal", "#F0E442"],
+    ["ventricular_epithelium", "Ventricular epithelium", "#999999"],
   ];
-  const CODEX_MAJOR_GROUPS = {
-    CD4: { label: "CD4", cellKey: "codexCellsCD4", genes: ["IL7R", "TCF7", "CCR7"] },
-    CD8: { label: "CD8", cellKey: "codexCellsCD8", genes: ["CD8A", "CD8B", "CCL5"] },
-    Bcell: { label: "B cell", cellKey: "codexCellsBcell", genes: ["MS4A1", "CD74", "CD22"] },
-    NK: { label: "NK", cellKey: "codexCellsNK", genes: ["GNLY", "KLRD1", "GZMB"] },
-    Macrophage: { label: "Macrophage", cellKey: "codexCellsMacrophage", genes: ["C1QA", "C1QB", "MARCO"] },
-    DC: { label: "DC", cellKey: "codexCellsDC", genes: ["CD1C", "CLEC10A", "CLEC9A"] },
-    Vascular: { label: "Vascular", cellKey: "codexCellsVascular", genes: ["PECAM1", "CLDN5", "MYH11", "MYLK"] },
-  };
-  const DEFINITIONS = {
-    he: { src: "assets/he.png", label: "H&E", legend: [] },
-    spacerec: {
-      src: "assets/spacerec.png?v=20260918-rctd10-grid60-1", label: "SpaceRec",
-      legendTitle: "SpaceRec · 10 RCTD types · 60 px grid",
-      legend: [
-        ["B cells", "#E41A1C"], ["T cells", "#377EB8"], ["DC", "#984EA3"],
-        ["Endo", "#4DAF4A"], ["ILC", "#FF7F00"], ["Macrophages", "#A65628"],
-        ["Monocytes", "#F781BF"], ["NK", "#00A6D6"], ["NKT", "#FFD92F"],
-        ["VSMC", "#666666"],
-      ],
+  const SAMPLE_CONFIG = {
+    C2: {
+      tag: "GSM6320947_37_46_C2",
+      grids: 156321,
+      counts: [67699, 40686, 18901, 7738, 10042, 1524, 9136, 595],
     },
-    clusters: {
-      src: "assets/clusters_fig3_aligned.png?v=20260918-fig3repro-aligned-2", label: "Clusters 0–4",
-      legendTitle: "Expression clusters · 2,478 spots",
-      legend: [
-        ["Cluster 0", "#4682B4"], ["Cluster 1", "#FA8072"],
-        ["Cluster 2", "#B4CDCD"], ["Cluster 3", "#B452CD"],
-        ["Cluster 4", "#F0E68C"],
-      ],
-    },
-    cluster0: {
-      src: "assets/expr_clusters/Cluster0_only_grid_style.png?v=20260918-expr-cluster-3", label: "Cluster 0",
-      legendTitle: "Cluster 0 only", legend: [["Cluster 0", "#4682B4"]],
-    },
-    cluster1: {
-      src: "assets/expr_clusters/Cluster1_only_grid_style.png?v=20260918-expr-cluster-3", label: "Cluster 1",
-      legendTitle: "Cluster 1 only", legend: [["Cluster 1", "#FA8072"]],
-    },
-    cluster3: {
-      src: "assets/expr_clusters/Cluster3_only_grid_style.png?v=20260918-expr-cluster-3", label: "Cluster 3",
-      legendTitle: "Cluster 3 only", legend: [["Cluster 3", "#B452CD"]],
-    },
-    cluster4: {
-      src: "assets/expr_clusters/Cluster4_only_grid_style.png?v=20260918-expr-cluster-3", label: "Cluster 4",
-      legendTitle: "Cluster 4 only", legend: [["Cluster 4", "#F0E68C"]],
-    },
-    expr0IL7R: {
-      src: "assets/expr_clusters/Cluster0_Gene_IL7R_grid_expr_rot90ccw_flipud.png?v=20260918-expr-cluster-3", label: "IL7R expression",
-      legend: [],
-    },
-    expr0CXCL9: {
-      src: "assets/expr_clusters/Cluster0_Gene_CXCL9_grid_expr_rot90ccw_flipud.png?v=20260918-expr-cluster-3", label: "CXCL9 expression",
-      legend: [],
-    },
-    expr1MS4A1: {
-      src: "assets/expr_clusters/Cluster1_Gene_MS4A1_grid_expr_rot90ccw_flipud.png?v=20260918-expr-cluster-3", label: "MS4A1 expression",
-      legend: [],
-    },
-    expr3MYH11: {
-      src: "assets/expr_clusters/Cluster3_Gene_MYH11_grid_expr_rot90ccw_flipud.png?v=20260918-expr-cluster-3", label: "MYH11 expression",
-      legend: [],
-    },
-    expr3MYLK: {
-      src: "assets/expr_clusters/Cluster3_Gene_MYLK_grid_expr_rot90ccw_flipud.png?v=20260918-expr-cluster-3", label: "MYLK expression",
-      legend: [],
-    },
-    expr4C1QA: {
-      src: "assets/expr_clusters/Cluster4_Gene_C1QA_grid_expr_rot90ccw_flipud.png?v=20260918-expr-cluster-3", label: "C1QA expression",
-      legend: [],
+    C3: {
+      tag: "GSM6320948_37_46_C3",
+      grids: 178064,
+      counts: [68084, 44991, 26052, 9767, 15498, 2443, 10832, 397],
     },
   };
-  Object.entries(CODEX_MAJOR_GROUPS).forEach(([majorType, group]) => {
-    DEFINITIONS[group.cellKey] = {
-      src: codexAsset(`cells_${majorType}.png`),
-      label: `${group.label} cells`,
-      legendTitle: `${group.label} selected`,
-      legend: CODEX_MAJOR_LEGEND,
-      width: 7932, height: 8058,
-    };
-    group.genes.forEach((gene) => {
-      DEFINITIONS[`codexGene${gene}`] = {
-        src: codexAsset(`gene_${gene}.png`),
-        label: `${gene} spot expression`,
-        legendTitle: `${gene} · raw DBiT spot expression`,
-        legend: [["Low", "#000004"], ["High", "#FCFDBF"]],
-        width: 7932, height: 8058,
-      };
-    });
+  const asset = (name) => `assets/${name}?v=${VERSION}`;
+  const defaultsFor = (sample) => ({
+    dapi: { src: asset(`${sample.toLowerCase()}_dapi.png`), label: "DAPI", width: 3200, height: 3200, url: null },
+    grid: { src: asset(`${sample.toLowerCase()}_grid_type.png`), label: "Grid type", width: 3200, height: 3200, url: null },
   });
-  const EXPRESSION_GROUPS = {
-    "0": { clusterKey: "cluster0", genes: [["IL7R", "expr0IL7R"], ["CXCL9", "expr0CXCL9"]] },
-    "1": { clusterKey: "cluster1", genes: [["MS4A1", "expr1MS4A1"]] },
-    "3": { clusterKey: "cluster3", genes: [["MYH11", "expr3MYH11"], ["MYLK", "expr3MYLK"]] },
-    "4": { clusterKey: "cluster4", genes: [["C1QA", "expr4C1QA"]] },
-  };
-  const PAIRS = {
-    "he-spacerec": ["he", "spacerec"],
-    "he-clusters": ["he", "clusters"],
-    "spacerec-clusters": ["spacerec", "clusters"],
-  };
-  const freshLayer = (key) => ({
-    ...DEFINITIONS[key], key, url: null,
-    width: DEFINITIONS[key].width || 0,
-    height: DEFINITIONS[key].height || 0,
-  });
+  const captionFor = (sample) => `${SAMPLE_CONFIG[sample].tag} · DAPI · SpaceRec Stage 1 · 30 px grid`;
   const state = {
-    mode: "swipe", pair: "he-clusters", value: 50, dragging: false,
-    expressionGenes: { "0": "expr0IL7R", "1": "expr1MS4A1", "3": "expr3MYH11", "4": "expr4C1QA" },
-    codexGenes: Object.fromEntries(
-      Object.entries(CODEX_MAJOR_GROUPS).map(([type, group]) => [type, `codexGene${group.genes[0]}`]),
-    ),
-    layers: Object.fromEntries(Object.keys(DEFINITIONS).map((key) => [key, freshLayer(key)])),
+    sample: "C2",
+    mode: "compare",
+    value: 50,
+    opacity: 85,
+    dragging: false,
+    layers: defaultsFor("C2"),
   };
   const byId = (id) => document.getElementById(id);
   const elements = {
     stage: byId("comparisonStage"), single: byId("singleView"), side: byId("sideView"),
-    leftImage: byId("leftImage"), rightImage: byId("rightImage"),
-    sideLeftImage: byId("sideLeftImage"), sideRightImage: byId("sideRightImage"),
-    leftLabel: byId("leftLabel"), rightLabel: byId("rightLabel"),
-    sideLeftCaption: byId("sideLeftCaption"), sideRightCaption: byId("sideRightCaption"),
-    clip: byId("heClip"), divider: byId("divider"), range: byId("comparisonRange"),
-    rangeGroup: byId("rangeGroup"), rangeLabel: byId("rangeLabel"), rangeOutput: byId("rangeOutput"),
+    dapi: byId("dapiImage"), grid: byId("gridImage"),
+    sideDapi: byId("sideDapiImage"), sideGrid: byId("sideGridImage"),
+    clip: byId("comparisonClip"), divider: byId("divider"),
+    range: byId("comparisonRange"), rangeGroup: byId("rangeGroup"), rangeOutput: byId("rangeOutput"),
+    opacity: byId("opacityRange"), opacityGroup: byId("opacityGroup"), opacityOutput: byId("opacityOutput"),
     status: byId("imageStatus"), warning: byId("imageWarning"), caption: byId("captionInput"),
-    legend: byId("legendBand"), heUpload: byId("heUpload"), spaceRecUpload: byId("spaceRecUpload"),
+    legend: byId("legendList"), dapiUpload: byId("dapiUpload"), predictionUpload: byId("predictionUpload"),
     reset: byId("resetButton"), export: byId("exportButton"),
-    modes: [...document.querySelectorAll("[data-mode]")], pairs: [...document.querySelectorAll("[data-pair]")],
-    expressionClusters: [...document.querySelectorAll("[data-expr-cluster]")],
-    expressionGeneGroup: byId("expressionGeneGroup"), expressionGeneButtons: byId("expressionGeneButtons"),
-    codexTypes: [...document.querySelectorAll("[data-codex-major]")],
-    codexGeneGroup: byId("codexGeneGroup"), codexGeneButtons: byId("codexGeneButtons"),
+    samples: [...document.querySelectorAll("[data-sample]")], modes: [...document.querySelectorAll("[data-mode]")],
   };
-
-  const expressionCluster = () => state.pair.startsWith("expr-cluster-") ? state.pair.split("-").at(-1) : null;
-  const codexMajorType = () => state.pair.startsWith("codex-major-") ? state.pair.slice("codex-major-".length) : null;
-  const activeKeys = () => {
-    const cluster = expressionCluster();
-    if (cluster) return [state.expressionGenes[cluster], EXPRESSION_GROUPS[cluster].clusterKey];
-    const majorType = codexMajorType();
-    if (majorType) return [state.codexGenes[majorType], CODEX_MAJOR_GROUPS[majorType].cellKey];
-    return PAIRS[state.pair];
-  };
-  const activeLayers = () => activeKeys().map((key) => state.layers[key]);
   const clamp = (value) => Math.min(100, Math.max(0, Number(value)));
 
-  function updateValue(value) {
+  function updatePosition(value) {
     state.value = clamp(value);
     elements.range.value = String(state.value);
     elements.rangeOutput.value = `${Math.round(state.value)}%`;
     elements.rangeOutput.textContent = `${Math.round(state.value)}%`;
     elements.divider.style.left = `${state.value}%`;
     elements.divider.setAttribute("aria-valuenow", String(Math.round(state.value)));
-    if (state.mode === "swipe") elements.clip.style.clipPath = `inset(0 ${100 - state.value}% 0 0)`;
-    if (state.mode === "opacity") elements.clip.style.opacity = String(state.value / 100);
+    elements.clip.style.clipPath = `inset(0 0 0 ${state.value}%)`;
   }
 
-  function updateAspect() {
-    const left = activeLayers()[0];
-    const width = left.width || 2016;
-    const height = left.height || 2048;
-    elements.stage.style.aspectRatio = state.mode === "side"
-      ? (window.matchMedia("(max-width: 520px)").matches ? `${width} / ${height * 2}` : `${width * 2} / ${height}`)
-      : `${width} / ${height}`;
+  function updateOpacity(value) {
+    state.opacity = clamp(value);
+    elements.opacity.value = String(state.opacity);
+    elements.opacityOutput.value = `${Math.round(state.opacity)}%`;
+    elements.opacityOutput.textContent = `${Math.round(state.opacity)}%`;
+    elements.clip.style.opacity = String(state.opacity / 100);
   }
 
   function renderLegend() {
     elements.legend.replaceChildren();
-    activeLayers().filter((layer) => layer.legend.length).forEach((layer) => {
-      const group = document.createElement("div");
-      group.className = "legend-group";
-      const title = document.createElement("h2");
-      title.textContent = layer.legendTitle || layer.label;
-      const list = document.createElement("div");
-      list.className = "legend-list";
-      layer.legend.forEach(([label, color]) => {
-        const item = document.createElement("span");
-        item.className = "legend-item";
-        const swatch = document.createElement("i");
-        swatch.style.backgroundColor = color;
-        item.append(swatch, document.createTextNode(label));
-        list.append(item);
-      });
-      group.append(title, list);
-      elements.legend.append(group);
+    const counts = SAMPLE_CONFIG[state.sample].counts;
+    TYPE_CONFIG.forEach(([, label, color], index) => {
+      const item = document.createElement("span");
+      item.className = "legend-item";
+      const swatch = document.createElement("i");
+      swatch.style.backgroundColor = color;
+      item.append(swatch, document.createTextNode(`${label} (${counts[index].toLocaleString()})`));
+      elements.legend.append(item);
     });
-    elements.legend.hidden = elements.legend.childElementCount === 0;
+  }
+
+  function updateCompatibility() {
+    const { dapi, grid } = state.layers;
+    const match = dapi.width === grid.width && dapi.height === grid.height;
+    const ratioDifference = Math.abs(dapi.width / dapi.height - grid.width / grid.height) / (dapi.width / dapi.height);
+    elements.status.textContent = `${state.sample} · ${SAMPLE_CONFIG[state.sample].grids.toLocaleString()} grids · ${dapi.label} ${dapi.width}×${dapi.height} · ${grid.label} ${grid.width}×${grid.height}`;
+    if (!match || ratioDifference > 0.001) {
+      elements.warning.hidden = false;
+      elements.warning.textContent = ratioDifference > 0.001
+        ? "Aspect ratios differ; these images cannot be assumed pixel-aligned."
+        : "Dimensions differ; verify that both images use the same coordinate bounds.";
+    } else {
+      elements.warning.hidden = true;
+      elements.warning.textContent = "";
+    }
   }
 
   function applyImages() {
-    const [left, right] = activeLayers();
-    elements.leftImage.src = left.src;
-    elements.rightImage.src = right.src;
-    elements.sideLeftImage.src = left.src;
-    elements.sideRightImage.src = right.src;
-    elements.leftLabel.textContent = left.label;
-    elements.rightLabel.textContent = right.label;
-    const showImageLabels = expressionCluster() === null && codexMajorType() === null;
-    elements.leftLabel.hidden = !showImageLabels;
-    elements.rightLabel.hidden = !showImageLabels;
-    elements.status.hidden = !showImageLabels;
-    elements.sideLeftCaption.textContent = left.label;
-    elements.sideRightCaption.textContent = right.label;
-    elements.sideLeftCaption.hidden = !showImageLabels;
-    elements.sideRightCaption.hidden = !showImageLabels;
-    elements.divider.setAttribute("aria-label", `${left.label} reveal position`);
+    elements.dapi.src = state.layers.dapi.src;
+    elements.grid.src = state.layers.grid.src;
+    elements.sideDapi.src = state.layers.dapi.src;
+    elements.sideGrid.src = state.layers.grid.src;
     renderLegend();
-  }
-
-  function renderExpressionControls() {
-    const cluster = expressionCluster();
-    elements.expressionClusters.forEach((button) => {
-      const active = button.dataset.exprCluster === cluster;
-      button.classList.toggle("active", active);
-      button.setAttribute("aria-pressed", String(active));
-    });
-    elements.expressionGeneButtons.replaceChildren();
-    elements.expressionGeneGroup.hidden = cluster === null;
-    if (cluster === null) return;
-    EXPRESSION_GROUPS[cluster].genes.forEach(([gene, key]) => {
-      const button = document.createElement("button");
-      button.className = `segment${state.expressionGenes[cluster] === key ? " active" : ""}`;
-      button.type = "button";
-      button.textContent = gene;
-      button.dataset.expressionGene = key;
-      button.setAttribute("aria-pressed", String(state.expressionGenes[cluster] === key));
-      button.addEventListener("click", () => setExpressionGene(cluster, key));
-      elements.expressionGeneButtons.append(button);
-    });
-  }
-
-  function setExpressionGene(cluster, key) {
-    if (!EXPRESSION_GROUPS[cluster].genes.some((entry) => entry[1] === key)) return;
-    state.expressionGenes[cluster] = key;
-    renderExpressionControls();
-    applyImages();
-    setMode(state.mode);
     updateCompatibility();
   }
 
-  function renderCodexControls() {
-    const majorType = codexMajorType();
-    elements.codexTypes.forEach((button) => {
-      const active = button.dataset.codexMajor === majorType;
+  function setSample(sample) {
+    if (!SAMPLE_CONFIG[sample]) return;
+    Object.values(state.layers).forEach((layer) => { if (layer.url) URL.revokeObjectURL(layer.url); });
+    state.sample = sample;
+    state.layers = defaultsFor(sample);
+    elements.samples.forEach((button) => {
+      const active = button.dataset.sample === sample;
       button.classList.toggle("active", active);
       button.setAttribute("aria-pressed", String(active));
     });
-    elements.codexGeneButtons.replaceChildren();
-    elements.codexGeneGroup.hidden = majorType === null;
-    if (majorType === null) return;
-    CODEX_MAJOR_GROUPS[majorType].genes.forEach((gene) => {
-      const key = `codexGene${gene}`;
-      const button = document.createElement("button");
-      button.className = `segment${state.codexGenes[majorType] === key ? " active" : ""}`;
-      button.type = "button";
-      button.textContent = gene;
-      button.dataset.codexGene = key;
-      button.setAttribute("aria-pressed", String(state.codexGenes[majorType] === key));
-      button.addEventListener("click", () => setCodexGene(majorType, key));
-      elements.codexGeneButtons.append(button);
-    });
-  }
-
-  function setCodexGene(majorType, key) {
-    if (!CODEX_MAJOR_GROUPS[majorType].genes.some((gene) => `codexGene${gene}` === key)) return;
-    state.codexGenes[majorType] = key;
-    renderCodexControls();
+    elements.dapiUpload.value = "";
+    elements.predictionUpload.value = "";
+    elements.caption.value = captionFor(sample);
     applyImages();
-    setMode(state.mode);
-    updateCompatibility();
-  }
-
-  function setCodexMajor(majorType) {
-    if (!CODEX_MAJOR_GROUPS[majorType]) return;
-    setPair(`codex-major-${majorType}`);
-    setMode("opacity");
-    updateValue(88);
   }
 
   function setMode(mode) {
@@ -295,81 +132,30 @@
       button.classList.toggle("active", active);
       button.setAttribute("aria-pressed", String(active));
     });
-    elements.stage.className = `comparison-stage mode-${mode}`;
     const side = mode === "side";
+    elements.stage.className = `comparison-stage mode-${mode}`;
     elements.single.hidden = side;
     elements.side.hidden = !side;
     elements.rangeGroup.hidden = side;
-    const [left, right] = activeLayers();
-    if (mode === "opacity") {
-      elements.rangeLabel.textContent = `${right.label} opacity`;
-      elements.clip.style.clipPath = "none";
-      elements.clip.style.opacity = String(state.value / 100);
-      elements.leftImage.src = right.src;
-      elements.rightImage.src = left.src;
-    } else {
-      elements.rangeLabel.textContent = "Position";
-      elements.clip.style.opacity = "1";
-      elements.leftImage.src = left.src;
-      elements.rightImage.src = right.src;
-      updateValue(state.value);
-    }
-    updateAspect();
-  }
-
-  function setPair(pair) {
-    state.pair = pair;
-    elements.pairs.forEach((button) => {
-      const active = button.dataset.pair === pair;
-      button.classList.toggle("active", active);
-      button.setAttribute("aria-pressed", String(active));
-    });
-    renderExpressionControls();
-    renderCodexControls();
-    applyImages();
-    setMode(state.mode);
-    updateCompatibility();
-  }
-
-  function updateCompatibility() {
-    const [left, right] = activeLayers();
-    if (!left.width || !right.width) return;
-    const ratioDifference = Math.abs(left.width / left.height - right.width / right.height) / (left.width / left.height);
-    const dimensionsMatch = left.width === right.width && left.height === right.height;
-    elements.status.textContent = `${left.label} ${left.width}×${left.height} · ${right.label} ${right.width}×${right.height}`;
-    updateAspect();
-    if (!dimensionsMatch || ratioDifference > 0.001) {
-      elements.warning.hidden = false;
-      elements.warning.textContent = ratioDifference > 0.001
-        ? "Aspect ratios differ; images are preserved with contain fitting and cannot be assumed pixel-aligned."
-        : "Dimensions differ; verify that both files cover the same coordinate bounds before interpreting the overlay.";
-    } else {
-      elements.warning.hidden = true;
-      elements.warning.textContent = "";
-    }
+    elements.opacityGroup.hidden = side;
+    elements.stage.style.aspectRatio = side && window.matchMedia("(max-width: 520px)").matches ? "1 / 2" : side ? "2 / 1" : "1 / 1";
+    updatePosition(state.value);
+    updateOpacity(state.opacity);
   }
 
   function loadDimensions(key) {
     const layer = state.layers[key];
-    const probe = new Image();
-    probe.onload = () => {
-      layer.width = probe.naturalWidth;
-      layer.height = probe.naturalHeight;
-      if (activeKeys().includes(key)) updateCompatibility();
+    const image = new Image();
+    image.onload = () => {
+      layer.width = image.naturalWidth;
+      layer.height = image.naturalHeight;
+      updateCompatibility();
     };
-    probe.onerror = () => {
+    image.onerror = () => {
       elements.warning.hidden = false;
       elements.warning.textContent = `Could not load ${layer.label}.`;
     };
-    probe.src = layer.src;
-  }
-
-  function setImage(key, src, label, objectUrl) {
-    if (state.layers[key].url) URL.revokeObjectURL(state.layers[key].url);
-    state.layers[key] = { ...state.layers[key], src, label, url: objectUrl, width: 0, height: 0 };
-    applyImages();
-    setMode(state.mode);
-    loadDimensions(key);
+    image.src = layer.src;
   }
 
   function upload(key, file) {
@@ -379,27 +165,18 @@
       elements.warning.textContent = `${file.name} is not a supported image file.`;
       return;
     }
+    if (state.layers[key].url) URL.revokeObjectURL(state.layers[key].url);
     const url = URL.createObjectURL(file);
-    setImage(key, url, file.name, url);
+    state.layers[key] = { src: url, label: file.name, width: 0, height: 0, url };
+    applyImages();
+    loadDimensions(key);
   }
 
   function reset() {
-    Object.keys(DEFINITIONS).forEach((key) => {
-      if (state.layers[key].url) URL.revokeObjectURL(state.layers[key].url);
-      state.layers[key] = freshLayer(key);
-    });
-    elements.heUpload.value = "";
-    elements.spaceRecUpload.value = "";
-    elements.caption.value = DEFAULT_CAPTION;
-    state.value = 50;
-    state.expressionGenes = { "0": "expr0IL7R", "1": "expr1MS4A1", "3": "expr3MYH11", "4": "expr4C1QA" };
-    state.codexGenes = Object.fromEntries(
-      Object.entries(CODEX_MAJOR_GROUPS).map(([type, group]) => [type, `codexGene${group.genes[0]}`]),
-    );
-    setPair("he-clusters");
-    setMode("swipe");
-    updateValue(50);
-    Object.keys(state.layers).filter((key) => !state.layers[key].width).forEach(loadDimensions);
+    setSample(state.sample);
+    setMode("compare");
+    updatePosition(50);
+    updateOpacity(85);
   }
 
   function loadedImage(src) {
@@ -411,128 +188,40 @@
     });
   }
 
-  function drawContained(context, image, x, y, width, height) {
-    const scale = Math.min(width / image.naturalWidth, height / image.naturalHeight);
-    const drawWidth = image.naturalWidth * scale;
-    const drawHeight = image.naturalHeight * scale;
-    context.drawImage(image, x + (width - drawWidth) / 2, y + (height - drawHeight) / 2, drawWidth, drawHeight);
-  }
-
-  function drawLabel(context, text, x, y, rightAligned = false) {
-    context.font = "700 28px Arial, sans-serif";
-    const width = context.measureText(text).width + 28;
-    const left = rightAligned ? x - width : x;
-    context.fillStyle = "rgba(255,255,255,0.92)";
-    context.fillRect(left, y, width, 48);
-    context.strokeStyle = "rgba(0,0,0,0.35)";
-    context.strokeRect(left, y, width, 48);
-    context.fillStyle = "#111315";
-    context.textAlign = "left";
-    context.textBaseline = "middle";
-    context.fillText(text, left + 14, y + 25);
-  }
-
-  function legendHeight(layers, width) {
-    const columns = width > 3000 ? 8 : 5;
-    return layers.reduce((sum, layer) => sum + 42 + Math.ceil(layer.legend.length / columns) * 38, 0);
-  }
-
-  function drawLegends(context, layers, startY, width) {
-    const columns = width > 3000 ? 8 : 5;
-    const columnWidth = width / columns;
-    let y = startY;
-    layers.forEach((layer) => {
-      context.fillStyle = "#17191c";
-      context.font = "700 24px Arial, sans-serif";
-      context.textAlign = "left";
-      context.fillText(layer.label, 20, y + 22);
-      y += 42;
-      layer.legend.forEach(([label, color], index) => {
-        const x = (index % columns) * columnWidth + 20;
-        const itemY = y + Math.floor(index / columns) * 38;
-        context.fillStyle = color;
-        context.fillRect(x, itemY + 7, 22, 22);
-        context.strokeStyle = "rgba(0,0,0,0.35)";
-        context.strokeRect(x, itemY + 7, 22, 22);
-        context.fillStyle = "#282c30";
-        context.font = "500 20px Arial, sans-serif";
-        context.fillText(label, x + 32, itemY + 19);
-      });
-      y += Math.ceil(layer.legend.length / columns) * 38;
-    });
-  }
-
   async function exportPng() {
     elements.export.disabled = true;
     elements.export.textContent = "Preparing…";
     try {
-      const [leftLayer, rightLayer] = activeLayers();
-      const [left, right] = await Promise.all([loadedImage(leftLayer.src), loadedImage(rightLayer.src)]);
-      const imageWidth = Math.min(8192, left.naturalWidth);
-      const imageHeight = Math.round(imageWidth * left.naturalHeight / left.naturalWidth);
-      const header = 88;
-      const captionHeight = elements.caption.value.trim() ? 72 : 0;
-      const gap = state.mode === "side" ? 24 : 0;
-      const canvasWidth = state.mode === "side" ? imageWidth * 2 + gap : imageWidth;
-      const legendLayers = [leftLayer, rightLayer].filter((layer) => layer.legend.length);
+      const [dapi, grid] = await Promise.all([loadedImage(state.layers.dapi.src), loadedImage(state.layers.grid.src)]);
+      const side = state.mode === "side";
+      const gap = side ? 24 : 0;
       const canvas = document.createElement("canvas");
-      canvas.width = canvasWidth;
-      canvas.height = imageHeight + header + captionHeight + legendHeight(legendLayers, canvasWidth);
+      canvas.width = side ? dapi.naturalWidth + grid.naturalWidth + gap : dapi.naturalWidth;
+      canvas.height = Math.max(dapi.naturalHeight, grid.naturalHeight);
       const context = canvas.getContext("2d");
-      context.fillStyle = "#ffffff";
+      context.fillStyle = "#02050b";
       context.fillRect(0, 0, canvas.width, canvas.height);
-      context.fillStyle = "#17191c";
-      context.font = "700 30px Arial, sans-serif";
-      context.textBaseline = "middle";
-      context.fillText(`${leftLayer.label} / ${rightLayer.label}`, 20, header / 2);
-      context.font = "500 24px Arial, sans-serif";
-      context.textAlign = "right";
-      const modeText = state.mode === "side" ? "Side by side" : state.mode === "opacity" ? `Opacity ${Math.round(state.value)}%` : `Swipe ${Math.round(state.value)}%`;
-      context.fillText(modeText, canvas.width - 20, header / 2);
-
-      if (state.mode === "side") {
-        drawContained(context, left, 0, header, imageWidth, imageHeight);
-        drawContained(context, right, imageWidth + gap, header, imageWidth, imageHeight);
-        drawLabel(context, leftLayer.label, 18, header + 18);
-        drawLabel(context, rightLayer.label, canvas.width - 18, header + 18, true);
-      } else if (state.mode === "opacity") {
-        drawContained(context, left, 0, header, imageWidth, imageHeight);
-        context.save();
-        context.globalAlpha = state.value / 100;
-        drawContained(context, right, 0, header, imageWidth, imageHeight);
-        context.restore();
-        drawLabel(context, `${leftLayer.label} + ${rightLayer.label}`, 18, header + 18);
+      context.drawImage(dapi, 0, 0);
+      if (side) {
+        context.drawImage(grid, dapi.naturalWidth + gap, 0);
       } else {
-        drawContained(context, right, 0, header, imageWidth, imageHeight);
-        const split = Math.round(imageWidth * state.value / 100);
+        const split = Math.round(canvas.width * state.value / 100);
         context.save();
         context.beginPath();
-        context.rect(0, header, split, imageHeight);
+        context.rect(split, 0, canvas.width - split, canvas.height);
         context.clip();
-        drawContained(context, left, 0, header, imageWidth, imageHeight);
+        context.globalAlpha = state.opacity / 100;
+        context.drawImage(grid, 0, 0);
         context.restore();
         context.fillStyle = "#ffffff";
-        context.fillRect(split - 2, header, 4, imageHeight);
-        drawLabel(context, leftLayer.label, 18, header + 18);
-        drawLabel(context, rightLayer.label, canvas.width - 18, header + 18, true);
+        context.fillRect(split - 1, 0, 2, canvas.height);
       }
-
-      let footerY = header + imageHeight;
-      if (captionHeight) {
-        context.fillStyle = "#17191c";
-        context.font = "500 24px Arial, sans-serif";
-        context.textAlign = "left";
-        context.fillText(elements.caption.value.trim(), 20, footerY + captionHeight / 2);
-        footerY += captionHeight;
-      }
-      drawLegends(context, legendLayers, footerY, canvas.width);
       const blob = await new Promise((resolve) => canvas.toBlob(resolve, "image/png"));
       if (!blob) throw new Error("PNG encoding failed");
       const url = URL.createObjectURL(blob);
       const anchor = document.createElement("a");
-      const sample = (elements.caption.value.trim() || "comparison").replace(/[^a-z0-9]+/gi, "_").replace(/^_|_$/g, "").slice(0, 70);
       anchor.href = url;
-      anchor.download = `${sample}_${state.pair}_${state.mode}.png`;
+      anchor.download = `cerebellum_${state.sample}_${state.mode}.png`;
       anchor.click();
       setTimeout(() => URL.revokeObjectURL(url), 1000);
     } catch (error) {
@@ -544,23 +233,22 @@
     }
   }
 
+  elements.samples.forEach((button) => button.addEventListener("click", () => setSample(button.dataset.sample)));
   elements.modes.forEach((button) => button.addEventListener("click", () => setMode(button.dataset.mode)));
-  elements.pairs.forEach((button) => button.addEventListener("click", () => setPair(button.dataset.pair)));
-  elements.expressionClusters.forEach((button) => button.addEventListener("click", () => setPair(`expr-cluster-${button.dataset.exprCluster}`)));
-  elements.codexTypes.forEach((button) => button.addEventListener("click", () => setCodexMajor(button.dataset.codexMajor)));
-  elements.range.addEventListener("input", () => updateValue(elements.range.value));
+  elements.range.addEventListener("input", () => updatePosition(elements.range.value));
+  elements.opacity.addEventListener("input", () => updateOpacity(elements.opacity.value));
   elements.single.addEventListener("pointerdown", (event) => {
-    if (state.mode !== "swipe") return;
+    if (state.mode !== "compare") return;
     event.preventDefault();
     state.dragging = true;
     elements.single.setPointerCapture(event.pointerId);
     const rect = elements.single.getBoundingClientRect();
-    updateValue(((event.clientX - rect.left) / rect.width) * 100);
+    updatePosition(((event.clientX - rect.left) / rect.width) * 100);
   });
   elements.single.addEventListener("pointermove", (event) => {
-    if (!state.dragging || state.mode !== "swipe") return;
+    if (!state.dragging || state.mode !== "compare") return;
     const rect = elements.single.getBoundingClientRect();
-    updateValue(((event.clientX - rect.left) / rect.width) * 100);
+    updatePosition(((event.clientX - rect.left) / rect.width) * 100);
   });
   elements.single.addEventListener("pointerup", () => { state.dragging = false; });
   elements.single.addEventListener("pointercancel", () => { state.dragging = false; });
@@ -568,19 +256,20 @@
     if (!["ArrowLeft", "ArrowRight", "Home", "End"].includes(event.key)) return;
     event.preventDefault();
     const step = event.shiftKey ? 5 : 1;
-    if (event.key === "Home") updateValue(0);
-    else if (event.key === "End") updateValue(100);
-    else updateValue(state.value + (event.key === "ArrowRight" ? step : -step));
+    if (event.key === "Home") updatePosition(0);
+    else if (event.key === "End") updatePosition(100);
+    else updatePosition(state.value + (event.key === "ArrowRight" ? step : -step));
   });
-  elements.heUpload.addEventListener("change", () => upload("he", elements.heUpload.files[0]));
-  elements.spaceRecUpload.addEventListener("change", () => upload("spacerec", elements.spaceRecUpload.files[0]));
+  elements.dapiUpload.addEventListener("change", () => upload("dapi", elements.dapiUpload.files[0]));
+  elements.predictionUpload.addEventListener("change", () => upload("grid", elements.predictionUpload.files[0]));
   elements.reset.addEventListener("click", reset);
   elements.export.addEventListener("click", exportPng);
-  window.addEventListener("resize", updateAspect);
+  window.addEventListener("resize", () => setMode(state.mode));
 
+  elements.caption.value = captionFor("C2");
   applyImages();
-  setMode("swipe");
-  updateValue(50);
-  Object.keys(state.layers).filter((key) => !state.layers[key].width).forEach(loadDimensions);
-  window.comparisonApp = { state, setMode, setPair, setExpressionGene, setCodexMajor, setCodexGene, updateValue, reset, exportPng };
+  setMode("compare");
+  updatePosition(50);
+  updateOpacity(85);
+  window.comparisonApp = { state, setSample, setMode, updatePosition, updateOpacity, reset, exportPng };
 })();
