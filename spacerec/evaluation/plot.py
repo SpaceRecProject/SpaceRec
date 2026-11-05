@@ -277,6 +277,8 @@ def plot_type_grid(
     selected_window = _window_tuple(window)
     x0, y0, x1, y1 = selected_window
     table = pd.read_csv(grid_type_csv)
+    if "predicted_type" not in table.columns and "top1_type" in table.columns:
+        table = table.rename(columns={"top1_type": "predicted_type"})
     required = {"bbox_x0", "bbox_y0", "bbox_x1", "bbox_y1", "predicted_type"}
     missing = sorted(required.difference(table.columns))
     if missing:
