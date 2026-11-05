@@ -12,7 +12,7 @@ from typing import Any
 
 def _dataset(dataset: str) -> str:
     selected = str(dataset).lower()
-    if selected not in {"brca", "crc"}:
+    if selected not in {"brca", "crc", "cerebellum"}:
         raise ValueError(f"Unsupported dataset: {dataset!r}.")
     return selected
 
@@ -84,22 +84,53 @@ def deconv(
 def rctd_ref(
     *,
     dataset: str,
-    sc_ref_h5ad: str | Path,
-    synthetic_h5: str | Path,
-    output_dir: str | Path,
-    gene_list_txt: str | Path,
+    sc_ref_h5ad: str | Path | None = None,
+    synthetic_h5: str | Path | None = None,
+    output_dir: str | Path | None = None,
+    gene_list_txt: str | Path | None = None,
     positions_csv: str | Path | None = None,
     annotation_column: str = "Level1",
     umi_min: int = 100,
     r_env_prefix: str | Path | None = None,
     merge_json: str | Path | None = None,
     force: bool = False,
+    sample_id: str | None = None,
+    project_root: str | Path | None = None,
+    run_root: str | Path | None = None,
+    deconv_csv: str | Path | None = None,
+    stage1_st_h5ad: str | Path | None = None,
+    stage1_gene_list: str | Path | None = None,
 ) -> dict[str, Any]:
     """Build the merged11 RCTD reference aligned to synthetic transcript Visium genes."""
 
     selected = _dataset(dataset)
+    if selected == "cerebellum":
+        from .dbit import prepare_reference
+
+        required = {
+            "sample_id": sample_id,
+            "project_root": project_root,
+            "run_root": run_root,
+            "deconv_csv": deconv_csv,
+            "stage1_st_h5ad": stage1_st_h5ad,
+            "stage1_gene_list": stage1_gene_list,
+        }
+        missing = [name for name, value in required.items() if value is None]
+        if missing:
+            raise ValueError(f"cerebellum rctd_ref requires: {', '.join(missing)}")
+        return prepare_reference(
+            project_root=project_root,
+            run_root=run_root,
+            sample_id=str(sample_id),
+            deconv_csv=deconv_csv,
+            stage1_st_h5ad=stage1_st_h5ad,
+            stage1_gene_list=stage1_gene_list,
+            force=bool(force),
+        )
     if selected != "brca":
         raise ValueError("rctd_ref is currently implemented for dataset='brca' only.")
+    if sc_ref_h5ad is None or synthetic_h5 is None or output_dir is None or gene_list_txt is None:
+        raise ValueError("brca rctd_ref requires sc_ref_h5ad, synthetic_h5, output_dir, and gene_list_txt.")
     from .rctd_ref import build_reference
 
     summary = build_reference(
@@ -203,8 +234,8 @@ def ge(
     dataset: str,
     he_image: str | Path,
     positions_csv: str | Path,
-    scalefactors_json: str | Path,
-    thumbnail_png: str | Path,
+    scalefactors_json: str | Path | None = None,
+    thumbnail_png: str | Path | None = None,
     output_dir: str | Path | None = None,
     output_h5: str | Path | None = None,
     summary_json: str | Path | None = None,
@@ -227,11 +258,35 @@ def ge(
     progress_refresh_rate: float = 1.0,
     stage_log_stdout: bool = False,
     sample_id: str | None = None,
+    project_root: str | Path | None = None,
+    run_root: str | Path | None = None,
+    openphenom_python: str | Path | None = None,
     **kwargs: Any,
 ) -> dict[str, Any]:
     """Run dense18 Virchow2 grid embedding through the existing implementation."""
 
     selected = _dataset(dataset)
+    if selected == "cerebellum":
+        if model != "openphenom":
+            raise ValueError("dataset='cerebellum' requires model='openphenom'.")
+        if (int(patch_size), int(stride), int(batch_size)) != (480, 120, 16):
+            raise ValueError("The validated cerebellum OpenPhenom workflow requires patch_size=480, stride=120, batch_size=16.")
+        if not concat_local or concat_nbr:
+            raise ValueError("The validated cerebellum workflow concatenates local/global features and does not add neighbors.")
+        if sample_id is None or project_root is None or run_root is None or openphenom_python is None:
+            raise ValueError(
+                "cerebellum ge requires sample_id, project_root, run_root, and openphenom_python."
+            )
+        from .dbit import extract_openphenom
+
+        return extract_openphenom(
+            project_root=project_root,
+            run_root=run_root,
+            sample_id=sample_id,
+            python_executable=openphenom_python,
+            batch_size=int(batch_size),
+            force=bool(force),
+        )
     if model != "virchow2":
         raise ValueError("The slim API currently supports model='virchow2' only.")
     if not concat_local:
@@ -350,6 +405,9 @@ def mask(
     min_he_object_pixels: int = 64,
     seed: int = 0,
     force: bool = False,
+    sample_id: str | None = None,
+    project_root: str | Path | None = None,
+    run_root: str | Path | None = None,
 ) -> dict[str, Any]:
     """Create an H&E grid tissue mask and a training-filtered grid embedding H5.
 
@@ -357,9 +415,20 @@ def mask(
     mode='embedding' is passed explicitly.
     """
 
+    selected = _dataset(dataset)
+    if selected == "cerebellum":
+        if sample_id is None or project_root is None or run_root is None:
+            raise ValueError("cerebellum mask requires sample_id, project_root, and run_root.")
+        from .dbit import apply_mask
+
+        return apply_mask(
+            project_root=project_root,
+            run_root=run_root,
+            sample_id=sample_id,
+            force=bool(force),
+        )
     from .mask import run_mask
 
-    selected = _dataset(dataset)
     selected_output = _ensure_dir(output_dir or _default_step_dir(selected, "mask"))
     summary = run_mask(
         grid_embedding_h5=Path(grid_embedding_h5),
@@ -797,11 +866,38 @@ def stage1(
     type_pred_dir: str | Path | None = None,
     grid_type_csv: str | Path | None = None,
     cell_type_csv: str | Path | None = None,
+    sample_id: str | None = None,
+    project_root: str | Path | None = None,
+    workflow_run_root: str | Path | None = None,
     **kwargs: Any,
 ) -> dict[str, Any]:
     """Train only the finetune-mu stage 1 router/type model."""
 
     selected = _dataset(dataset)
+    if selected == "cerebellum":
+        exact = {
+            "projection_dim": (int(projection_dim), 1024),
+            "stage1_epochs": (int(stage1_epochs if max_epochs is None else max_epochs), 70),
+            "batch_size": (int(batch_size), 8),
+            "skip_input_projector": (bool(skip_input_projector), False),
+            "factorized_head_hidden_layers": (int(factorized_head_hidden_layers), 1),
+            "scale_head_hidden_dim": (scale_head_hidden_dim, 256),
+            "delta_head_hidden_dim": (delta_head_hidden_dim, 256),
+        }
+        changed = [name for name, (actual, expected) in exact.items() if actual != expected]
+        if changed:
+            raise ValueError(f"Cerebellum Stage 1 has fixed validated parameters; mismatched: {', '.join(changed)}")
+        if sample_id is None or project_root is None or workflow_run_root is None:
+            raise ValueError(
+                "cerebellum stage1 requires sample_id, project_root, and workflow_run_root."
+            )
+        from .dbit import train_stage1
+
+        return train_stage1(
+            project_root=project_root,
+            run_root=workflow_run_root,
+            sample_id=sample_id,
+        )
     selected_type_pred_dir = _ensure_dir(type_pred_dir or Path.cwd() / "resources" / selected / "type_pred")
     selected_grid_type_csv = Path(grid_type_csv) if grid_type_csv is not None else selected_type_pred_dir / "stage1_grid_type.csv"
     selected_cell_type_csv = None
@@ -898,11 +994,38 @@ def stage2(
     cell_polygon_csv: str | Path | None = None,
     grid_pred_expression_h5: str | Path | None = None,
     cell_pred_expression_h5: str | Path | None = None,
+    sample_id: str | None = None,
+    project_root: str | Path | None = None,
+    workflow_run_root: str | Path | None = None,
     **kwargs: Any,
 ) -> dict[str, Any]:
     """Train Stage 2, export grid outputs, and optionally aggregate cells."""
 
     selected = _dataset(dataset)
+    if selected == "cerebellum":
+        exact = {
+            "projection_dim": (int(projection_dim), 1024),
+            "stage2_epochs": (int(stage2_epochs if max_epochs is None else max_epochs), 70),
+            "batch_size": (int(batch_size), 4),
+            "skip_input_projector": (bool(skip_input_projector), False),
+            "factorized_head_hidden_layers": (int(factorized_head_hidden_layers), 1),
+            "scale_head_hidden_dim": (scale_head_hidden_dim, 256),
+            "delta_head_hidden_dim": (delta_head_hidden_dim, 256),
+        }
+        changed = [name for name, (actual, expected) in exact.items() if actual != expected]
+        if changed:
+            raise ValueError(f"Cerebellum Stage 2 has fixed validated parameters; mismatched: {', '.join(changed)}")
+        if sample_id is None or project_root is None or workflow_run_root is None:
+            raise ValueError(
+                "cerebellum stage2 requires sample_id, project_root, and workflow_run_root."
+            )
+        from .dbit import train_stage2
+
+        return train_stage2(
+            project_root=project_root,
+            run_root=workflow_run_root,
+            sample_id=sample_id,
+        )
     selected_run_dir = Path(run_dir) if run_dir is not None else Path.cwd() / "resources" / selected / "type_pred" / "train"
     selected_gene_txt = Path(gene_txt) if gene_txt is not None else None
     if selected_gene_txt is None:
