@@ -258,17 +258,6 @@ spacerec.plottype(..., window=(x0, y0, x1, y1))
 spacerec.plotexpr(..., window=(x0, y0, x1, y1), gene="KRT5")
 ```
 
-Expression is standardized independently for the selected gene and bbox, then
-clipped to the displayed range:
-
-$$
-z_g=\min\left(2,\max\left(-2,
-\frac{x_g-\mu_{\mathrm{bbox}}}{\sigma_{\mathrm{bbox}}}
-\right)\right).
-$$
-
-The type and expression panels retain the same spatial scale and aspect ratio.
-
 ## Current BRCA settings
 
 | Component | Setting | Value |
