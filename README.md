@@ -10,11 +10,10 @@
 
 ---
 
-SpaceRec learns dense spatial predictions from H&E image features and Visium
-measurements. The current BRCA workflow builds a cell-type expression
-reference, extracts and filters image-grid embeddings, trains cell-type and
-expression models in two stages, and visualizes grid predictions inside a
-user-selected full-resolution H&E bounding box.
+SpaceRec learns dense spatial predictions from registered tissue images and
+spot-level spatial transcriptomics. The primary BRCA workflow uses H&E and
+Visium, while the cerebellum variant demonstrates transfer to multichannel
+fluorescence and xDBiT without changing the two-stage biological formulation.
 
 ## Repository layout
 
@@ -22,14 +21,17 @@ user-selected full-resolution H&E bounding box.
 SpaceRec/
 ├── spacerec/                    # active Python package
 │   ├── notebooks/
-│   │   └── spacerec.ipynb      # existing Visium data
+│   │   ├── spacerec.ipynb                  # Visium plus H&E
+│   │   └── cerebellum_openphenom.ipynb    # xDBiT plus fluorescence
+│   ├── dbit.py                 # validated cerebellum workflow adapter
 │   ├── deconv/
 │   ├── gridembedding/
 │   ├── mask/
 │   ├── model/
 │   ├── evaluation/
 │   └── rctd_ref/
-└── resources/brca/              # BRCA inputs and generated outputs
+├── resources/brca/              # BRCA inputs and generated outputs
+└── resources/cerebellum/        # C2/C3 inputs and generated outputs
 ```
 
 The active import is:
@@ -114,6 +116,58 @@ single-cell reference inputs. It reuses the supplied deconvolution proportions
 after validation and regenerates the expression reference and downstream
 outputs. Stage 1 and Stage 2 write grid-level outputs only; cell aggregation is
 not performed in these training cells.
+
+### xDBiT with multichannel fluorescence
+
+Open:
+
+```text
+spacerec/notebooks/cerebellum_openphenom.ipynb
+```
+
+This variant applies SpaceRec to the C2 and C3 adult mouse cerebellum sections
+from xDBiT, which measures transcriptomes in 50-µm square spots paired with
+registered fluorescence images. It replaces Visium with xDBiT and H&E with the
+DAPI, phalloidin, and CD31 channels. A frozen OpenPhenom microscopy encoder
+produces the image-grid representation; channel features are averaged, and the
+local and global representations are concatenated into a 768-dimensional
+embedding. Stage 1 remains composition-supervised, Stage 2 remains anchored to
+the expression reference, and predictions use the same dense 30-pixel grid.
+See [Wirth et al.](https://doi.org/10.1038/s41467-023-37111-w) for xDBiT and
+[Kraus et al.](https://doi.org/10.1109/CVPR52733.2024.01117) for OpenPhenom.
+
+The notebook follows the same public API sequence as the BRCA notebook:
+
+```python
+spacerec.rctd_ref(dataset="cerebellum", ...)
+spacerec.ge(dataset="cerebellum", model="openphenom", ...)
+spacerec.mask(dataset="cerebellum", ...)
+spacerec.stage1(dataset="cerebellum", ...)
+spacerec.stage2(dataset="cerebellum", ...)
+spacerec.plottype(...)
+spacerec.plotexpr(...)
+```
+
+`spacerec/dbit.py` routes these calls to the validated cerebellum workflow and
+publishes the results in the standard SpaceRec layout rather than a separate
+notebook run directory:
+
+```text
+resources/cerebellum/C2/
+├── dbit/
+├── deconv/
+├── reference/
+├── embedding/
+├── mask/
+└── model_pred/
+    └── train/metrics/windows/
+```
+
+The window visualization is generated through `spacerec.plottype(...)` and
+`spacerec.plotexpr(...)`, as in the main notebook. The representative
+`Slc17a7` and `Gad1` maps provide interpretable readouts of excitatory and
+inhibitory neuronal programs in adult mouse cerebellum
+([Kozareva et al.](https://doi.org/10.1038/s41586-021-03220-z)).
 
 ## Workflow
 
