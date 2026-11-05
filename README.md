@@ -273,9 +273,9 @@ The type and expression panels retain the same spatial scale and aspect ratio.
 
 | Component | Setting | Value |
 | --- | --- | --- |
-| Grid embedding | `patch_size` | `480` px |
-| Grid embedding | `stride` | `120` px |
-| Grid output | grid spacing | `30` px |
+| Grid embedding | `patch_size` | `288` px |
+| Grid embedding | `stride` | `72` px |
+| Grid output | grid spacing | `18` px |
 | Grid embedding | feature dimension | `3840` |
 | Grid embedding | neighbor features | disabled |
 | Stage 1 and 2 | `projection_dim` | `2048` |
