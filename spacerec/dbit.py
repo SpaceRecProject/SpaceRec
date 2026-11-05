@@ -15,8 +15,12 @@ def _require_file(path: Path) -> Path:
     return path
 
 
-def _workflow_paths(project_root: str | Path) -> tuple[Path, Path]:
-    root = Path(project_root).resolve()
+def _workflow_paths(project_root: str | Path | None = None) -> tuple[Path, Path]:
+    if project_root is None:
+        repository_root = Path(__file__).resolve().parents[1]
+        root = (repository_root / "resources").resolve().parent
+    else:
+        root = Path(project_root).resolve()
     scripts = root / "scripts" / "handoff_cerebellum_spacerec_v2"
     if not scripts.is_dir():
         raise FileNotFoundError(scripts)
@@ -203,7 +207,7 @@ def _run_training(
 
 def prepare_reference(
     *,
-    project_root: str | Path,
+    project_root: str | Path | None = None,
     sample_id: str,
     deconv_csv: str | Path,
     stage1_st_h5ad: str | Path,
@@ -248,20 +252,21 @@ def prepare_reference(
 
 def extract_openphenom(
     *,
-    project_root: str | Path,
+    project_root: str | Path | None = None,
     sample_id: str,
-    python_executable: str | Path,
+    python_executable: str | Path | None = None,
     batch_size: int = 16,
     force: bool = False,
 ) -> dict[str, Any]:
     root, scripts = _workflow_paths(project_root)
+    selected_python = root / "openphenom_env" / "bin" / "python" if python_executable is None else Path(python_executable)
     run_root = _validated_run_root(root)
     sample_root = run_root / sample_id
     summary_path = sample_root / "tissue_bbox" / "embedding" / "embedding_summary.json"
     output_h5 = sample_root / "tissue_bbox" / "embedding" / "grid_embedding.h5"
     if not output_h5.is_file() or force:
         command = [
-            str(_require_file(Path(python_executable))),
+            str(_require_file(selected_python)),
             str(scripts / "extract_openphenom.py"),
             "--sample",
             sample_id,
@@ -286,7 +291,7 @@ def extract_openphenom(
 
 def apply_mask(
     *,
-    project_root: str | Path,
+    project_root: str | Path | None = None,
     sample_id: str,
     force: bool = False,
 ) -> dict[str, Any]:
@@ -318,7 +323,7 @@ def apply_mask(
 
 def train_stage1(
     *,
-    project_root: str | Path,
+    project_root: str | Path | None = None,
     sample_id: str,
 ) -> dict[str, Any]:
     root, scripts = _workflow_paths(project_root)
@@ -348,7 +353,7 @@ def train_stage1(
 
 def train_stage2(
     *,
-    project_root: str | Path,
+    project_root: str | Path | None = None,
     sample_id: str,
 ) -> dict[str, Any]:
     root, scripts = _workflow_paths(project_root)
