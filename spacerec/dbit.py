@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import json
 import os
+import pickle
 import shutil
 import subprocess
 import sys
@@ -156,7 +157,7 @@ def _checkpoint_epoch(path: Path) -> int | None:
         payload = torch.load(path, map_location="cpu", weights_only=False)
         value = payload.get("epoch") if isinstance(payload, dict) else None
         return None if value is None else int(value) + 1
-    except (OSError, RuntimeError, EOFError, ValueError):
+    except (OSError, RuntimeError, EOFError, ValueError, pickle.UnpicklingError):
         return None
 
 
@@ -190,15 +191,25 @@ def _run_training(
             text=True,
         )
         last_mtime = -1
-        while process.poll() is None:
-            if checkpoint.is_file():
-                mtime = checkpoint.stat().st_mtime_ns
-                if mtime != last_mtime:
-                    last_mtime = mtime
-                    completed_epochs = _checkpoint_epoch(checkpoint)
-                    if completed_epochs is not None:
-                        progress.update(max(0, min(epochs, completed_epochs) - progress.n))
-            time.sleep(1.0)
+        try:
+            while process.poll() is None:
+                if checkpoint.is_file():
+                    mtime = checkpoint.stat().st_mtime_ns
+                    if mtime != last_mtime:
+                        last_mtime = mtime
+                        completed_epochs = _checkpoint_epoch(checkpoint)
+                        if completed_epochs is not None:
+                            progress.update(max(0, min(epochs, completed_epochs) - progress.n))
+                time.sleep(1.0)
+        except BaseException:
+            if process.poll() is None:
+                process.terminate()
+                try:
+                    process.wait(timeout=30)
+                except subprocess.TimeoutExpired:
+                    process.kill()
+                    process.wait()
+            raise
         return_code = int(process.returncode or 0)
         if return_code == 0:
             progress.update(max(0, epochs - progress.n))
