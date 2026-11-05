@@ -849,6 +849,7 @@ def stage1(
     grid_type_csv: str | Path | None = None,
     cell_type_csv: str | Path | None = None,
     sample_id: str | None = None,
+    force: bool = False,
     **kwargs: Any,
 ) -> dict[str, Any]:
     """Train only the finetune-mu stage 1 router/type model."""
@@ -873,6 +874,7 @@ def stage1(
 
         return train_stage1(
             sample_id=sample_id,
+            force=bool(force),
         )
     selected_type_pred_dir = _ensure_dir(type_pred_dir or Path.cwd() / "resources" / selected / "type_pred")
     selected_grid_type_csv = Path(grid_type_csv) if grid_type_csv is not None else selected_type_pred_dir / "stage1_grid_type.csv"
@@ -971,6 +973,7 @@ def stage2(
     grid_pred_expression_h5: str | Path | None = None,
     cell_pred_expression_h5: str | Path | None = None,
     sample_id: str | None = None,
+    force: bool = False,
     **kwargs: Any,
 ) -> dict[str, Any]:
     """Train Stage 2, export grid outputs, and optionally aggregate cells."""
@@ -995,6 +998,7 @@ def stage2(
 
         return train_stage2(
             sample_id=sample_id,
+            force=bool(force),
         )
     selected_run_dir = Path(run_dir) if run_dir is not None else Path.cwd() / "resources" / selected / "type_pred" / "train"
     selected_gene_txt = Path(gene_txt) if gene_txt is not None else None

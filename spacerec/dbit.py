@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import json
 import os
+import shutil
 import subprocess
 import sys
 import time
@@ -325,17 +326,20 @@ def train_stage1(
     *,
     project_root: str | Path | None = None,
     sample_id: str,
+    force: bool = False,
 ) -> dict[str, Any]:
     root, scripts = _workflow_paths(project_root)
     run_root = _validated_run_root(root)
     sample_root = run_root / sample_id
     summary_path = sample_root / "model" / "stage1_summary.json"
+    if force and summary_path.parent.exists():
+        shutil.rmtree(summary_path.parent)
     if not summary_path.is_file():
         _run_training(
             [sys.executable, str(scripts / "train_stage1.py"), "--sample", sample_id],
             cwd=root,
             env=_environment(root, run_root),
-            log_path=sample_root / "model" / "api_stage1.log",
+            log_path=sample_root / "logs" / "api_stage1.log",
             checkpoint=sample_root / "model" / "training" / "model" / "stage1_router" / "checkpoints" / "last.ckpt",
             description=f"Stage 1 {sample_id}",
         )
@@ -355,17 +359,29 @@ def train_stage2(
     *,
     project_root: str | Path | None = None,
     sample_id: str,
+    force: bool = False,
 ) -> dict[str, Any]:
     root, scripts = _workflow_paths(project_root)
     run_root = _validated_run_root(root)
     sample_root = run_root / sample_id
     summary_path = sample_root / "stage2" / "validation_summary.json"
+    if force:
+        training_dir = sample_root / "stage2" / "training"
+        if training_dir.exists():
+            shutil.rmtree(training_dir)
+        for path in (
+            summary_path,
+            sample_root / "stage2" / "adapted_stage1_realgenes.ckpt",
+            sample_root / "stage2" / "checkpoint_adaptation_summary.json",
+        ):
+            if path.exists():
+                path.unlink()
     if not summary_path.is_file():
         _run_training(
             [sys.executable, str(scripts / "train_stage2.py"), "--sample", sample_id],
             cwd=root,
             env=_environment(root, run_root),
-            log_path=sample_root / "stage2" / "training" / "api_stage2.log",
+            log_path=sample_root / "stage2" / "logs" / "api_stage2.log",
             checkpoint=sample_root / "stage2" / "training" / "model" / "stage2_expression" / "checkpoints" / "last.ckpt",
             description=f"Stage 2 {sample_id}",
         )
