@@ -46,6 +46,16 @@ CELL_TYPE_COLORS = {
     "Unlabeled": "#bdbdbd",
     "Others": "#ffffff",
 }
+CEREBELLUM_TYPE_COLORS = {
+    "other_neurons": "#E69F00",
+    "excitatory_neurons": "#CC79A7",
+    "inhibitory_neurons": "#0072B2",
+    "astroglia": "#009E73",
+    "oligodendroglia": "#56B4E9",
+    "immune": "#D55E00",
+    "vascular_stromal": "#F0E442",
+    "ventricular_epithelium": "#999999",
+}
 MARKER_GROUPS = {
     "Lymphoid": {"CD3D", "CD3E", "TRAC"},
     "Myeloid": {"LYZ", "CD68"},
@@ -262,6 +272,7 @@ def plot_type_grid(
     output_dir: str | Path,
     output_name: str = "grid_type.png",
     dpi: int = 180,
+    type_colors: dict[str, str] | None = None,
 ) -> dict[str, Any]:
     selected_window = _window_tuple(window)
     x0, y0, x1, y1 = selected_window
@@ -274,20 +285,22 @@ def plot_type_grid(
 
     table = table.reset_index(drop=True)
     rows, cols, lattice_shape, extent = _grid_lattice(table, selected_window)
+    colors = CELL_TYPE_COLORS if type_colors is None else {**type_colors, "Unassigned": "#bdbdbd"}
+    order = CELL_TYPE_ORDER if type_colors is None else list(type_colors)
     image = np.full((*lattice_shape, 3), 255, dtype=np.uint8)
-    counts = {name: 0 for name in CELL_TYPE_ORDER + ["Unassigned"]}
+    counts = {name: 0 for name in order + ["Unassigned"]}
     labels: list[str] = []
     for value in table["predicted_type"]:
         label = str(value)
-        if label not in CELL_TYPE_COLORS:
+        if label not in colors:
             label = "Unassigned"
         labels.append(label)
         counts[label] = counts.get(label, 0) + 1
     label_array = np.asarray(labels, dtype=object)
-    for label in CELL_TYPE_ORDER + ["Unassigned"]:
+    for label in order + ["Unassigned"]:
         selected = label_array == label
         if np.any(selected):
-            image[rows[selected], cols[selected]] = _hex_to_rgb(CELL_TYPE_COLORS[label])
+            image[rows[selected], cols[selected]] = _hex_to_rgb(colors[label])
 
     output_png = Path(output_dir) / output_name
     output_png.parent.mkdir(parents=True, exist_ok=True)
@@ -298,9 +311,9 @@ def plot_type_grid(
     ax.set_ylim(y1, y0)
     ax.set_aspect("equal")
     ax.set_axis_off()
-    present = [label for label in CELL_TYPE_ORDER + ["Unassigned"] if counts.get(label, 0)]
+    present = [label for label in order + ["Unassigned"] if counts.get(label, 0)]
     handles = [
-        Line2D([0], [0], color=CELL_TYPE_COLORS[label], lw=5, label=f"{label} ({counts[label]})")
+        Line2D([0], [0], color=colors[label], lw=5, label=f"{label} ({counts[label]})")
         for label in present
     ]
     if handles:
@@ -378,6 +391,66 @@ def plot_grid_expression(
     fig.savefig(output_png, facecolor="black")
     plt.close(fig)
 
+    return {
+        "output_png": str(output_png),
+        "gene": gene,
+        "n_window_grids": int(len(table)),
+        "normalization": "per_gene_per_window_zscore_clipped_to_minus2_plus2",
+        "window_mean": window_mean,
+        "window_std": window_std,
+    }
+
+
+def plot_grid_expression_h5(
+    *,
+    grid_predictions_h5: str | Path,
+    window: tuple[float, float, float, float] | list[float],
+    output_dir: str | Path,
+    gene: str,
+    output_name: str = "grid_expr.png",
+    dpi: int = 180,
+) -> dict[str, Any]:
+    selected_window = _window_tuple(window)
+    x0, y0, x1, y1 = selected_window
+    with h5py.File(grid_predictions_h5, "r") as handle:
+        genes = _decode_array(handle["gene_name"][:])
+        if gene not in genes:
+            raise ValueError(f"Gene {gene!r} is not present in grid_predictions_h5.")
+        gene_index = genes.index(gene)
+        bbox = np.asarray(handle["bbox_xyxy"], dtype=np.float32)
+        keep = np.flatnonzero(
+            (bbox[:, 2] > x0) & (bbox[:, 0] < x1) & (bbox[:, 3] > y0) & (bbox[:, 1] < y1)
+        )
+        values = np.asarray(handle["expr_pred"][keep, gene_index], dtype=np.float32)
+    table = pd.DataFrame(bbox[keep], columns=["bbox_x0", "bbox_y0", "bbox_x1", "bbox_y1"])
+    window_mean = float(np.nanmean(values))
+    window_std = float(np.nanstd(values))
+    table["zvalue"] = np.clip(_zscore(values), -2.0, 2.0)
+    rows, cols, lattice_shape, extent = _grid_lattice(table, selected_window)
+    image = np.full(lattice_shape, np.nan, dtype=np.float32)
+    image[rows, cols] = table["zvalue"].to_numpy(dtype=np.float32)
+
+    output_png = Path(output_dir) / output_name
+    output_png.parent.mkdir(parents=True, exist_ok=True)
+    fig = plt.figure(figsize=(12.0, 9.0), dpi=dpi, facecolor="black")
+    ax = fig.add_axes([0.01, 0.01, 0.78, 0.98])
+    cax = fig.add_axes([0.82, 0.08, 0.025, 0.84])
+    ax.set_facecolor("black")
+    cmap = plt.get_cmap("magma").copy()
+    cmap.set_bad("black")
+    im = ax.imshow(
+        np.ma.masked_invalid(image), cmap=cmap, vmin=-2, vmax=2,
+        interpolation="nearest", origin="upper", extent=extent,
+    )
+    ax.set_xlim(x0, x1)
+    ax.set_ylim(y1, y0)
+    ax.set_aspect("equal")
+    ax.set_axis_off()
+    colorbar = fig.colorbar(im, cax=cax)
+    colorbar.ax.tick_params(colors="white", labelsize=8)
+    colorbar.outline.set_edgecolor("white")
+    fig.savefig(output_png, facecolor="black")
+    plt.close(fig)
     return {
         "output_png": str(output_png),
         "gene": gene,

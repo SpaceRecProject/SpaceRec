@@ -96,7 +96,6 @@ def rctd_ref(
     force: bool = False,
     sample_id: str | None = None,
     project_root: str | Path | None = None,
-    run_root: str | Path | None = None,
     deconv_csv: str | Path | None = None,
     stage1_st_h5ad: str | Path | None = None,
     stage1_gene_list: str | Path | None = None,
@@ -110,7 +109,6 @@ def rctd_ref(
         required = {
             "sample_id": sample_id,
             "project_root": project_root,
-            "run_root": run_root,
             "deconv_csv": deconv_csv,
             "stage1_st_h5ad": stage1_st_h5ad,
             "stage1_gene_list": stage1_gene_list,
@@ -120,7 +118,6 @@ def rctd_ref(
             raise ValueError(f"cerebellum rctd_ref requires: {', '.join(missing)}")
         return prepare_reference(
             project_root=project_root,
-            run_root=run_root,
             sample_id=str(sample_id),
             deconv_csv=deconv_csv,
             stage1_st_h5ad=stage1_st_h5ad,
@@ -259,7 +256,6 @@ def ge(
     stage_log_stdout: bool = False,
     sample_id: str | None = None,
     project_root: str | Path | None = None,
-    run_root: str | Path | None = None,
     openphenom_python: str | Path | None = None,
     **kwargs: Any,
 ) -> dict[str, Any]:
@@ -273,15 +269,14 @@ def ge(
             raise ValueError("The validated cerebellum OpenPhenom workflow requires patch_size=480, stride=120, batch_size=16.")
         if not concat_local or concat_nbr:
             raise ValueError("The validated cerebellum workflow concatenates local/global features and does not add neighbors.")
-        if sample_id is None or project_root is None or run_root is None or openphenom_python is None:
+        if sample_id is None or project_root is None or openphenom_python is None:
             raise ValueError(
-                "cerebellum ge requires sample_id, project_root, run_root, and openphenom_python."
+                "cerebellum ge requires sample_id, project_root, and openphenom_python."
             )
         from .dbit import extract_openphenom
 
         return extract_openphenom(
             project_root=project_root,
-            run_root=run_root,
             sample_id=sample_id,
             python_executable=openphenom_python,
             batch_size=int(batch_size),
@@ -407,7 +402,6 @@ def mask(
     force: bool = False,
     sample_id: str | None = None,
     project_root: str | Path | None = None,
-    run_root: str | Path | None = None,
 ) -> dict[str, Any]:
     """Create an H&E grid tissue mask and a training-filtered grid embedding H5.
 
@@ -417,13 +411,12 @@ def mask(
 
     selected = _dataset(dataset)
     if selected == "cerebellum":
-        if sample_id is None or project_root is None or run_root is None:
-            raise ValueError("cerebellum mask requires sample_id, project_root, and run_root.")
+        if sample_id is None or project_root is None:
+            raise ValueError("cerebellum mask requires sample_id and project_root.")
         from .dbit import apply_mask
 
         return apply_mask(
             project_root=project_root,
-            run_root=run_root,
             sample_id=sample_id,
             force=bool(force),
         )
@@ -868,7 +861,6 @@ def stage1(
     cell_type_csv: str | Path | None = None,
     sample_id: str | None = None,
     project_root: str | Path | None = None,
-    workflow_run_root: str | Path | None = None,
     **kwargs: Any,
 ) -> dict[str, Any]:
     """Train only the finetune-mu stage 1 router/type model."""
@@ -887,15 +879,14 @@ def stage1(
         changed = [name for name, (actual, expected) in exact.items() if actual != expected]
         if changed:
             raise ValueError(f"Cerebellum Stage 1 has fixed validated parameters; mismatched: {', '.join(changed)}")
-        if sample_id is None or project_root is None or workflow_run_root is None:
+        if sample_id is None or project_root is None:
             raise ValueError(
-                "cerebellum stage1 requires sample_id, project_root, and workflow_run_root."
+                "cerebellum stage1 requires sample_id and project_root."
             )
         from .dbit import train_stage1
 
         return train_stage1(
             project_root=project_root,
-            run_root=workflow_run_root,
             sample_id=sample_id,
         )
     selected_type_pred_dir = _ensure_dir(type_pred_dir or Path.cwd() / "resources" / selected / "type_pred")
@@ -996,7 +987,6 @@ def stage2(
     cell_pred_expression_h5: str | Path | None = None,
     sample_id: str | None = None,
     project_root: str | Path | None = None,
-    workflow_run_root: str | Path | None = None,
     **kwargs: Any,
 ) -> dict[str, Any]:
     """Train Stage 2, export grid outputs, and optionally aggregate cells."""
@@ -1015,15 +1005,14 @@ def stage2(
         changed = [name for name, (actual, expected) in exact.items() if actual != expected]
         if changed:
             raise ValueError(f"Cerebellum Stage 2 has fixed validated parameters; mismatched: {', '.join(changed)}")
-        if sample_id is None or project_root is None or workflow_run_root is None:
+        if sample_id is None or project_root is None:
             raise ValueError(
-                "cerebellum stage2 requires sample_id, project_root, and workflow_run_root."
+                "cerebellum stage2 requires sample_id and project_root."
             )
         from .dbit import train_stage2
 
         return train_stage2(
             project_root=project_root,
-            run_root=workflow_run_root,
             sample_id=sample_id,
         )
     selected_run_dir = Path(run_dir) if run_dir is not None else Path.cwd() / "resources" / selected / "type_pred" / "train"
@@ -1106,6 +1095,7 @@ def plottype(
     """Plot grid-level predicted cell types for a full-resolution window."""
 
     from .evaluation import plot_true_type, plot_type_grid
+    from .evaluation.plot import CEREBELLUM_TYPE_COLORS
 
     selected = _dataset(dataset)
     selected_output = _ensure_dir(output_dir or _default_step_dir(selected, "Evaluation"))
@@ -1114,6 +1104,7 @@ def plottype(
         window=window,
         output_dir=selected_output,
         output_name=output_name,
+        type_colors=CEREBELLUM_TYPE_COLORS if selected == "cerebellum" else None,
     )
     result: dict[str, Any] = {
         "dataset": selected,
@@ -1136,7 +1127,8 @@ def plottype(
 def plotexpr(
     *,
     dataset: str,
-    grid_expr_h5ad: str | Path,
+    grid_expr_h5ad: str | Path | None = None,
+    grid_predictions_h5: str | Path | None = None,
     window: tuple[float, float, float, float] | list[float],
     true_xen_expr_h5: str | Path | None = None,
     true_xen_type_csv: str | Path | None = None,
@@ -1147,17 +1139,28 @@ def plotexpr(
 ) -> dict[str, Any]:
     """Plot grid-level predicted expression for one gene in a full-resolution window."""
 
-    from .evaluation import plot_grid_expression, plot_xenium_expression
+    from .evaluation import plot_grid_expression, plot_grid_expression_h5, plot_xenium_expression
 
     selected = _dataset(dataset)
     selected_output = _ensure_dir(output_dir or _default_step_dir(selected, "Evaluation"))
-    grid_plot = plot_grid_expression(
-        grid_expr_h5ad=Path(grid_expr_h5ad),
-        window=window,
-        output_dir=selected_output,
-        gene=gene,
-        output_name=output_name,
-    )
+    if grid_predictions_h5 is not None:
+        grid_plot = plot_grid_expression_h5(
+            grid_predictions_h5=Path(grid_predictions_h5),
+            window=window,
+            output_dir=selected_output,
+            gene=gene,
+            output_name=output_name,
+        )
+    elif grid_expr_h5ad is not None:
+        grid_plot = plot_grid_expression(
+            grid_expr_h5ad=Path(grid_expr_h5ad),
+            window=window,
+            output_dir=selected_output,
+            gene=gene,
+            output_name=output_name,
+        )
+    else:
+        raise ValueError("plotexpr requires grid_expr_h5ad or grid_predictions_h5.")
     result: dict[str, Any] = {
         "dataset": selected,
         "output_dir": str(selected_output),

@@ -2,7 +2,6 @@ from __future__ import annotations
 
 import json
 import os
-import shutil
 import subprocess
 import sys
 import time
@@ -22,6 +21,25 @@ def _workflow_paths(project_root: str | Path) -> tuple[Path, Path]:
     if not scripts.is_dir():
         raise FileNotFoundError(scripts)
     return root, scripts
+
+
+def _validated_run_root(project_root: Path) -> Path:
+    return project_root / "resources" / "handoff_cerebellum" / "spacerec_v2_openphenom_mean_30px"
+
+
+def _public_sample_root(project_root: Path, sample_id: str) -> Path:
+    return project_root / "resources" / "cerebellum" / sample_id
+
+
+def _publish(source: Path, target: Path) -> Path:
+    _require_file(source)
+    target.parent.mkdir(parents=True, exist_ok=True)
+    if target.exists() or target.is_symlink():
+        if target.resolve() != source.resolve():
+            raise FileExistsError(f"Refusing to replace a different published output: {target}")
+        return target
+    target.symlink_to(os.path.relpath(source.resolve(), target.parent))
+    return target
 
 
 def _environment(project_root: Path, run_root: Path) -> dict[str, str]:
@@ -186,7 +204,6 @@ def _run_training(
 def prepare_reference(
     *,
     project_root: str | Path,
-    run_root: str | Path,
     sample_id: str,
     deconv_csv: str | Path,
     stage1_st_h5ad: str | Path,
@@ -194,29 +211,16 @@ def prepare_reference(
     force: bool = False,
 ) -> dict[str, Any]:
     root, scripts = _workflow_paths(project_root)
-    run_root = Path(run_root)
+    run_root = _validated_run_root(root)
     sample_root = run_root / sample_id
-    input_dir = sample_root / "input"
-    input_dir.mkdir(parents=True, exist_ok=True)
-    copied_deconv = input_dir / "RCTD_merged8.csv"
-    source_deconv = _require_file(Path(deconv_csv))
-    if copied_deconv.exists() and not force:
-        if copied_deconv.read_bytes() != source_deconv.read_bytes():
-            raise ValueError(f"Existing staged deconvolution differs from {source_deconv}")
-    else:
-        shutil.copy2(source_deconv, copied_deconv)
-    for source, name in [
-        (_require_file(Path(stage1_st_h5ad)).resolve(), "st_stage1.h5ad"),
-        (_require_file(Path(stage1_gene_list)).resolve(), "stage1_placeholder_genes.txt"),
-    ]:
-        target = input_dir / name
-        if target.exists() or target.is_symlink():
-            if target.resolve() != source:
-                if not force:
-                    raise ValueError(f"Existing staged input differs: {target}")
-                target.unlink()
-        if not target.exists():
-            target.symlink_to(os.path.relpath(source, target.parent))
+    expected_inputs = {
+        Path(deconv_csv): sample_root / "input" / "RCTD_merged8.csv",
+        Path(stage1_st_h5ad): sample_root / "input" / "st_stage1.h5ad",
+        Path(stage1_gene_list): sample_root / "input" / "stage1_placeholder_genes.txt",
+    }
+    for supplied, expected in expected_inputs.items():
+        if _require_file(supplied).resolve() != _require_file(expected).resolve():
+            raise ValueError(f"The supplied input is not the validated cerebellum input: {supplied}")
 
     summary_path = sample_root / "stage2" / "preparation_summary.json"
     if not summary_path.is_file() or force:
@@ -227,22 +231,31 @@ def prepare_reference(
             command,
             cwd=root,
             env=_environment(root, run_root),
-            log_path=sample_root / "logs" / "reference.log",
+            log_path=sample_root / "stage2" / "reference" / "api_reference.log",
         )
-    return _read_json(summary_path)
+    summary = _read_json(summary_path)
+    public = _public_sample_root(root, sample_id)
+    summary.update(
+        {
+            "gene_list": str(_publish(sample_root / "stage2/reference/genes_hvg8000.txt", public / "reference/genes.txt")),
+            "mu_ref": str(_publish(sample_root / "stage2/reference/mu_ref_hvg8000.npy", public / "reference/mu_ref.npy")),
+            "cell_type_order": str(_publish(sample_root / "stage2/reference/cell_type_order.txt", public / "reference/cell_type_order.txt")),
+            "st_h5ad": str(_publish(sample_root / "stage2/input/st_stage2.h5ad", public / "dbit/st.h5ad")),
+        }
+    )
+    return summary
 
 
 def extract_openphenom(
     *,
     project_root: str | Path,
-    run_root: str | Path,
     sample_id: str,
     python_executable: str | Path,
     batch_size: int = 16,
     force: bool = False,
 ) -> dict[str, Any]:
     root, scripts = _workflow_paths(project_root)
-    run_root = Path(run_root)
+    run_root = _validated_run_root(root)
     sample_root = run_root / sample_id
     summary_path = sample_root / "tissue_bbox" / "embedding" / "embedding_summary.json"
     output_h5 = sample_root / "tissue_bbox" / "embedding" / "grid_embedding.h5"
@@ -263,22 +276,22 @@ def extract_openphenom(
             command,
             cwd=root,
             env=_environment(root, run_root),
-            log_path=sample_root / "logs" / "openphenom.log",
+            log_path=sample_root / "tissue_bbox" / "embedding" / "api_openphenom.log",
         )
     summary = _read_json(summary_path)
-    summary["output_h5"] = str(_require_file(output_h5))
+    public_output = _publish(output_h5, _public_sample_root(root, sample_id) / "embedding/grid_embedding.h5")
+    summary["output_h5"] = str(public_output)
     return summary
 
 
 def apply_mask(
     *,
     project_root: str | Path,
-    run_root: str | Path,
     sample_id: str,
     force: bool = False,
 ) -> dict[str, Any]:
     root, scripts = _workflow_paths(project_root)
-    run_root = Path(run_root)
+    run_root = _validated_run_root(root)
     sample_root = run_root / sample_id
     summary_path = sample_root / "mask" / "validation_summary.json"
     if not summary_path.is_file() or force:
@@ -289,19 +302,27 @@ def apply_mask(
             command,
             cwd=root,
             env=_environment(root, run_root),
-            log_path=sample_root / "logs" / "mask.log",
+            log_path=sample_root / "mask" / "api_mask.log",
         )
-    return _read_json(summary_path)
+    summary = _read_json(summary_path)
+    public = _public_sample_root(root, sample_id)
+    summary.update(
+        {
+            "mask_h5": str(_publish(sample_root / "mask/he_mask_grid.h5", public / "mask/he_mask_grid.h5")),
+            "training_h5": str(_publish(sample_root / "embedding/grid_embedding_train_filtered.h5", public / "embedding/grid_embedding_train_filtered.h5")),
+            "mask_summary": str(_publish(sample_root / "mask/mask_summary.json", public / "mask/mask_summary.json")),
+        }
+    )
+    return summary
 
 
 def train_stage1(
     *,
     project_root: str | Path,
-    run_root: str | Path,
     sample_id: str,
 ) -> dict[str, Any]:
     root, scripts = _workflow_paths(project_root)
-    run_root = Path(run_root)
+    run_root = _validated_run_root(root)
     sample_root = run_root / sample_id
     summary_path = sample_root / "model" / "stage1_summary.json"
     if not summary_path.is_file():
@@ -309,21 +330,29 @@ def train_stage1(
             [sys.executable, str(scripts / "train_stage1.py"), "--sample", sample_id],
             cwd=root,
             env=_environment(root, run_root),
-            log_path=sample_root / "logs" / "stage1.log",
+            log_path=sample_root / "model" / "api_stage1.log",
             checkpoint=sample_root / "model" / "training" / "model" / "stage1_router" / "checkpoints" / "last.ckpt",
             description=f"Stage 1 {sample_id}",
         )
-    return _read_json(summary_path)
+    summary = _read_json(summary_path)
+    public = _public_sample_root(root, sample_id) / "model_pred"
+    summary.update(
+        {
+            "checkpoint": str(_publish(Path(summary["checkpoint"]), public / "stage1_checkpoint.ckpt")),
+            "grid_type_csv": str(_publish(Path(summary["grid_type_csv"]), public / "stage1_grid_type.csv")),
+            "stage1_summary": str(_publish(summary_path, public / "stage1_summary.json")),
+        }
+    )
+    return summary
 
 
 def train_stage2(
     *,
     project_root: str | Path,
-    run_root: str | Path,
     sample_id: str,
 ) -> dict[str, Any]:
     root, scripts = _workflow_paths(project_root)
-    run_root = Path(run_root)
+    run_root = _validated_run_root(root)
     sample_root = run_root / sample_id
     summary_path = sample_root / "stage2" / "validation_summary.json"
     if not summary_path.is_file():
@@ -331,11 +360,22 @@ def train_stage2(
             [sys.executable, str(scripts / "train_stage2.py"), "--sample", sample_id],
             cwd=root,
             env=_environment(root, run_root),
-            log_path=sample_root / "logs" / "stage2.log",
+            log_path=sample_root / "stage2" / "training" / "api_stage2.log",
             checkpoint=sample_root / "stage2" / "training" / "model" / "stage2_expression" / "checkpoints" / "last.ckpt",
             description=f"Stage 2 {sample_id}",
         )
-    return _read_json(summary_path)
+    summary = _read_json(summary_path)
+    public = _public_sample_root(root, sample_id) / "model_pred" / "train"
+    summary.update(
+        {
+            "stage1_checkpoint": str(_publish(sample_root / "stage2/adapted_stage1_realgenes.ckpt", public / "stage1_checkpoint.ckpt")),
+            "stage2_checkpoint": str(_publish(Path(summary["stage2_checkpoint"]), public / "stage2_checkpoint.ckpt")),
+            "grid_predictions_h5": str(_publish(Path(summary["grid_predictions_h5"]), public / "grid_predictions.h5")),
+            "training_summary": str(_publish(sample_root / "stage2/training/summary.json", public / "summary.json")),
+            "validation_summary": str(_publish(summary_path, public / "validation_summary.json")),
+        }
+    )
+    return summary
 
 
 __all__ = [
