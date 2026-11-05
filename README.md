@@ -125,6 +125,10 @@ Open:
 spacerec/notebooks/cerebellum_openphenom.ipynb
 ```
 
+Download the C2 and C3 cerebellum resources from
+[Google Drive](https://drive.google.com/open?id=1ETUmzOSuwRvY8neZKvOa8dkV7Llu1EaS)
+and place them under `resources/cerebellum/`.
+
 This variant applies SpaceRec to the C2 and C3 adult mouse cerebellum sections
 from xDBiT, which measures transcriptomes in 50-µm square spots paired with
 registered fluorescence images. It replaces Visium with xDBiT and H&E with the
